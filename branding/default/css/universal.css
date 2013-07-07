@@ -177,6 +177,10 @@ a:hover {
 	background-image: url(../images/nav_members.png);
 }
 
+#navigation ul li.livescore a.parent {
+	background-image: url(../images/nav_livescore.png);
+}
+
 #navigation ul.children {
 	position: absolute;
 	top: 35px;

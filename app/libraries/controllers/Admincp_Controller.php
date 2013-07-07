@@ -52,6 +52,7 @@ class Admincp_Controller extends MY_Controller {
 		$this->admin_navigation->parent_link('members','Members');
 		$this->admin_navigation->parent_link('reports','Reports');
 		$this->admin_navigation->parent_link('design','Design');
+                $this->admin_navigation->parent_link('livescore','Livescore');
 		$this->admin_navigation->parent_link('configuration','Configuration');
 		
 		$this->admin_navigation->child_link('dashboard',1,'Dashboard',site_url('admincp'));
