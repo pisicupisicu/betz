@@ -18,6 +18,10 @@ $route['scaffolding_trigger'] = "";
 // reroute all callback/X calls to the main callback controller
 $route['callback:any'] = 'billing/callback/process';
 
+//second admin controller module
+$route['admincp2/([a-zA-Z_-]+)/(:any)'] = "$1/admincp2/$2";
+$route['admincp2/([a-zA-Z_-]+)'] = "$1/admincp2/index";
+
 // admin specific routes
 $route['admincp'] = 'admincp/dashboard';
 $route['admincp/dashboard/([a-zA-Z_-]+)'] = 'admincp/dashboard/$1';

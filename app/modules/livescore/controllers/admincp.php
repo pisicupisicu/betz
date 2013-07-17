@@ -13,7 +13,7 @@
 
 class Admincp extends Admincp_Controller {
     
-        public $t = 100;
+        public $t = 10;
         //start bank amount
         public $start;
         //rate percentage from bank for growth
@@ -90,7 +90,7 @@ class Admincp extends Admincp_Controller {
 		$this->dataset->columns($columns);
 		$this->dataset->datasource('step_model','get_steps',$filters);
 		$this->dataset->base_url(site_url('admincp/livescore/steps'));
-                $this->dataset->rows_per_page(50);
+                $this->dataset->rows_per_page($filters['limit']);
 		
                 // total rows
 		$total_rows = $this->db->get('z_steps')->num_rows(); 
