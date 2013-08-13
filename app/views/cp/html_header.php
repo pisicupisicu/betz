@@ -6,9 +6,15 @@
 	<base href="<?=site_url();?>" />
 	
 	<link href="<?=branded_include('css/universal.css');?>" rel="stylesheet" type="text/css" media="screen" />
+        <link href="<?=branded_include('css/bootstrap.css');?>" rel="stylesheet" type="text/css" media="screen" />
+        <link href="<?=branded_include('css/bootstrap-responsive.css');?>" rel="stylesheet" type="text/css" media="screen" />
+        <link href="<?=branded_include('css/bootstrap-datetimepicker.min.css');?>" rel="stylesheet" type="text/css" media="screen" />
 	
 	<script type="text/javascript" src="<?=branded_include('js/jquery-1.4.2.js');?>"></script>
+        <script type="text/javascript" src="<?=branded_include('js/jquery-1.9.1.min.js');?>"></script>
 	<script type="text/javascript" src="<?=branded_include('js/jquery.simplemodal.1.4.min.js');?>"></script>
+        <script type="text/javascript" src="<?=branded_include('js/bootstrap-datetimepicker.min.js');?>"></script>
+        <script type="text/javascript" src="<?=branded_include('js/bootstrap.js');?>"></script>
 	
 	<? /* date picker must be loaded here, so that it's methods are available in universal.js/form.js */ ?>
 	<? if (defined('INCLUDE_DATEPICKER')) { ?>

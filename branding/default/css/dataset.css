@@ -34,6 +34,9 @@ table.dataset thead td a {
 	border-bottom: 1px dashed #f0f0f0 !important;
 	color: #fff !important;
 	text-decoration: none !important;
+	opacity:1 !important;
+	display:inline-table !important;
+	position:inherit !important;
 }
 
 table.dataset span.sorting {
@@ -114,7 +117,8 @@ div.pagination b {
 }
 
 table.dataset input.text {
-	width: 100%;
+	width: 90%;
+	margin-bottom:0 !important;
 }
 
 table.dataset input.date_start {
