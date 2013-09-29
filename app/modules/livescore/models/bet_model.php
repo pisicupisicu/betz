@@ -99,9 +99,19 @@
 	                
                 $this->db->join('z_methods','z_methods.ID_method = z_bets.strategy','inner');
 		$this->db->join('z_markets','z_markets.ID_market = z_bets.market_type','inner');
+                $this->db->join('z_markets_selects','z_markets_selects.market_select_id = z_bets.market_select','inner');
 		$this->db->join('z_leagues','z_leagues.ID_league = z_bets.event_type','inner');
 		$this->db->join('z_countries','z_countries.ID = z_bets.country_name','inner');
+                $this->db->join('users','users.user_id = z_bets.username','inner');
                 
+                // if is not an admin user he see only his bets
+                $username=$this->user_model->get('id');
+                if ($this->user_model->logged_in() and !$this->user_model->is_admin()) {
+                     
+                     $this->db->where('username', $username);   
+                 }
+                 
+                // if is an admin user he see all bets 
                 $result = $this->db->get('z_bets');
                 
                 if ($result->num_rows() == 0) {
@@ -121,12 +131,14 @@
                                         'event_type' => $bet['league_name'],
                                         'bet_type' => $bet['bet_type'],
                                         'odds' => $bet['odds'],
-										'market_id' => $bet['market_type'],
+					'market_id' => $bet['market_type'],
                                         'market_type' => $bet['market_name'],
+                                        'market_select' => $bet['market_select_name'],
                                         'comment' => $bet['comment'],
-										'strategy_id' => $bet['strategy'],
+					'strategy_id' => $bet['strategy'],
                                         'strategy' => $bet['method_name'],
-					'username' => $bet['username'],
+					'username' => $bet['user_username'],
+					'paper_bet' => $bet['paper_bet'],
                                                         );
 		}
 		//print_r(array_values($methods));
@@ -169,7 +181,7 @@
 	* Create New Bet
 	*
 	*/
-	function new_bet($event_name,$event_date,$stake,$profit,$loss,$country_name,$event_type,$bet_type,$odds,$market_type,$comment,$strategy) 
+	function new_bet($event_name,$event_date,$stake,$profit,$loss,$country_name,$event_type,$bet_type,$odds,$market_type,$market_select,$comment,$strategy,$username,$paper_bet) 
         {
 	
 		$insert_fields = array(
@@ -183,10 +195,15 @@
 							'bet_type'=> $bet_type,
 							'odds'=> $odds,
 							'market_type'=> $market_type,
+                                                        'market_select'=> $market_select,
 							'comment'=> $comment,
-							'strategy'=> $strategy
+							'strategy'=> $strategy,
+                                                        'username'=>$username,
+														'paper_bet'=>$paper_bet
 						);
 		
+		//echo $paper_bet;
+		//die;		
 		
 		$this->db->insert('z_bets', $insert_fields);
 
@@ -197,7 +214,7 @@
 	*
 	* @return void
 	*/
-	function update_bet($id_bet,$event_name,$event_date,$stake,$profit,$loss,$country_name,$event_type,$bet_type,$odds,$market_type,$comment,$strategy) 
+	function update_bet($id_bet,$event_name,$event_date,$stake,$profit,$loss,$country_name,$event_type,$bet_type,$odds,$market_type,$market_select,$comment,$strategy,$username,$paper_bet) 
         {
 		$update_fields = array(
 							'event_name'   => $event_name,
@@ -210,8 +227,11 @@
 							'bet_type'     => $bet_type,
 							'odds'         => $odds,
 							'market_type'  => $market_type,
+                            'market_select'=> $market_select,
 							'comment'      => $comment,
-							'strategy'     => $strategy
+							'strategy'     => $strategy,
+                            'username'     => $username,
+							'paper_bet'    => $paper_bet
 						);
 
 		$this->db->update('z_bets', $update_fields, array('ID_bet' => $id_bet));

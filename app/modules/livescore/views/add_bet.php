@@ -20,10 +20,22 @@ function MarketsSelects()
 	$("#marketsDiv").html(data);
 	});
 }
+
+function MarketsSelectsEdit() 
+{	
+	$('#disable_selects').empty().hide();	
+	var marketsID = $("#market_selects").val();
+	var queryString = "/admincp2/livescore/view_markets_selects/"+ marketsID;
+	
+	$.get(queryString, function(data) {
+	$("#marketsDiv").html(data);
+	});
+}
 </script>
 
 <h1><?=$form_title;?></h1>
 	<form class="form-horizontal" name="add_bet_form" action="<?=$form_action;?>" method="post">
+    <input type="hidden" name="username" value="<?=$username?>" />
     <input type="hidden" name="ID_bet" value="<? if ($action == 'new') {  } else { echo $ID_bet;} ?>" />
             <div class="row-fluid">
             
@@ -128,7 +140,12 @@ function MarketsSelects()
 								echo form_dropdown('market_type',$market,'','id="market_selects" onChange="MarketsSelects();"');
 								echo "<div id='marketsDiv'></div>";
 								} 
-								else { echo form_dropdown('market_type',$market,$market_id);} ?>
+								else { echo form_dropdown('market_type',$market,$market_id,'id="market_selects" onChange="MarketsSelectsEdit();"');
+									   echo "<div id='marketsDiv'></div>";
+                                       echo form_dropdown('markets_selects',$market_select,$market_select_id,'id="disable_selects"');
+									   //print_r ($market_select);
+									   //die;
+                                                                } ?>
                             </div>
                         </div>
                         
@@ -160,15 +177,25 @@ function MarketsSelects()
             <hr>
             
             <div class="row">
-            	<div class="span4 offset1">
-		           <p class="muted">* All fields must be completed for a good statistics results
-                </div>
+            	   <div class="span4 offset1">
+		              <p class="muted">* All fields must be completed for a good statistics results
+                   </div>
 
+                  <div class="span2 pull-right">
                  <? if ($action == 'new') { ?>
                                     <input type="submit" class="btn btn-success btn-large pull-right" name="add" value="Add New Bet" />
                                     <? } else { ?>
                                     <input type="submit" class="btn btn-info btn-large pull-right" name="edit" value="Edit Bet" />
                                     <? } ?>
+                  </div>
+           
+                  <div class="checkbox span1 pull-right" style="padding-top:15px;">
+                    <label>
+                    <? if ($action == 'new') { echo '<input type="checkbox" name="paper_bet" value="1">'; } 
+					else { echo form_checkbox('paper_bet','1',$paper_bet); } ?>Paper Bet
+                    </label>
+                  </div>
+                  
             </div>
                 
 			</form>

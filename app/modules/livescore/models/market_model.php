@@ -121,7 +121,7 @@
 	* @return array 
 	*/
         
-	function get_markets_selects($id = "4") 
+	function get_markets_selects($id='4') 
         {
         $market = array();								
 		$this->db->where('markets_id',$id); // doar de test am pus id 4
@@ -132,9 +132,9 @@
                 foreach ($result->result_array() as $market) {
                     
                     $markets_selects[] = array(
-                    'id' => $market['id'],
+                    'market_select_id' => $market['market_select_id'],
 					'markets_id' => $market['markets_id'],
-					'name' => $market['name'],
+					'market_select_name' => $market['market_select_name'],
 				     );
 		}
 	
@@ -144,7 +144,6 @@
 	
 	/**
 	* Get Markets Selects
-	*
 	* 
 	* @return array 
 	*/

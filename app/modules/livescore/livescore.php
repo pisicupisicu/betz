@@ -37,7 +37,8 @@ class Livescore extends Module {
             $this->CI->admin_navigation->child_link('livescore',60,'Markets Types List',site_url('admincp2/livescore/list_markets')); 
             $this->CI->admin_navigation->child_link('livescore',70,'Events Types List',site_url('admincp2/livescore/list_leagues')); 
             $this->CI->admin_navigation->child_link('livescore',80,'Methods List',site_url('admincp2/livescore/list_methods'));
-            $this->CI->admin_navigation->child_link('livescore',90,'Parse Matches',site_url('admincp/livescore/parse_matches'));
+            $this->CI->admin_navigation->child_link('livescore',90,'Parse Matches',site_url('admincp3/livescore/parse_matches'));
+            $this->CI->admin_navigation->child_link('livescore',100,'Stats',site_url('admincp4/livescore/profit_loss_stats'));
             
 	}
 		

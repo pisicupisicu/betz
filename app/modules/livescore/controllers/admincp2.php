@@ -415,11 +415,16 @@ class Admincp2 extends Admincp_Controller {
 
 		$columns = array(
 						array(
-							'name' => 'ID #',
+							'name' => 'ID',
 							'type' => 'id',
-							'width' => '5%',
-							'filter' => 'id',
+							'width' => '1%',
                                                     ),
+						array(
+							'name' => 'PB',
+							'width' => '2%',
+                            'type' => 'text',
+							'sort_column' => 'paper_bet',
+							),
 
 						array(
 							'name' => 'Event Name',
@@ -436,7 +441,7 @@ class Admincp2 extends Admincp_Controller {
                                                 array(
 							'name' => 'Event',
                                                         'type' => 'text',
-							'width' => '10%',
+							'width' => '8%',
 							),
 						array(
 							'name' => 'Stake',
@@ -456,22 +461,34 @@ class Admincp2 extends Admincp_Controller {
 							),
 						array(
 							'name' => 'Odds',
-							'width' => '7%',
+							'width' => '4%',
                                                         'type' => 'text',
 														'filter' => 'odds',
 														'sort_column' => 'odds',
                                                     ),
                                                 array(
-							'name' => 'Market Type',
-							'width' => '13%',
+							'name' => 'Mkt Type',
+							'width' => '11%',
+                                                        'type' => 'text',
+						),
+                                                array(
+							'name' => 'Mkt Select',
+							'width' => '5%',
                                                         'type' => 'text',
 						),
 						array(
 							'name' => 'Strategy Name',
-							'width' => '20%',
+							'width' => '19%',
                                                         'type' => 'text',
 														'filter' => 'strategy_name',
 						),
+                    array(
+							'name' => 'User',
+							'width' => '5%',
+                                                        'type' => 'text',
+														'filter' => 'username',
+														'sort_column' => 'username',
+                                                    ),
                                                 array(
 							'name' => '',
 							'width' => '5%',
@@ -484,17 +501,16 @@ class Admincp2 extends Admincp_Controller {
                 $filters['limit'] = 30;
 
                 if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
-				
+                
 		$this->dataset->columns($columns);
 		$this->dataset->datasource('bet_model','get_bets',$filters);
 		$this->dataset->base_url(site_url('admincp2/livescore/list_bets'));
 		$this->dataset->rows_per_page($filters['limit']);
-		
-        
+
 		// total rows
                 $this->load->model('bet_model');
 		$total_rows = $this->bet_model->get_num_rows_bets($filters);
-        //die (print($total_rows));
+
 		$this->dataset->total_rows($total_rows);
 		
 		// initialize the dataset
@@ -516,7 +532,8 @@ class Admincp2 extends Admincp_Controller {
             $this->load->model('bet_model');
 			$this->load->model('method_model');
 			$this->load->model('league_model');
-			$this->load->model('market_model');
+			$this->load->model('user_model');
+                        $this->load->model('market_model');
 			$this->load->model('country_model');
 
             $countries = array();
@@ -537,19 +554,24 @@ class Admincp2 extends Admincp_Controller {
             }
             
             $markets = array();
-	    	$markets = $this->market_model->get_markets(); 
+	    $markets = $this->market_model->get_markets(); 
+            array_unshift($markets,array('ID_market' => 0,'market_name'=>'Select Markets'));            
             foreach($markets as $val) {
                 $market[$val['ID_market']] = $val['market_name'];
             }
-			
+		
 			$markets_selects = array();
 	    	$markets_selects = $this->market_model->get_markets_selects();
 			foreach($markets_selects as $val) {
-                $market_select[$val['id']] = $val['name'];
+                $market_select[$val['market_select_id']] = $val['market_select_name'];
             }
             
+            $username=$this->user_model->get('id');
+            //$username = $this->user_model->get('username');
+            
             $data = array(      
-                   	'strategy' => $strategy,
+                   	'username' => $username,
+                'strategy' => $strategy,
  					'country_name' => $countries,
                     'event' => $event,
 					'market_select' => $market_select,
@@ -581,11 +603,11 @@ class Admincp2 extends Admincp_Controller {
 		$bet_type = $this->input->post('bet_type');
 		$odds = $this->input->post('odds');
 		$market_type = $this->input->post('market_type');
+        $market_select = $this->input->post('markets_selects') ? $this->input->post('markets_selects') : null;
 		$comment = $this->input->post('comment');
 		$strategy = $this->input->post('strategy');
-		
-		//echo $event_name."<br>".$event_date."<br>".$stake."<br>".$profit."<br>".$loss."<br>".$country_name."<br>".$event_type."<br>".$bet_type."<br>".$odds."<br>".$market_type."<br>".$comment."<br>".$strategy;
-		//die;
+		$username = $this->input->post('username');
+		$paper_bet = $this->input->post('paper_bet');		
 		
 		if ($action == 'new') {
 			$bet_id = $this->bet_model->new_bet(
@@ -599,15 +621,18 @@ class Admincp2 extends Admincp_Controller {
 						$bet_type,
 						$odds,
 						$market_type,
+                                                $market_select,
 						$comment,
-						$strategy
+						$strategy,
+                                                $username,
+												$paper_bet
 						);
 												
 			$this->notices->SetNotice('Bet added successfully.');
 		}
 		else {
 			$bet_id = $this->bet_model->update_bet(
-                        $id_bet,
+                                                $id_bet,
 						$event_name,
 						$event_date,
 						$stake,
@@ -618,8 +643,11 @@ class Admincp2 extends Admincp_Controller {
 						$bet_type,
 						$odds,
 						$market_type,
+                                                $market_select,
 						$comment,
-						$strategy													
+						$strategy,
+                                                $username,
+												$paper_bet
 						);
 
 			$this->notices->SetNotice('Bet edited successfully.');
@@ -646,7 +674,8 @@ class Admincp2 extends Admincp_Controller {
 		$this->load->model('league_model');
 		$this->load->model('market_model');
 		$this->load->model('country_model');
-
+                $this->load->model('user_model');
+                
             $countries = array();
             $countries = array_merge(array('Select country'),$countries);
 	    	$countries = $this->country_model->get_name_countries();
@@ -669,10 +698,20 @@ class Admincp2 extends Admincp_Controller {
             foreach($markets as $val) {
                 $market[$val['ID_market']] = $val['market_name'];
             }
+            
+			
+			$bet = $this->bet_model->get_bet($id);
 		
-		$bet = $this->bet_model->get_bet($id);
-		
+		 	$markets_selects = array();
+			$bet['market_select_name'] = array();
+	    	$markets_selects = $this->market_model->get_markets_selects($bet['market_type']); 
+            foreach($markets_selects as $val) {
+                $market_select[$val['market_select_id']] = $val['market_select_name'];
+            }
+		$username = $this->user_model->get('username');
+
 		$data = array(
+                                        'username' => $bet['username'],
 					'ID_bet' => $bet['ID_bet'],
 					'event_name' => $bet['event_name'],
 					'event_date' => $bet['event_date'],
@@ -686,15 +725,18 @@ class Admincp2 extends Admincp_Controller {
 					'odds' => $bet['odds'],
 					'market_id' => $bet['market_type'],
 					'market' => $market,
+                    'market_select_id' => $bet['market_select'],
+                    'market_select' => $market_select,
 					'comment' => $bet['comment'],
 					'strategy_id' => $bet['strategy'],
+					'paper_bet' => $bet['paper_bet'],
 					'strategy' => $strategy,
 					'form' => $bet,
 					'form_title' => 'Edit Bet',
 					'form_action' => site_url('admincp2/livescore/post_bet/edit/'.$bet['ID_bet']),
                     'action' => 'edit',
 					);
-		//var_dump ($data);
+		//print_r ($market_select);
         //die;		
 		$this->load->view('add_bet',$data);
 	} 
@@ -1157,12 +1199,13 @@ class Admincp2 extends Admincp_Controller {
 		$markets_selects = array();
 	    $markets_selects = $this->market_model->get_markets_selects($id);
 		foreach($markets_selects as $val) {
-                $market_select[$val['id']] = $val['name'];
+                $market_select[$val['market_select_id']] = $val['market_select_name'];
             }
-
-		//print_r ($markets_selects[$id]); 
-		echo form_dropdown('markets_selects',$market_select);
-		 
+                        
+                if(empty($market_select)) $market_select = array(0=>'None');              
+		echo form_dropdown('markets_selects',$market_select); 
+		
+		
 	}	 
         
         /**
@@ -1269,6 +1312,5 @@ class Admincp2 extends Admincp_Controller {
 	}
         
  //********************************** END Market LIST *******************************// 
-    
-        
+       
 }
