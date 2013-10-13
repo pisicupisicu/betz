@@ -3917,6 +3917,18 @@ input[type="submit"].btn.btn-mini {
   border-color: #eed3d7;
 }
 
+.alert-loss {
+  color: #FFFFFF;
+  background-color: #EB5F5F;
+  border-color: #eed3d7;
+}
+
+.alert-protif {
+  color: #FFFFFF;
+  background-color: #82C565;
+  border-color: #d6e9c6;
+}
+
 .alert-danger h4,
 .alert-error h4 {
   color: #b94a48;

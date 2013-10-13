@@ -413,12 +413,14 @@ class Admincp2 extends Admincp_Controller {
 		$this->load->library('dataset');
 		$this->admin_navigation->module_link('Add New Bet',site_url('admincp2/livescore/add_bet'));
 
+                
+                
 		$columns = array(
 						array(
 							'name' => 'ID',
 							'type' => 'id',
 							'width' => '1%',
-                                                    ),
+                           ),
 						array(
 							'name' => 'PB',
 							'width' => '2%',
@@ -428,74 +430,72 @@ class Admincp2 extends Admincp_Controller {
 
 						array(
 							'name' => 'Event Name',
-                                                        'type' => 'text',
-							'width' => '10%',
-														'filter' => 'event_name',
+                            'type' => 'text',
+							'width' => '17%',
+							'filter' => 'event_name',
 							),
-                                                array(
+                       array(
 							'name' => 'Country',
-                                                        'type' => 'text',
+                            'type' => 'text',
 							'width' => '10%',
-														'filter' => 'country_name',
+							'filter' => 'country_name',
 							),
-                                                array(
+                        array(
 							'name' => 'Event',
-                                                        'type' => 'text',
+                            'type' => 'text',
 							'width' => '8%',
 							),
 						array(
 							'name' => 'Stake',
-                                                        'type' => 'text',
+                            'type' => 'text',
 							'width' => '3%',
 							),
 						array(
 							'name' => 'Profit/Loss',
-							'width' => '10%',
+							'width' => '5%',
                             'type' => 'text',
-							),
-						array(
-							'name' => 'Bet Type',
-							'width' => '7%',
-                            'type' => 'text',
-							'sort_column' => 'bet_type',
 							),
 						array(
 							'name' => 'Odds',
 							'width' => '4%',
-                                                        'type' => 'text',
-														'filter' => 'odds',
-														'sort_column' => 'odds',
-                                                    ),
-                                                array(
+                            'type' => 'text',
+							'filter' => 'odds',
+							'sort_column' => 'odds',
+                        ),
+                        array(
 							'name' => 'Mkt Type',
 							'width' => '11%',
-                                                        'type' => 'text',
+                            'type' => 'text',
 						),
-                                                array(
+                        array(
 							'name' => 'Mkt Select',
 							'width' => '5%',
-                                                        'type' => 'text',
+                            'type' => 'text',
 						),
 						array(
 							'name' => 'Strategy Name',
-							'width' => '19%',
-                                                        'type' => 'text',
-														'filter' => 'strategy_name',
+							'width' => '24%',
+                            'type' => 'text',
+							'filter' => 'strategy_name',
 						),
-                    array(
+            );
+        if ($this->user_model->logged_in() and $this->user_model->is_admin()) {
+            $columns[] = array(
 							'name' => 'User',
 							'width' => '5%',
-                                                        'type' => 'text',
-														'filter' => 'username',
-														'sort_column' => 'username',
-                                                    ),
-                                                array(
+                            'type' => 'text',
+							'filter' => 'username',
+							'sort_column' => 'username',
+                           );
+        }
+          $columns[] =             
+                        array(
 							'name' => '',
 							'width' => '5%',
-                                                        'type' => 'text',
-						)
+                            'type' => 'text',
+						);
 						
-					);
+					
                 
                 $filters = array();    
                 $filters['limit'] = 30;

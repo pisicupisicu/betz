@@ -457,7 +457,7 @@ class Admincp5 extends Admincp_Controller
 
                 if(!$count) {
                     //delete duplicate team with higher team_id
-                    $this->team_model->delete_team($teamz[1]['team_id']);
+                    //$this->team_model->delete_team($teamz[1]['team_id']);
                 }
             }
         } else {

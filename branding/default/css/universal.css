@@ -387,7 +387,7 @@ a:hover {
 
 	-webkit-border-radius: 6px;
 
-	z-index: 999;
+	z-index: 99999;
 
 	padding: 6px 6px 0px 6px;
 
@@ -2242,3 +2242,5 @@ div.shipping_address {
 }
 
 .pane { margin-bottom:30px; padding-bottom:10px; border-bottom:solid 1px #CCC; }
+
+.oddformat {margin:0 !important; padding: 5px !important; text-align: center; font-weight: bold;}

@@ -11,7 +11,7 @@
         <link href="<?=branded_include('css/bootstrap-datetimepicker.min.css');?>" rel="stylesheet" type="text/css" media="screen" />
 	
         <script type="text/javascript" src="<?=branded_include('js/jquery-1.9.1.min.js');?>"></script>
-	<script type="text/javascript" src="<?=branded_include('js/jquery.simplemodal.1.4.min.js');?>"></script>
+	<!--<script type="text/javascript" src="<?=branded_include('js/jquery.simplemodal.1.4.min.js');?>"></script>-->
         <script type="text/javascript" src="<?=branded_include('js/bootstrap-datetimepicker.min.js');?>"></script>
         <script type="text/javascript" src="<?=branded_include('js/bootstrap.js');?>"></script>
 

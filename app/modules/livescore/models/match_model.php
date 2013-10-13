@@ -35,15 +35,24 @@
         $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';  
         if(isset($filters['sort']))  $this->db->order_by($filters['sort'], $order_dir);
                                       
-        if(isset($filters['country_name'])) $this->db->like('country_name',$filters['country_name']);
-        if(isset($filters['competition_name'])) $this->db->like('z_competitions.name',$filters['competition_name']);
-        if(isset($filters['team1'])) $this->db->like('z_teams.name',$filters['team1']);
-        if(isset($filters['team2'])) $this->db->like('z_teams.name',$filters['team2']);
+        if(isset($filters['country_name']) && $filters['country_name']) $this->db->like('country_name',$filters['country_name']);
+        if(isset($filters['competition_name']) && $filters['competition_name']) $this->db->like('z_competitions.name',$filters['competition_name']);
+        if(isset($filters['team1']) && $filters['team1']) $this->db->like('z_teams.name',$filters['team1']);
+        if(isset($filters['team2']) && $filters['team2']) $this->db->like('z_teams.name',$filters['team2']);
+        if(isset($filters['score']) && $filters['score']) $this->db->like('score',$filters['score']);
 
         if (isset($filters['limit'])) {
                     $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
                     $this->db->limit($filters['limit'], $offset);
             }
+
+        if(isset($filters['team1']) && $filters['team1']) {
+            $this->db->join('z_teams','z_matches.team1 = z_teams.team_id','inner');
+        }
+
+        if(isset($filters['team2']) && $filters['team2']) {
+            $this->db->join('z_teams','z_matches.team2 = z_teams.team_id','inner');
+        }    
 
         $this->db->join('z_competitions','z_matches.competition_id = z_competitions.competition_id','inner');    
         $this->db->join('z_countries','z_competitions.country_id = z_countries.ID','left');
@@ -68,17 +77,27 @@
 
 	}
 
-    function get_num_rows($filters)
+    function get_num_rows($filters = array())
     {
-        if(isset($filters['country_name'])) $this->db->like('country_name',$filters['country_name']);
-        if(isset($filters['competition_name'])) $this->db->like('z_competitions.name',$filters['competition_name']);
-        if(isset($filters['team1'])) $this->db->like('z_teams.name',$filters['team1']);
-        if(isset($filters['team2'])) $this->db->like('z_teams.name',$filters['team2']);
-        if(isset($filters['parsed']))   $this->db->where('parsed',$filters['parsed']);
 
-        $this->db->join('z_competitions','z_matches.competition_id = z_competitions.competition_id','inner');    
+        if(isset($filters['country_name']) && $filters['country_name']) $this->db->like('country_name',$filters['country_name']);
+        if(isset($filters['competition_name']) && $filters['competition_name']) $this->db->like('z_competitions.name',$filters['competition_name']);
+        if(isset($filters['team1']) && $filters['team1']) $this->db->like('z_teams.name',$filters['team1']);
+        if(isset($filters['team2']) && $filters['team2']) $this->db->like('z_teams.name',$filters['team2']);
+        if(isset($filters['score']) && $filters['score']) $this->db->like('score',$filters['score']);
+        if(isset($filters['parsed']))   $this->db->where('parsed',$filters['parsed']);                        
+
+        if(isset($filters['team1']) && $filters['team1']) {
+            $this->db->join('z_teams','z_matches.team1 = z_teams.team_id','inner');
+        }
+
+        if(isset($filters['team2']) && $filters['team2']) {
+            $this->db->join('z_teams','z_matches.team2 = z_teams.team_id','inner');
+        }
+
+        $this->db->join('z_competitions','z_matches.competition_id = z_competitions.competition_id','inner'); 
         $this->db->join('z_countries','z_competitions.country_id = z_countries.ID','left');
-
+        
         $result = $this->db->get('z_matches');
 
         return $result->num_rows();        
@@ -208,7 +227,41 @@
 
         $this->db->delete('z_matches',array('id' => $id));
         return TRUE;
-    }                
+    }
+
+    function get_no_of_matches_by_team_id($team_id)
+    {
+        $this->db->or_where('team1',$team_id);
+        $this->db->or_where('team2',$team_id);
+        
+        $result = $this->db->get('z_matches');
+
+        return $result->num_rows();
+    }
+
+    function fix_score () 
+    {
+        $row = array();                                
+        $result = $this->db->get('z_matches');
+                
+        $this->load->model('match_model');
+                
+        foreach ($result->result_array() as $linie) {                        
+            $score = $linie['score'];
+            $aux = explode('-',$score);
+            $score = str_replace(' ','',$aux[0]).'-'.str_replace(' ','',$aux[1]);
+
+            $data_match = array(                           
+                           'score' =>  $score,                                                                             
+                        );
+                        
+            $this->update_match ($data_match,$linie['id']);
+                                                                
+        }
+            
+       return $row;                                                     
+
+    }                       
 
 }
 

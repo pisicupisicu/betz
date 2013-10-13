@@ -203,9 +203,6 @@ function MarketsSelectsEdit()
 	
 
 	<!-- JavaScript -->
-
-    <script src="js/bootstrap-datetimepicker.min.js"></script>
-	<script src="js/bootstrap.js"></script>
      <script type="text/javascript">
              $('#fail').on('click', function(e){
 

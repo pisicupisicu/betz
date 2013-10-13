@@ -16,15 +16,15 @@ if (!empty($this->dataset->data)) {
                         <td><?=$row['event_type'];?></td>
                         <td><?=$row['stake'];?></td>
                         <td style="padding: 0 !important;">
-                                    <div class="btn-success text-center"><?=$row['profit'];?></div>
-                                    <div class="btn-danger text-center"><?=$row['loss'];?></div>
+                            <? if(empty($row['profit'])){ echo'<div class="alert alert-loss text-center oddformat">'.$row['loss'].'</div>';}
+                               else { echo'<div class="alert alert-protif text-center oddformat">'.$row['profit'].'</div>';} ?>                               
                         </td>
-                        <td><?=$row['bet_type'];?></td>
-                        <td><?=$row['odds'];?></td>
+                        <!--<td><?=$row['bet_type'];?></td>-->
+                        <td><div <? if($row['bet_type']=='Back'){echo 'class="alert alert-info oddformat"';}else{echo 'class="alert alert-danger oddformat"';}?>><?=$row['odds'];?></div></td>
                         <td><?=$row['market_type'];?></td>
                         <td><?=$row['market_select'];?></td>
                         <td><?=$row['strategy'];?></td>  
-                        <td><?=$row['username'];?></td>  
+                        <?if ($this->user_model->logged_in() and !$this->user_model->is_admin()){echo "&nbsp;";}else{echo "<td>".$row['username']."</td>";}?> 
 			<td class="options" style="text-align:right; padding:0 5px 0 0;"><a href="<?=site_url('admincp2/livescore/edit_bet/' . $row['ID_bet']);?> " class="button action_button">edit</a></td>
 		</tr>
 	<?

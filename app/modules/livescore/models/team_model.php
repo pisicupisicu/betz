@@ -32,12 +32,12 @@
 
 	function get_teams ($filters = array()) 
     {
-
+        $this->load->model('match_model');
 		$row = array();
-                
-        $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';  
-        if(isset($filters['sort']))  $this->db->order_by($filters['sort'], $order_dir);
+
+        $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';                        
                                       
+        if(isset($filters['country_id'])) $this->db->where('country_id',$filters['country_id']);
         if(isset($filters['country_name'])) $this->db->like('country_name',$filters['country_name']);
         if (isset($filters['limit'])) {
                     $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
@@ -53,17 +53,198 @@
         
         $this->db->join('z_countries','z_teams.country_id = z_countries.ID','left');
 
+        $this->db->order_by('country_name,name',$order_dir);
+       
+        // if(isset($filters['sort']))  $this->db->order_by($filters['sort'], $order_dir);        
+
 		$result = $this->db->get('z_teams');
 				
 		foreach ($result->result_array() as $linie) {
-
+            $linie['no_of_matches'] = $this->match_model->get_no_of_matches_by_team_id($linie['team_id']);
 			$row[] = $linie;
 
 		}
                 
 		return $row;														
 
-	}        
+	}
+
+    function get_duplicate_teams_helper($filters = array())
+    {  
+        $row = array();
+
+        $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';          
+                                      
+        if(isset($filters['country_id'])) $this->db->where('country_id',$filters['country_id']);
+        if(isset($filters['country_name'])) $this->db->like('country_name',$filters['country_name']);
+
+        if (isset($filters['limit'])) {
+                    $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
+                    $this->db->limit($filters['limit'], $offset);
+            }
+
+        if(isset($filters['equal'])) {
+            if(isset($filters['name'])) $this->db->where('name',$filters['name']);
+        } else {
+            if(isset($filters['name'])) $this->db->like('name',$filters['name']);
+        }
+
+        $this->db->select('*,COUNT(*) c');
+        $this->db->group_by('country_id,name');
+        $this->db->having('c > 1');        
+
+        $this->db->join('z_countries','z_teams.country_id = z_countries.ID','left');
+
+        $this->db->order_by('country_name,name',$order_dir);
+        //if(isset($filters['sort']))  $this->db->order_by($filters['sort'], $order_dir);
+
+        $result = $this->db->get('z_teams');
+
+        foreach ($result->result_array() as $linie) {            
+            $row[] = $linie;
+
+        }
+
+        return $row;
+    }
+
+    function get_duplicate_teams_helper_num_rows($filters = array())
+    {
+        return count($this->get_duplicate_teams_helper($filters));
+    }
+
+    function get_duplicate_teams($filters = array())
+    {     
+        $this->load->model('match_model');
+        $row = $duplicate_teams = array();
+
+        $duplicate_teams = $this->get_duplicate_teams_helper($filters);
+
+        foreach($duplicate_teams as $team) {
+            $this->db->where('country_id',$team['country_id']);
+            $this->db->where('name',$team['name']);
+            $this->db->join('z_countries','z_teams.country_id = z_countries.ID','left');
+            $result = $this->db->get('z_teams');
+            foreach ($result->result_array() as $linie) {
+                $linie['no_of_matches'] = $this->match_model->get_no_of_matches_by_team_id($linie['team_id']);
+                $row[] = $linie;
+            }
+        }
+
+        return $row;
+    }
+
+    function get_similar_teams($filters = array(),$count = 0)
+    {     
+        $this->load->model('match_model');
+        $row = $teams = array();
+
+        $filters_team = array_merge($filters);
+        unset($filters_team['offset']);
+        unset($filters_team['limit']);        
+        $teams = $this->get_teams($filters_team);
+
+        foreach($teams as $team) {
+            $this->db->where('country_id',$team['country_id']);
+            $this->db->like('name',$team['name']);
+            $this->db->join('z_countries','z_teams.country_id = z_countries.ID','left');
+            $result = $this->db->get('z_teams');
+            
+            if($result->num_rows > 1) {
+               foreach ($result->result_array() as $linie) {
+                    $linie['no_of_matches'] = $this->match_model->get_no_of_matches_by_team_id($linie['team_id']);
+                    $row[] = $linie;
+                } 
+            }
+            
+        }       
+
+        if(!$count) {
+            return array_slice($row,isset($filters['offset']) ? (int)$filters['offset'] : 0,isset($filters['limit']) ? (int)$filters['limit'] : 20);
+        } else {
+            return $row;
+        }
+        
+    }
+
+    function get_num_rowz_similar($filters = array())
+    {       
+        return count($this->get_similar_teams($filters,1));        
+    }
+
+    function fix_duplicate_teams($filters = array())
+    {
+        $this->load->model('match_model');
+        $duplicate_teams = array();
+
+        $duplicate_teams = $this->get_duplicate_teams_helper($filters);
+        $deleted = 0;
+
+        foreach($duplicate_teams as $team) {
+            $row = array();
+            $no_of_matches = 0;
+            $this->db->where('country_id',$team['country_id']);
+            $this->db->where('name',$team['name']);
+            $this->db->join('z_countries','z_teams.country_id = z_countries.ID','left');
+            $result = $this->db->get('z_teams');
+            foreach($result->result_array() as $linie) {
+                $linie['no_of_matches'] = $this->match_model->get_no_of_matches_by_team_id($linie['team_id']);
+                if ($linie['no_of_matches']) {
+                    $no_of_matches++;
+                }
+                $row[] = $linie;
+            }
+
+            if($no_of_matches) {
+                foreach($row as $linie) {
+                    if(!$linie['no_of_matches']) {
+                       $this->delete_team($linie['team_id']);
+                       $deleted++; 
+                    }
+                }
+            }
+
+        }
+
+        return $deleted;
+    }
+
+    function get_num_rowz($filters = array())
+    {       
+                
+        $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';  
+        if(isset($filters['sort']))  $this->db->order_by($filters['sort'], $order_dir);
+                                      
+        if(isset($filters['country_id'])) $this->db->where('country_id',$filters['country_id']);
+        if(isset($filters['country_name'])) $this->db->like('country_name',$filters['country_name']);
+
+        if (isset($filters['limit'])) {
+                    $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
+                    $this->db->limit($filters['limit'], $offset);
+            }
+
+        if(isset($filters['equal'])) {
+            if(isset($filters['name'])) $this->db->where('name',$filters['name']);
+        } else {
+            if(isset($filters['name'])) $this->db->like('name',$filters['name']);
+        }    
+
+        
+        $this->db->join('z_countries','z_teams.country_id = z_countries.ID','left');
+
+        if(isset($filters['country_id'])) {
+            $this->db->order_by('name','asc');
+        }
+
+        $result = $this->db->get('z_teams');
+
+        return $result->num_rows();        
+    }
+
+    function get_num_rowz_duplicate($filters = array())
+    {       
+        return count($this->get_duplicate_teams());        
+    }        
 
     /**
     * Get Team
@@ -165,25 +346,7 @@
 
         return $result->num_rows();        
     }
-
-    function get_duplicates()
-    {
-        $row = array(); 
-
-        $this->db->select('*,COUNT(*) c');
-        $this->db->group_by('country_id,name');
-        $this->db->having('c > 1');
-        $this->db->order_by('name','asc');
-
-        $result = $this->db->get('z_teams');
-
-        foreach ($result->result_array() as $line) {
-                $row[] = $line;
-        }
-
-        return $row;
-    }
-
+    
     function get_team_by_country_and_name($filters)
     {
         $row = array();
