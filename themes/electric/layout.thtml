@@ -5,6 +5,7 @@
 <base href="{url}" />
 <title>{block name="title"}{setting name="site_name"}{/block}</title>
 <link href='http://fonts.googleapis.com/css?family=Podkova' rel='stylesheet' type='text/css'>
+<link rel="shortcut icon" type="image/x-icon" href="branding/default/images/favicon.ico" />
 <link href="{theme_url path="css/universal.css"}" rel="stylesheet" type="text/css" media="screen" />
 <script type="text/javascript" src="{url path="themes/_common/jquery-1.4.2.min.js"}"></script>
 <script type="text/javascript" src="{theme_url path="js/universal.js"}"></script>

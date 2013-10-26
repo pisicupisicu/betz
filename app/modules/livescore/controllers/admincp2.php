@@ -411,10 +411,10 @@ class Admincp2 extends Admincp_Controller {
         function list_bets()
 	{
 		$this->load->library('dataset');
-		$this->admin_navigation->module_link('Add New Bet',site_url('admincp2/livescore/add_bet'));
 
-                
-                
+        $this->admin_navigation->module_link('Import Bets',site_url('admincp4/livescore/import_csv'));
+		$this->admin_navigation->module_link('Add New Bet',site_url('admincp2/livescore/add_bet'));
+        
 		$columns = array(
 						array(
 							'name' => 'ID',
@@ -537,8 +537,8 @@ class Admincp2 extends Admincp_Controller {
 			$this->load->model('country_model');
 
             $countries = array();
-            $countries = array_merge(array('Select country'),$countries);
-	    	$countries = $this->country_model->get_name_countries();
+            $params['dropdown'] = 1;
+	    	$countries = $this->country_model->get_countries($params);
 
             
 	    	$methods = array();
@@ -677,8 +677,8 @@ class Admincp2 extends Admincp_Controller {
                 $this->load->model('user_model');
                 
             $countries = array();
-            $countries = array_merge(array('Select country'),$countries);
-	    	$countries = $this->country_model->get_name_countries();
+            $params['dropdown'] = 1;
+	    	$countries = $this->country_model->get_countries($params);
 
             
 	    	$methods = array();
@@ -959,7 +959,174 @@ class Admincp2 extends Admincp_Controller {
 		$this->load->view('add_method',$data);
 	}
                 
- //********************************** END Methods LIST *******************************//       
+ //********************************** END Methods LIST *******************************//
+ 
+ //********************************** Countries LIST *******************************//           
+                
+        function list_countries()
+	{
+				
+		$this->load->model('country_model');
+		
+		$this->load->library('dataset');
+		$this->admin_navigation->module_link('Add New Country',site_url('admincp2/livescore/add_country/new'));
+                
+                
+                $columns = array(
+						array(
+							'name' => 'ID #',
+							'type' => 'id',
+							'width' => '5%',
+                                                    ),
+
+						array(
+							'name' => 'Country Name',
+                            'type' => 'text',
+							'width' => '90%',
+                            'filter' => 'country_name',
+							),
+
+						 array(
+							'name' => '',
+							'width' => '5%',
+                            'type' => 'text',
+						),
+						
+					);
+                
+       $filters = array();    
+       $filters['limit'] = 30;
+
+       if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
+                
+			
+		$this->dataset->columns($columns);
+		$this->dataset->datasource('country_model','get_countries_list',$filters);
+		$this->dataset->base_url(site_url('admincp2/livescore/list_countries'));
+		$this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+		//$total_rows = $this->country_model->get_num_rows($filters); 
+		//$this->dataset->total_rows($total_rows);
+                
+		// initialize the dataset
+		$this->dataset->initialize();
+
+		// add actions
+		$this->dataset->action('Delete','admincp2/livescore/delete_country');
+		
+		$this->load->view('list_countries');  
+        }
+
+    /**
+	* Add New Country
+	*
+	*/
+	function add_country () {
+		
+		$this->load->model('livescore/country_model');
+		
+		$data = array(
+					'form_title' => 'Add New Country',
+					'form_action' => site_url('admincp2/livescore/post_country/new'),
+                    'action' => 'new'
+					);
+		
+		$this->load->view('add_country',$data);
+	}
+	
+		
+	/**
+	* Edit Country
+	*
+	* Show the country list, preloaded with variables
+	*/
+	function edit_country($id) {
+		$this->load->model('country_model');
+		
+		$country = $this->country_model->get_country($id);
+		
+		//print_r ($country);
+		//die;
+		
+		$data = array(
+					'ID_country' => $country['ID'],
+					'country_name' => $country['country_name'],
+					'form' => $country,
+					'form_title' => 'Edit Country',
+					'form_action' => site_url('admincp2/livescore/post_country/edit/'.$country['ID']),
+                    'action' => 'edit',
+					);
+		
+		$this->load->view('add_country',$data);
+	}
+	
+	
+	/**
+	* Handle New/Edit Country Post
+	*/
+	function post_country ($action, $id = false) {	
+		
+		$this->load->model('country_model');
+		
+		// content
+		$id_country = $this->input->post('ID_country');
+		$country_name = $this->input->post('country_name');
+
+ 		$insert_fields = array(
+					'country_name'=> $country_name,
+		);
+		
+		$update_fields = array(
+					'ID'=> $id_country,
+					'country_name'=> $country_name,
+		);
+
+		
+		$this->load->model('method_model');
+		
+		if ($action == 'new') {
+
+			$this->country_model->new_country($insert_fields);			
+			$this->notices->SetNotice('Country added successfully.');
+		}
+		else {
+			$this->country_model->update_country($update_fields,$id_country);
+			$this->notices->SetNotice('Country edited successfully.');
+		}
+		
+                
+		redirect('admincp2/livescore/list_countries');
+		
+		return TRUE;
+	}
+		        
+    /**
+	* Delete Country
+	*
+	*/
+         function delete_country ($contents,$return_url) 
+        {
+		
+		$this->load->library('asciihex');
+		$this->load->model('country_model');
+		
+		$contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+		$return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+		
+		foreach ($contents as $content) {
+                        $this->country_model->delete_country($content);
+		}
+		       			
+		$this->notices->SetNotice('Countries deleted successfully.');
+				
+		redirect($return_url);
+		
+		return TRUE;
+	
+	}
+ 
+ //********************************** END Countries LIST *******************************// 
         
 //********************************** LEAGUES LIST *******************************//         
     /**

@@ -3,7 +3,7 @@
 jQuery(document).ready(function(){
 		
     $('#country_select').on('change', function(event){
-   if(confirm('You will lose all your values!Are you sure?')) {
+        
        var countryID = $("#country_select").val();
         var competitionString = "/admincp4/livescore/view_competitions_selects/"+ countryID;
         var homeString = "/admincp4/livescore/view_hometeam_selects/"+ countryID;
@@ -20,7 +20,7 @@ jQuery(document).ready(function(){
         $.get(awayString, function(data) {
         $("#awaySelect").html(data);
         });
-   }                               
+                               
  });   
     
 
@@ -58,6 +58,11 @@ $('#submit-score').on('click', function(event){
 			}
 
  });   
+
+$(document).on("change","#link_user", function()
+{
+                $('#link_complete').val('http://www.livescore.com/soccer/'+$('#link_user').val());     
+}); 
 
 });    
     
@@ -132,19 +137,28 @@ $('#submit-score').on('click', function(event){
              </div>
             
              <div class="control-group">
+                            <label for="link_user" class="control-label">Link:</label>
+                            
+                            <div class="controls">
+                               <input type="text" style="width: 650px;" id="link_user" name="link_user" value="<? if ($action == 'new') {  } else { echo $link;} ?>" <? if ($action == 'new') { } else { echo 'disabled="disabled"'; }?> placeholder="england/premier-league/liverpool-vs-manchester-united/1-1474162/" />
+                            </div>
+             </div>
+            
+             <div class="control-group">
                             <label for="livescore" class="control-label">Livescore Link:</label>
                             
                             <div class="controls">
-                               <input type="text" style="width: 650px;" id="livescore" name="livescore" value="<? if ($action == 'new') {  } else { echo $livescore_link;} ?>" <? if ($action == 'new') { } else { echo 'disabled="disabled"'; }?> placeholder="http://www.livescore.com/soccer/england/premier-league/liverpool-vs-manchester-united/1-1474162/" />
+                               <input type="text" style="width: 650px;" id="link_complete" name="link_complete" class="disabledinput" value="<? if ($action == 'new') {  } else { echo $livescore_link;} ?>" <? if ($action == 'new') { } else { echo 'disabled="disabled"'; }?> placeholder="http://www.livescore.com/soccer/england/premier-league/liverpool-vs-manchester-united/1-1474162/" />
                             </div>
              </div>
 <? if ($action == 'new') {  } else {?>  
             <div class="control-group">
-                <div class="controls">
+               <hr /> 
                     <table class="table table-striped table-hover" align="center">
 
                         <thead>
-
+                            <th width="160px"></th>
+                            
                             <th width="10%"><h3>Minutes</h3></th>
 
                             <th width="30%" style="text-align:right;"><h3><?php echo $home['name']; ?></h3></th>
@@ -169,13 +183,13 @@ $('#submit-score').on('click', function(event){
 
                                     if($goal['team'] == 'home') {
 
-                                        echo '<td>'.$goal['min'].'\'</td><td style="text-align:right;">'.$goal['player'].$type.$assist.' <img src="'.site_url('/app/modules/livescore/assets/ball.png').'"/>'.'</td><td style="text-align:center;">'.$goal['score'].'</td>';
+                                        echo '<td><a class="btn btn-danger" href="/admincp4/livescore/delete_goal/add/'.$id_match.'/'.$goal['id'].'" >Delete</a></td><td>'.$goal['min'].'\'</td><td style="text-align:right;">'.$goal['player'].$type.$assist.' <img src="'.site_url('/app/modules/livescore/assets/ball.png').'"/>'.'</td><td style="text-align:center;">'.$goal['score'].'</td>';
 
                                         echo '<td>&nbsp;</td>';						
 
                                     } else {
 
-                                        echo '<td>'.$goal['min'].'\'</td><td>&nbsp;</td><td style="text-align:center;">'.$goal['score'].'</td>';
+                                        echo '<td><a class="btn btn-danger" href="/admincp4/livescore/delete_goal/add/'.$id_match.'/'.$goal['id'].'" >Delete</a></td><td>'.$goal['min'].'\'</td><td>&nbsp;</td><td style="text-align:center;">'.$goal['score'].'</td>';
 
                                         echo '<td>'.'<img src="'.site_url('/app/modules/livescore/assets/ball.png').'"/> '.$goal['player'].$type.$assist.'</td>';												
 
@@ -195,13 +209,13 @@ $('#submit-score').on('click', function(event){
 
                                     if($card['team'] == 'home') {
 
-                                        echo '<td>'.$card['min'].'\'</td><td style="text-align:right">'.$card['player'].' <img src="'.site_url('/app/modules/livescore/assets/'.$card['card_type'].'.png').'"/>'.'</td><td>&nbsp;</td>';
+                                        echo '<td><a class="btn btn-danger" href="/admincp4/livescore/delete_card/add/'.$id_match.'/'.$card['id'].'" >Delete</a></td><td>'.$card['min'].'\'</td><td style="text-align:right">'.$card['player'].' <img src="'.site_url('/app/modules/livescore/assets/'.$card['card_type'].'.png').'"/>'.'</td><td>&nbsp;</td>';
 
                                         echo '<td>&nbsp;</td>';						
 
                                     } else {
 
-                                        echo '<td>'.$card['min'].'\'</td><td>&nbsp;</td><td>&nbsp;</td>';
+                                        echo '<td><a class="btn btn-danger" href="/admincp4/livescore/delete_card/add/'.$id_match.'/'.$card['id'].'" >Delete</a></td><td>'.$card['min'].'\'</td><td>&nbsp;</td><td>&nbsp;</td>';
 
                                         echo '<td>'.'<img src="'.site_url('/app/modules/livescore/assets/'.$card['card_type'].'.png').'"/> '.$card['player'].'</td>';												
 
@@ -214,7 +228,7 @@ $('#submit-score').on('click', function(event){
                             ?>
 
                     </table>
-                </div>
+			   <hr /> 
              </div>
              
             <div class="control-group">
@@ -222,7 +236,7 @@ $('#submit-score').on('click', function(event){
                             
                             <div class="controls">
                                
-                                <button class="btn btn-warning" type="button" data-toggle="modal" data-target="#myModal">Add Event</button>
+                                <button class="btn btn-success" type="button" data-toggle="modal" data-target="#myModal">Add Event</button>
                                 
                                     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                                       <div class="modal-dialog">
@@ -305,7 +319,7 @@ $('#submit-score').on('click', function(event){
                                                  <label for="team_types" class="control-label">Team: </label>
                                                  <div class="controls">
                                                       <label style="text-align:left;">
-                                                        <input type="radio" name="team_types" value="home"> Home
+                                                        <input type="radio" name="team_types" value="home" checked=""> Home
                                                       </label>
                                                       <label style="text-align:left;">
                                                         <input type="radio" name="team_types" value="away"> Away
@@ -330,7 +344,7 @@ $('#submit-score').on('click', function(event){
                                            <? if ($action == 'new') { ?>
                                     <input type="submit" class="btn btn-success btn-large" name="add" value="Add Match" />
                                     <? } else { ?>  
-                                    <input type="submit" id="submit" class="btn btn-info btn-large" name="step" value="Add Score" />
+                                    <a class="btn btn-info btn-large offset4" href="/admincp/livescore/list_matches">Finalize</a>
                                     <? } ?>
                 </div>
             </div>

@@ -58,7 +58,7 @@ class Admincp5 extends Admincp_Controller
         //62,49
         if(!$id)    $id = 1;
         $match = $this->match_model->get_match($id);        
-        $page = $this->getUrl($match['link_match']);
+        $page = $this->getUrl($match['link_match_complete']);
         // echo $match['link_c'].'<br/>';
         // echo $page.'<br/>';    
         print '<pre>MATCH';
@@ -74,8 +74,8 @@ class Admincp5 extends Admincp_Controller
             $data = array(
                     'match_id'  =>  $id,
                     'card_type' =>  'yellow',
-                    'min'       =>  $yellowcard_left[1][$key],
-                    'player'    =>  $yellowcard_left[2][$key],
+                    'min'       =>  trim($yellowcard_left[1][$key]),
+                    'player'    =>  trim($yellowcard_left[2][$key]),
                     'team'      =>  'home',
                 );
             if(!$this->card_model->card_exists($data)) {
@@ -93,8 +93,8 @@ class Admincp5 extends Admincp_Controller
             $data = array(
                     'match_id'  =>  $id,
                     'card_type' =>  'yellow',
-                    'min'       =>  $yellowcard_right[1][$key],
-                    'player'    =>  $yellowcard_right[2][$key],
+                    'min'       =>  trim($yellowcard_right[1][$key]),
+                    'player'    =>  trim($yellowcard_right[2][$key]),
                     'team'      =>  'away',
                 );
             if(!$this->card_model->card_exists($data)) {
@@ -105,7 +105,8 @@ class Admincp5 extends Admincp_Controller
         
         //<td class="min"> 47' </td> <td class="ply"> <div> <span class="inc yellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Fredy</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc yellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Fernando Marcal</span> <div class="clear"></div> </div> </td>
         //<td class="min"> 90' </td> <td class="ply"> <div> <span class="inc yellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Flori</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc yellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Marcel Sabitzer</span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc yellowcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s?</td>\s*<td class="ply">\s*<div>\s*<span class="inc yellowcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">([A-Z]+.*)</span>@U';
+        //<td class="min"> 90' </td> <td class="ply"> <div> <span class="inc yellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Anders Kristiansen</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc yellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Timmi Johansen</span> <div class="clear"></div> </div> </td>
+        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc yellowcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">([\ß\ü\w\-\#\&\;\.\s\*]+)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s?</td>\s*<td class="ply">\s*<div>\s*<span class="inc yellowcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">([A-Z]+.*)</span>@U';
         preg_match_all($pattern, $page, $yellowcard_right_same_line);
         print '<pre>YELLOWCARD RIGHT SAME LINE';
         print_r($yellowcard_right_same_line);
@@ -116,8 +117,8 @@ class Admincp5 extends Admincp_Controller
                     $data = array(
                     'match_id'  =>  $id,
                     'card_type' =>  'yellow',
-                    'min'       =>  $yellowcard_right_same_line[1][$key],
-                    'player'    =>  $yellowcard_right_same_line[3][$key],
+                    'min'       =>  trim($yellowcard_right_same_line[1][$key]),
+                    'player'    =>  trim($yellowcard_right_same_line[3][$key]),
                     'team'      =>  'away',
                 );
 
@@ -129,7 +130,9 @@ class Admincp5 extends Admincp_Controller
             }
         }
 
-        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard right"></span>\s*<span class="right ml4"></span>\s*<span class="right name">(.*)</span>@U';
+
+        //<td class="min"> 90' </td> <td class="ply"> <div> <span class="inc redcard right"></span> <span class="right ml4"> </span> <span class="right name">Maurizio Ciaramitaro</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class=" left"></span> <span class="left mr4"> </span> <span class="left name"></span> <div class="clear"></div> </div> </td>
+        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
         preg_match_all($pattern, $page, $redcard_left);
         print '<pre>REDCARD LEFT';
         print_r($redcard_left);
@@ -138,8 +141,8 @@ class Admincp5 extends Admincp_Controller
             $data = array(
                     'match_id'  =>  $id,
                     'card_type' =>  'red',
-                    'min'       =>  $redcard_left[1][$key],
-                    'player'    =>  $redcard_left[2][$key],
+                    'min'       =>  trim($redcard_left[1][$key]),
+                    'player'    =>  trim($redcard_left[2][$key]),
                     'team'      =>  'home',
                 );
             if(!$this->card_model->card_exists($data)) {
@@ -159,8 +162,8 @@ class Admincp5 extends Admincp_Controller
                     $data = array(
                     'match_id'  =>  $id,
                     'card_type' =>  'yellow',
-                    'min'       =>  $red_left_yellowcard_right_same_line[1][$key],
-                    'player'    =>  $red_left_yellowcard_right_same_line[3][$key],
+                    'min'       =>  trim($red_left_yellowcard_right_same_line[1][$key]),
+                    'player'    =>  trim($red_left_yellowcard_right_same_line[3][$key]),
                     'team'      =>  'away',
                 );
 
@@ -172,7 +175,8 @@ class Admincp5 extends Admincp_Controller
             }
         }
 
-        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class=" right"></span>\s*<span class="right ml4"></span>\s*<span class="right name"></span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard left"></span>\s*<span class="left mr4"></span>\s*<span class="left name">(.*)</span>@U';
+        //<td class="min"> 24' </td> <td class="ply"> <div> <span class=" right"></span> <span class="right ml4"> </span> <span class="right name"></span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redcard left"></span> <span class="left mr4"> </span> <span class="left name">Luis Pedro</span> <div class="clear"></div> </div> </td>
+        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class=" right">\s*</span>\s*<span class="right ml4">\s*</span>\s*<span class="right name"></span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
         preg_match_all($pattern, $page, $redcard_right);
         print '<pre>REDCARD RIGHT';
         print_r($redcard_right);
@@ -181,8 +185,8 @@ class Admincp5 extends Admincp_Controller
             $data = array(
                     'match_id'  =>  $id,
                     'card_type' =>  'red',
-                    'min'       =>  $redcard_right[1][$key],
-                    'player'    =>  $redcard_right[2][$key],
+                    'min'       =>  trim($redcard_right[1][$key]),
+                    'player'    =>  trim($redcard_right[2][$key]),
                     'team'      =>  'away',
                 );
             if(!$this->card_model->card_exists($data)) {
@@ -191,7 +195,9 @@ class Admincp5 extends Admincp_Controller
         }
 
         //<td class="min"> 80' </td> <td class="ply"> <div> <span class="inc redcard right"></span> <span class="right ml4"> </span> <span class="right name">Hector Acuna</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redcard left"></span> <span class="left mr4"> </span> <span class="left name">Cristian Gonzalez</span> <div class="clear"></div> </div> </td>        
-        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
+        //<td class="min"> 70' </td> <td class="ply"> <div> <span class="inc redcard right"></span> <span class="right ml4"> </span> <span class="right name">Teino       </span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class=" left"></span> <span class="left mr4"> </span> <span class="left name"></span> <div class="clear"></div> </div> </td>
+        //<td class="min"> 90' </td> <td class="ply"> <div> <span class="inc redcard right"></span> <span class="right ml4"> </span> <span class="right name">Nakhor      </span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redcard left"></span> <span class="left mr4"> </span> <span class="left name">A Smetanin       </span> <div class="clear"></div> </div> </td>
+        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">([\ß\ü\w\-\#\&\;\.\s\*]+)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">([\ß\ü\w\-\#\&\;\.\s\*]+)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
         preg_match_all($pattern, $page, $red_left_redcard_right_same_line);
         print '<pre>RED LEFT REDCARD RIGHT SAME LINE';
         print_r($red_left_redcard_right_same_line);
@@ -202,8 +208,8 @@ class Admincp5 extends Admincp_Controller
                     $data = array(
                     'match_id'  =>  $id,
                     'card_type' =>  'red',
-                    'min'       =>  $red_left_redcard_right_same_line[1][$key],
-                    'player'    =>  $red_left_redcard_right_same_line[3][$key],
+                    'min'       =>  trim($red_left_redcard_right_same_line[1][$key]),
+                    'player'    =>  trim($red_left_redcard_right_same_line[3][$key]),
                     'team'      =>  'away',
                 );
 
@@ -215,7 +221,8 @@ class Admincp5 extends Admincp_Controller
             }
         }
 
-        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redyellowcard right"></span>\s*<span class="right ml4"></span>\s*<span class="right name">(.*)</span>@U';
+        //<td class="min"> 71' </td> <td class="ply"> <div> <span class="inc redyellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Jonathan Lopera</span> <div class="clear"></div> </div> </td>
+        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redyellowcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
         preg_match_all($pattern, $page, $yellowredcard_left);
         print '<pre>YELLOW-RED CARD LEFT';
         print_r($yellowredcard_left);
@@ -224,16 +231,37 @@ class Admincp5 extends Admincp_Controller
             $data = array(
                     'match_id'  =>  $id,
                     'card_type' =>  'yellow_red',
-                    'min'       =>  $yellowredcard_left[1][$key],
-                    'player'    =>  $yellowredcard_left[2][$key],
+                    'min'       =>  trim($yellowredcard_left[1][$key]),
+                    'player'    =>  trim($yellowredcard_left[2][$key]),
                     'team'      =>  'home',
                 );
             if(!$this->card_model->card_exists($data)) {
                 $this->card_model->new_card($data);
             }
         }
-        
-        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td> <td class="ply">\s*<div>\s*<span class=" right"></span>\s*<span class="right ml4"></span>\s*<span class="right name"></span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redyellowcard left"></span>\s*<span class="left mr4"></span>\s*<span class="left name">(.*)</span>@U';
+
+        //<tr class=""> <td class="min"> 90' </td> <td class="ply"> <div> <span class="inc redyellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Diego Coria</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redcard left"></span> <span class="left mr4"> </span> <span class="left name">Cristian Tavio</span> <div class="clear"></div> </div> </td>
+        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redyellowcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span> <div class="clear"></div>\s*</div>\s*</td>@U';
+        preg_match_all($pattern, $page, $yellowredcard_left_redcard_right_same_line);
+        print '<pre>YELLOW-RED CARD LEFT RED CARD RIGHT SAME LINE';
+        print_r($yellowredcard_left_redcard_right_same_line);
+
+        foreach($yellowredcard_left_redcard_right_same_line[1] as $key=>$val){
+            $data = array(
+                    'match_id'  =>  $id,
+                    'card_type' =>  'red',
+                    'min'       =>  trim($yellowredcard_left_redcard_right_same_line[1][$key]),
+                    'player'    =>  trim($yellowredcard_left_redcard_right_same_line[3][$key]),
+                    'team'      =>  'away',
+                );
+            if(!$this->card_model->card_exists($data)) {
+                $this->card_model->new_card($data);
+            }
+        }
+
+
+        //<td class="min"> 45' </td> <td class="ply"> <div> <span class=" right"></span> <span class="right ml4"> </span> <span class="right name"></span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redyellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Johan Persson</span> <div class="clear"></div> </div> </td>
+        $pattern = '@<td class="min">\s*(\d*'."'".')\s*</td>\s*<td class="ply">\s*<div>\s*<span class=" right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name"></span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redyellowcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
         preg_match_all($pattern, $page, $yellowredcard_right);
         print '<pre>YELLOW-RED CARD RIGHT';
         print_r($yellowredcard_right);
@@ -242,8 +270,8 @@ class Admincp5 extends Admincp_Controller
             $data = array(
                     'match_id'  =>  $id,
                     'card_type' =>  'yellow_red',
-                    'min'       =>  $yellowredcard_right[1][$key],
-                    'player'    =>  $yellowredcard_right[2][$key],
+                    'min'       =>  trim($yellowredcard_right[1][$key]),
+                    'player'    =>  trim($yellowredcard_right[2][$key]),
                     'team'      =>  'away',
                 );
             if(!$this->card_model->card_exists($data)) {
@@ -277,7 +305,7 @@ class Admincp5 extends Admincp_Controller
                     'match_id'  =>  $id,
                     'score'     =>  str_replace(" ","",$goal_left[4][$key]),
                     'min'       =>  str_replace("'","",$goal_left[1][$key]),
-                    'assist'    =>  $assist,
+                    'assist'    =>  trim($assist),
                     'type'      =>  trim(strip_tags($goal_left[2][$key])),
                     'player'    =>  trim($player),
                     'team'      =>  'home',
@@ -326,7 +354,7 @@ class Admincp5 extends Admincp_Controller
                     'match_id'  =>  $id,
                     'score'     =>  str_replace(" ","",$goal_right[2][$key]),
                     'min'       =>  str_replace("'","",$goal_right[1][$key]),
-                    'assist'    =>  $assist,
+                    'assist'    =>  trim($assist),
                     'type'      =>  trim(strip_tags($goal_right[3][$key])),
                     'player'    =>  trim(strip_tags($goal_right[4][$key])),
                     'team'      =>  'away',

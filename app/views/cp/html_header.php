@@ -1,20 +1,22 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+    <link rel="shortcut icon" type="image/x-icon" href="<?=branded_include('images/favicon.ico');?>" />
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title><?=setting('site_name');?> | Control Panel</title>
-	<!--<base href="<?=site_url();?>" -->
-	
-	<link href="<?=branded_include('css/universal.css');?>" rel="stylesheet" type="text/css" media="screen" />
-        <link href="<?=branded_include('css/bootstrap.css');?>" rel="stylesheet" type="text/css" media="screen" />
-        <link href="<?=branded_include('css/bootstrap-responsive.css');?>" rel="stylesheet" type="text/css" media="screen" />
-        <link href="<?=branded_include('css/bootstrap-datetimepicker.min.css');?>" rel="stylesheet" type="text/css" media="screen" />
-	
-        <script type="text/javascript" src="<?=branded_include('js/jquery-1.9.1.min.js');?>"></script>
-	<!--<script type="text/javascript" src="<?=branded_include('js/jquery.simplemodal.1.4.min.js');?>"></script>-->
-        <script type="text/javascript" src="<?=branded_include('js/bootstrap-datetimepicker.min.js');?>"></script>
-        <script type="text/javascript" src="<?=branded_include('js/bootstrap.js');?>"></script>
 
+	<!--<base href="<?=site_url();?>" -->
+        
+	<link href="<?=branded_include('css/universal.css');?>" rel="stylesheet" type="text/css" media="screen" />
+    <link href="<?=branded_include('css/bootstrap.css');?>" rel="stylesheet" type="text/css" media="screen" />
+    <link href="<?=branded_include('css/bootstrap-responsive.css');?>" rel="stylesheet" type="text/css" media="screen" />
+    <link href="<?=branded_include('css/bootstrap-datetimepicker.min.css');?>" rel="stylesheet" type="text/css" media="screen" />
+
+    <script type="text/javascript" src="<?=branded_include('js/jquery-1.9.1.min.js');?>"></script>
+    <!--<script type="text/javascript" src="<?=branded_include('js/jquery.simplemodal.1.4.min.js');?>"></script>-->
+    <script type="text/javascript" src="<?=branded_include('js/bootstrap-datetimepicker.min.js');?>"></script>
+    <script type="text/javascript" src="<?=branded_include('js/bootstrap.js');?>"></script>
+        
         <? /* Charts must be loaded here, to work stats  */ ?>
 	<script type="text/javascript" src="<?=branded_include('js/knockout2.js');?>"></script>
 	<script type="text/javascript" src="<?=branded_include('js/globalize.min.js');?>"></script>

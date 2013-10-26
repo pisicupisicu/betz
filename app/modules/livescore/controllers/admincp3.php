@@ -105,26 +105,34 @@ class Admincp3 extends Admincp_Controller
         // <span class="league"> <a href="/soccer/england/"><strong>England</strong></a> - <span><a href="/soccer/england/premier-league/">Premier League</a></span></span>
         //phpinfo();die;
 
-        $pattern = '@<span class="league">\s*<a href="(.*)"><strong>(.*)</strong></a>\s*-\s*<span><a href="(.*)">(.*)</a></span></span>@U';
+        //<span class="league"> <a href="/soccer/italy/"><strong>Italy</strong></a> - <span><a href="/soccer/italy/serie-b/">Serie B</a></span> </span> <span class="date">September 2</span>
+        $pattern = '@<span class="league">\s*<a href="(.*)"><strong>(.*)</strong></a>\s*-\s*<span><a href="(.*)">(.*)</a></span>\s*</span>@U';
         preg_match_all($pattern, $page, $countries);
         print '<pre>COUNTRIES';
-        //print_r($countries);
+        print_r($countries);
 
+        //<td class="fh"> St.Kickers </td> <td class="fs"> <a href="/soccer/germany/3-liga/st-kickers-vs-unterhaching/1-1485980/" class="scorelink">2 - 3</a> </td> <td class="fa"> Unterhaching </td>
         $pattern = '@<td class="fh">\s*(.*)\s*</td>@U';
         preg_match_all($pattern, $page, $teams_home);
-        //print '<pre>TEAMS HOME';
-        //print_r($teams_home);
+        print '<pre>TEAMS HOME';
+        print_r($teams_home);
 
+        //<td class="fh"> Saarbrucken </td> <td class="fs"> <a href="/soccer/germany/3-liga/saarbrucken-vs-fc-heidenheim/1-1485981/" class="scorelink">2 - 3</a> </td> <td class="fa"> FC Heidenheim </td> </tr> <tr class="even"> <td class="fd"> FT </td> 
+        //<td class="fh"> St.Kickers </td> <td class="fs"> <a href="/soccer/germany/3-liga/st-kickers-vs-unterhaching/1-1485980/" class="scorelink">2 - 3</a> </td> <td class="fa"> Unterhaching </td>
         $pattern = '@<td class="fa">\s*(.*)\s*</td>@U';
         preg_match_all($pattern, $page, $teams_away);
-        //print '<pre>TEAMS AWAY';
-        //print_r($teams_away);
+        print '<pre>TEAMS AWAY';
+        print_r($teams_away);
 
-        $pattern = '@<td class="fd">\s*([a-zA-Z]*)\s*</td>\s*<td class="fh">\s*([a-zA-Z\s\*]*)\s*</td>\s*<td class="fs">\s*<a href="(.*)" class="scorelink">\s*(.*)\s*</a>\s*</td>\s*<td class="fa">\s*(.*)\s*</td>@U';
+        //<td class="fs"> <a href="/soccer/england/jp-trophy/dagenham-redbridge-vs-colchester-united/1-1560822/" class="scorelink">4 - 1</a> </td> <td class="fa"> Colchester United </td>        
+        //<td class="fd"> FT </td> <td class="fh"> Brentford </td> <td class="fs"> <a href="/soccer/england/jp-trophy/brentford-vs-afc-wimbledon/1-1560824/" class="scorelink">5 - 3</a> </td> <td class="fa"> AFC Wimbledon </td> </tr> 
+        //<td class="fd"> FT </td> <td class="fh"> Dagenham &amp; Redbridge </td> <td class="fs"> <a href="/soccer/england/jp-trophy/dagenham-redbridge-vs-colchester-united/1-1560822/" class="scorelink">4 - 1</a> </td> <td class="fa"> Colchester United </td> </tr> 
+        //<td class="fd"> FT </td> <td class="fh"> Gillingham </td> <td class="fs"> <a href="/soccer/england/jp-trophy/gillingham-vs-leyton-orient/1-1560823/" class="scorelink">1 - 3</a> </td>
+        //$pattern = '@<td class="fd">\s*([a-zA-Z]*)\s*</td>\s*<td class="fh">\s*([a-zA-Z\s\*]*)\s*</td>\s*<td class="fs">\s*<a href="(.*)" class="scorelink">\s*(.*)\s*</a>\s*</td>\s*<td class="fa">\s*(.*)\s*</td>@U';
+        $pattern = '@<td class="fd">\s*([a-zA-Z]*)\s*</td>\s*<td class="fh">\s*([\é\ø\ß\ü\w\-\#\&\;\.\s\*]*)\s*</td>\s*<td class="fs">\s*<a href="(.*)" class="scorelink">\s*(.*)\s*</a>\s*</td>\s*<td class="fa">\s*(.*)\s*</td>@U';
         preg_match_all($pattern,$page,$scores);
-        //print '<pre>SCORES';
-        //print_r($scores);
-
+        print '<pre>SCORES';
+        print_r($scores);        
 
         $competition    = new stdClass();
         $competitions   = array();
@@ -159,7 +167,7 @@ class Admincp3 extends Admincp_Controller
         }
 
         foreach($competitions as $c) {
-            $c->competition_link = str_replace('soccer','', $c->competition_link);
+            $c->competition_link = str_replace('soccer/','', $c->competition_link);
             $param['link']  =   $c->competition_link;
             $country_id =   $this->country_model->get_country_by_name($c->country);
             //competitions
@@ -170,17 +178,19 @@ class Admincp3 extends Admincp_Controller
                     'link_complete' =>  'http://www.livescore.com/soccer/'.$c->competition_link,
                 );
                 $this->competition_model->update_competition_by_link($update_fields,$c->competition_link);
-            } else {                
-                if(isset($country_id)) {
-                    $insert_fields = array(
-                    'country_id'    =>  $country_id,
-                    'name'  =>  $c->competition_name,
-                    'link'  =>  $c->competition_link,
-                    'link_complete' =>  'http://www.livescore.com/soccer/'.$c->competition_link,
-                );
-                    $competition_id =   $this->competition_model->new_competition($insert_fields);
-                }
+            } else {
+                if(!$country_id) {
+                    //default World
+                    $country_id = 243;
+                }               
                 
+                $insert_fields = array(
+                'country_id'    =>  $country_id,
+                'name'  =>  $c->competition_name,
+                'link'  =>  $c->competition_link,
+                'link_complete' =>  'http://www.livescore.com/soccer/'.$c->competition_link,
+            );
+                $competition_id =   $this->competition_model->new_competition($insert_fields);                                
             }
             //teams
             $teams = array();
@@ -199,7 +209,7 @@ class Admincp3 extends Admincp_Controller
 
             //matches
             $temp           =   explode('/',$link);
-            $match_date     =   $temp[4];           
+            $match_date     =   $temp[4];     
             foreach($c->matches as $m) {
                 $team1_id       =   $this->team_model->team_exists(array('name' => $m->team_home,'country_id' => $country_id));
                 $team2_id       =   $this->team_model->team_exists(array('name' => $m->team_away,'country_id' => $country_id));
@@ -210,7 +220,7 @@ class Admincp3 extends Admincp_Controller
                         'match_date'        =>  $match_date,
                         'team1'             =>  $team1_id,
                         'team2'             =>  $team2_id,
-                        'score'             =>  $m->score,
+                        'score'             =>  str_replace(' ','',$m->score),
                         'link'              =>  $m->score_link,
                         'link_complete'     =>  $link_complete,
                         'parsed'            =>  0,

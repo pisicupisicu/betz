@@ -31,8 +31,7 @@
 	*/
 
 	function get_teams ($filters = array()) 
-    {
-        $this->load->model('match_model');
+    {        
 		$row = array();
 
         $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';                        
@@ -59,8 +58,7 @@
 
 		$result = $this->db->get('z_teams');
 				
-		foreach ($result->result_array() as $linie) {
-            $linie['no_of_matches'] = $this->match_model->get_no_of_matches_by_team_id($linie['team_id']);
+		foreach ($result->result_array() as $linie) {            
 			$row[] = $linie;
 
 		}
@@ -114,8 +112,7 @@
     }
 
     function get_duplicate_teams($filters = array())
-    {     
-        $this->load->model('match_model');
+    {             
         $row = $duplicate_teams = array();
 
         $duplicate_teams = $this->get_duplicate_teams_helper($filters);
@@ -125,8 +122,7 @@
             $this->db->where('name',$team['name']);
             $this->db->join('z_countries','z_teams.country_id = z_countries.ID','left');
             $result = $this->db->get('z_teams');
-            foreach ($result->result_array() as $linie) {
-                $linie['no_of_matches'] = $this->match_model->get_no_of_matches_by_team_id($linie['team_id']);
+            foreach ($result->result_array() as $linie) {                
                 $row[] = $linie;
             }
         }
@@ -135,8 +131,7 @@
     }
 
     function get_similar_teams($filters = array(),$count = 0)
-    {     
-        $this->load->model('match_model');
+    {             
         $row = $teams = array();
 
         $filters_team = array_merge($filters);
@@ -151,8 +146,7 @@
             $result = $this->db->get('z_teams');
             
             if($result->num_rows > 1) {
-               foreach ($result->result_array() as $linie) {
-                    $linie['no_of_matches'] = $this->match_model->get_no_of_matches_by_team_id($linie['team_id']);
+               foreach ($result->result_array() as $linie) {                    
                     $row[] = $linie;
                 } 
             }
@@ -305,6 +299,27 @@
             $this->db->update('z_teams',$update_fields,array('team_id' => $id));
 
             return TRUE;
+    }
+
+    function update_team_matches($id)
+    {
+        $this->load->model('match_model');
+        $matches = count($this->match_model->get_matches_by_team_id($id));
+        $update_fields = array(
+                'matches' => $matches,
+            );
+        $this->update_team($update_fields,$id);
+    }
+
+    function update_all_teams_matches()
+    {
+        $result = $this->db->get('z_teams');
+
+        foreach ($result->result_array() as $row) {
+                $this->update_team_matches($row['team_id']);
+            }
+
+        return $result->num_rows();
     }
 
     function team_exists($team)

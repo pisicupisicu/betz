@@ -28,7 +28,7 @@
 	*/
 
 	function get_matches ($filters = array()) 
-    {
+    {        
         $this->load->model('team_model');
 		$row = array();
                 
@@ -40,6 +40,9 @@
         if(isset($filters['team1']) && $filters['team1']) $this->db->like('z_teams.name',$filters['team1']);
         if(isset($filters['team2']) && $filters['team2']) $this->db->like('z_teams.name',$filters['team2']);
         if(isset($filters['score']) && $filters['score']) $this->db->like('score',$filters['score']);
+        if(isset($filters['parsed']))   $this->db->where('parsed',$filters['parsed']);
+        if(isset($filters['match_date_start']) && !empty($filters['match_date_start'])) $this->db->where('match_date >=',$filters['match_date_start']);
+        if(isset($filters['match_date_end']) && !empty($filters['match_date_end'])) $this->db->where('match_date <=',$filters['match_date_end']);
 
         if (isset($filters['limit'])) {
                     $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
@@ -85,7 +88,9 @@
         if(isset($filters['team1']) && $filters['team1']) $this->db->like('z_teams.name',$filters['team1']);
         if(isset($filters['team2']) && $filters['team2']) $this->db->like('z_teams.name',$filters['team2']);
         if(isset($filters['score']) && $filters['score']) $this->db->like('score',$filters['score']);
-        if(isset($filters['parsed']))   $this->db->where('parsed',$filters['parsed']);                        
+        if(isset($filters['parsed']))   $this->db->where('parsed',$filters['parsed']);
+        if(isset($filters['match_date_start'])) $this->db->where('match_date >=',$filters['match_date_start']);
+        if(isset($filters['match_date_end'])) $this->db->where('match_date <=',$filters['match_date_end']);                        
 
         if(isset($filters['team1']) && $filters['team1']) {
             $this->db->join('z_teams','z_matches.team1 = z_teams.team_id','inner');
@@ -120,7 +125,7 @@
         $this->db->join('z_competitions','z_matches.competition_id = z_competitions.competition_id','inner');    
         $this->db->join('z_countries','z_competitions.country_id = z_countries.ID','left');
         $this->db->where('z_matches.id',$id);
-        $this->db->select('*,z_matches.link_complete AS link_match');
+        $this->db->select('*,z_matches.link AS link_match,z_matches.link_complete AS link_match_complete');
         $result = $this->db->get('z_matches');
 
         foreach ($result->result_array() as $row) {
