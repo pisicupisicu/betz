@@ -1220,9 +1220,8 @@ class Admincp4 extends Admincp_Controller
 	public function fields()
 	{
 		$this->load->helper('file');
-		
 
-		$data['csv_data'] = $this->read_csv_file(15);
+		$data['csv_data'] = $this->read_csv_file();
 
 		$this->load->view('fields', $data);
 	}
@@ -1230,53 +1229,115 @@ class Admincp4 extends Admincp_Controller
 	
 
 	public function do_import()
-	{
-		$data = array();
-		$error_users = array();
-		$total_imports = 0;
+    {
+        $this->load->model('market_model');
+        $this->load->model('bet_model');
+        $data = $duplicate = array();
 
-		$imports = array();
+        $total_imports = 0;
 
-		if (isset($_POST['db_field']) && is_array($_POST['db_field']))
-		{
-			// Grab our records.
-			$records = $this->read_csv_file();
+        // Grab our records.
+        $records = $this->read_csv_file();
+        $duplicates = $inserted = 0;        
 
-			// Map each of our fields for importing.
-			foreach ($records as $record) {
-				// Split into each field
-                
-				$row_fields = explode(',', $record);
-				$new_record = array();
+        // Map each of our fields for importing.
+        foreach ($records as $record) {
+            if($total_imports < 2) {
+                $total_imports++;
+                continue;
+            }
+            
+            if(empty($record)) break;
+            
+            //echo "record = $record<br/>";
+            $param = array();
+            // Split into each field
+            $row_fields = explode(',', $record);
 
-				$count = count($row_fields);
-				for ($i=0; $i < $count; $i++) {
-					if (!empty($_POST['db_field'][$i])) {
-						$new_record[$_POST['db_field'][$i]] = trim($row_fields[$i]);
-					}
-				}
+            $count = count($row_fields);
+            
+            if(!$count) {
+                echo $record.'<br/>';
+            }
+            
+            if(!isset($row_fields[2]) || !isset($row_fields[2])) {
+                echo $record.'<br/>';
+            }
 
-				$imports[] = $new_record;
-			}
+            //[2] => Over 2.5 Goals
+            $market_names = array();
+            $market_names = explode(' ',$row_fields[2]);
+            $market_type = $market_names[0];
+            $market_select = $market_names[1];
 
-			// Create the users
+            $get_markets_id = $this->market_model->get_market_by_name($market_type);
+            $get_markets_selects_id = $this->market_model->markets_selects_by_name($market_select);
 
-			// we may need to generate a password
-			$this->load->helper('string');
+            //[1] => Fixtures 20 October   / Goias v Atletico PR / Over/Under 2.5 Goals
+            $bet_name = $market_name = array();
+            $bet_name = explode('/',$row_fields[1]);
+            $market_name = trim($bet_name[1]);
 
-			// What group are we saving the members to?
-			$group = $this->input->post('to_group');
+            // Search is (loss) or profit
+            $profit_loss = preg_match('/^([a-f0-9])/',$row_fields[12]);
+            if ( $profit_loss == 1 ) { 
+                $profit= $row_fields[12];
+                $loss = NULL;
+            } else { 
+                $profit = NULL;
+                $clear_loss = str_replace ("(","",$row_fields[12]);
+                $clean = str_replace (")","",$clear_loss);
+                $loss= $clean;                 
+            }            
 
-		}
+            //20-Oct-13 21:28 
+            $event_date = date('Y-m-d H:i:s', strtotime($row_fields[5])); 
 
-		// Delete the import file
-		unlink($this->config->item('path_writeable') . 'csv_upload.csv');
+            // username
+            $username=$this->user_model->get('id');
 
-		$data['error_users']	= $error_users;
-		$data['total_imports']	= $total_imports;
+            if (!empty($market_name)){
+            $insert_fields = array(
+                            'event_name' => $market_name,
+                            'odds' => $row_fields[11],
+                            'market_select' => $get_markets_selects_id['market_select_id'],
+                            'market_type' => $get_markets_id['ID_market'],
+                            'stake' => $row_fields[9],
+                            'profit' => $profit,
+                            'loss' => $loss,
+                            'bet_type' => $row_fields[3],                   
+                            'event_date' => $event_date,
+                            'paper_bet' => 0,
+                            'username' => $username,
+                            ); 
 
-		$this->load->view('results', $data);
-	}
+           
+            $param['event_name']   =  $market_name;
+            $param['event_date']   =  $event_date;
+            $param['odds']         =  $row_fields[11];
+            $param['stake']        =  $row_fields[9];
+            if(!$this->bet_model->bet_exists($param)) {                        
+                $this->bet_model->new_bet($insert_fields);
+                $inserted++;                
+            } else {
+               $duplicates++;
+               $duplicate[] = $record;
+            }                        
+
+            $total_imports++; 
+
+            }
+        }			
+
+        //$this->notices->SetNotice('Duplicate!');
+        //redirect(site_url('admincp4/livescore/import_csv'));
+        $data['total_imports']	= $total_imports;
+        $data['inserted'] = $inserted;
+        $data['duplicates'] = $duplicates;
+        $data['duplicate'] = $duplicate;
+
+        $this->load->view('results', $data);
+}
 
 	
 
@@ -1388,19 +1449,11 @@ class Admincp4 extends Admincp_Controller
 
 		$loss[] = $loss_markets;
 
-		
-
 		$profit_back[] = $profit_back_bets;
 
 		$profit_lay[] = $profit_lay_bets;
 
-		
-
 		}
-
-
-
-	
 
 		$data = array(
 

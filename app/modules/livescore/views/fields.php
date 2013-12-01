@@ -2,18 +2,16 @@
 
 <h1>Match Columns</h1>
 
-<p>Your list has been uploaded. </p>
-
 <p><b>NOTE: Unmatched fields will NOT be imported.</b></p>
 
 <?php if (isset($csv_data) && is_array($csv_data) && count($csv_data)) : ?>
 
 <form class="form" action="<?php echo site_url('admincp4/livescore/do_import') ?>" method="post">
 
-<div style="overflow-x: auto">
+<div style="overflow: auto; height: 500px;">
 	<table class="dataset" cellpadding="0" cellspacing="0">
-        <?php $count = count( explode(',', $csv_data[0]) );	?>
-
+		
+     <?php $count = count( explode(',', $csv_data[0]) );	?>
 		<?php $count = 0; ?>
 		<?php foreach ($csv_data as $row) : ?>
 			<?php

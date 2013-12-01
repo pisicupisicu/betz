@@ -61,7 +61,7 @@
 
 					
 		  //return $result->result_array();
-
+          $profit = array();
 		  foreach($result->result_array() as $market){
 			
 			$profit[] = $market['profit'];  
@@ -86,7 +86,7 @@
            $result = $this->db->get('z_bets');
 
 		   //return $result->result_array();
-
+          $loss = array();
 		  foreach($result->result_array() as $market){
 			
 			$loss[] = $market['loss'];  
@@ -110,7 +110,7 @@
 		   $this->db->where('bet_type','Back');
 		   $this->db->where('market_type',$id);
            $result = $this->db->get('z_bets');
-
+           $profit = array();
 		  foreach($result->result_array() as $market){
 			
 			$profit[] = $market['profit'];  
@@ -135,7 +135,7 @@
 		   $this->db->where('bet_type','Lay');
 		   $this->db->where('market_type',$id);
            $result = $this->db->get('z_bets');
-
+           $profit = array();
 		  foreach($result->result_array() as $market){
 			
 			$profit[] = $market['profit'];  

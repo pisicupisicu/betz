@@ -163,7 +163,42 @@
 
         return $result->num_rows();
     }
+    
+    /**
+    * Count Goals 
+    *
+    * @param $min - minutes	
+    *
+    * @return int $insert_id
+    */
 
+    function count_goals ($min) 
+    {																					
+        $this->db->where('min', $min);
+        $this->db->from('z_goals');
+        $total_goals = $this->db->count_all_results();;
+
+        return $total_goals;
+    }
+
+    /**
+    * Count Score by Minutes 
+    *
+    * @param $min - minutes	
+    *
+    * @return int $insert_id
+    */
+
+    function count_corect_score ($filters = array()) 
+    {																					
+        $this->db->where('min', $filters['min']);
+        $this->db->where('score', $filters['score']);
+        $this->db->from('z_goals');
+        $total_scores = $this->db->count_all_results();
+
+        return $total_scores;
+    }
+    
 
     /**
     * Delete match
@@ -180,7 +215,152 @@
 
         $this->db->delete('z_goals',array('id' => $id));
         return TRUE;
-    }                
+    }  
+    
+    /**
+    * over_stats
+    *
+    *
+    * @return boolean TRUE
+    */
+    
+    function get_unique_score() { 
+        $this->db->distinct('score');
+        $this->db->select('score AS unique_score');
+        $result = $this->db->get('z_matches');
+                      
+        return $result->result_array();
+    }
+    
+     function over_stats($filters = array()) 
+    {
 
+        $this->load->model('match_model');
+        $this->load->model('country_model');
+         
+        $this->db->join('z_competitions','z_matches.competition_id = z_competitions.competition_id','inner'); 
+        $this->db->join('z_countries','z_competitions.country_id = z_countries.ID','inner');
+        $this->db->group_by('z_matches.score,z_countries.country_name');
+
+        
+        $this->db->select('z_countries.country_name,z_countries.ID AS country_id,z_matches.score,COUNT( DISTINCT z_matches.id ) AS cate'); 
+        
+        
+        if (isset($filters['country_name']) && $filters['country_name']) {
+
+			$this->db->like('z_countries.country_name', $filters['country_name']);
+            $filters['setter'] = $_GET['setter'];
+		}
+
+        $result = $this->db->get('z_matches');
+
+         
+        $row=array();
+        $country=array();
+        $over=$under=0;
+ 
+        foreach ($result->result_array() as $linie) {                
+            $row[] = $linie;
+            $explode_score = explode('-', $linie['score']);
+            $total=$explode_score[0]+$explode_score[1];
+            
+            if(!isset($country[$linie['country_name']])) $country[$linie['country_name']] = array();
+            if(!array_key_exists('under', $country[$linie['country_name']])) $country[$linie['country_name']]['under'] = 0;
+            if(!array_key_exists('over', $country[$linie['country_name']])) $country[$linie['country_name']]['over'] = 0;
+            
+            if ($total<round($filters['setter'])){                
+                $country[$linie['country_name']]['under'] += $linie['cate'];            
+            } else {                
+                $country[$linie['country_name']]['over'] += $linie['cate'];
+            }
+            $country[$linie['country_name']]['total']=$country[$linie['country_name']]['under']+$country[$linie['country_name']]['over']; 
+ 
+            $country[$linie['country_name']]['percent_over'] = ($country[$linie['country_name']]['over']*100)/$country[$linie['country_name']]['total'];
+            $country[$linie['country_name']]['percent_over'] = sprintf("%.2f",$country[$linie['country_name']]['percent_over']);
+            
+            $country[$linie['country_name']]['country_name'] = $linie['country_name'];
+        }
+        
+        usort($country,array('Goal_model','cmp_over')); 
+  
+            return $country; 
+      
+    }
+    
+       private static function cmp_over($a, $b)
+    {
+           
+        if ($a['percent_over'] == $b['percent_over']) {
+            return 0;
+        }
+        return ($a['percent_over'] > $b['percent_over']) ? -1 : 1;
+           
+    }
+    
+    function under_stats($filters = array()) 
+    {
+
+        $this->load->model('match_model');
+        $this->load->model('country_model');
+         
+        $this->db->join('z_competitions','z_matches.competition_id = z_competitions.competition_id','inner'); 
+        $this->db->join('z_countries','z_competitions.country_id = z_countries.ID','inner');
+        $this->db->group_by('z_matches.score,z_countries.country_name');
+
+        
+        $this->db->select('z_countries.country_name,z_countries.ID AS country_id,z_matches.score,COUNT( DISTINCT z_matches.id ) AS cate'); 
+        
+        
+        if (isset($filters['country_name']) && $filters['country_name']) {
+
+			$this->db->like('z_countries.country_name', $filters['country_name']);
+            $filters['setter'] = $_GET['setter'];
+		}
+
+        $result = $this->db->get('z_matches');
+
+         
+        $row=array();
+        $country=array();
+        $over=$under=0;
+ 
+        foreach ($result->result_array() as $linie) {                
+            $row[] = $linie;
+            $explode_score = explode('-', $linie['score']);
+            $total=$explode_score[0]+$explode_score[1];
+            
+            if(!isset($country[$linie['country_name']])) $country[$linie['country_name']] = array();
+            if(!array_key_exists('under', $country[$linie['country_name']])) $country[$linie['country_name']]['under'] = 0;
+            if(!array_key_exists('over', $country[$linie['country_name']])) $country[$linie['country_name']]['over'] = 0;
+            
+            if ($total<round($filters['setter'])){                
+                $country[$linie['country_name']]['under'] += $linie['cate'];            
+            } else {                
+                $country[$linie['country_name']]['over'] += $linie['cate'];
+            }
+            $country[$linie['country_name']]['total']=$country[$linie['country_name']]['under']+$country[$linie['country_name']]['over']; 
+            
+            $country[$linie['country_name']]['percent_under'] = ($country[$linie['country_name']]['under']*100)/$country[$linie['country_name']]['total'];
+            $country[$linie['country_name']]['percent_under'] = sprintf("%.2f",$country[$linie['country_name']]['percent_under']);
+            
+            $country[$linie['country_name']]['country_name'] = $linie['country_name'];
+        }
+        
+        usort($country,array('Goal_model','cmp_under')); 
+  
+            return $country; 
+      
+    }
+    
+       private static function cmp_under($a, $b)
+    {
+           
+        if ($a['percent_under'] == $b['percent_under']) {
+            return 0;
+        }
+        return ($a['percent_under'] > $b['percent_under']) ? -1 : 1;
+           
+    }
+    
 }
 

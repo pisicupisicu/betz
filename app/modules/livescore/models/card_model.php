@@ -86,19 +86,22 @@
 
         
 
-        /**
-        * Get Match
-        *
-        * @param int $id	
-        *
-        * @return array
-        */
+    /**
+    * Get Match
+    *
+    * @param int $id	
+    *
+    * @return array
+    */
 
-    function get_cards_by_match ($id) 
+    function get_cards_by_match ($id,$type = array()) 
     {
             $row = array();								                    
             
-            $this->db->where('z_cards.match_id',$id); 
+            $this->db->where('z_cards.match_id',$id);
+            if(!empty($type)) {
+                $this->db->where_in('z_cards.card_type',$type);            
+            } 
             $this->db->order_by('min','asc');           
             $result = $this->db->get('z_cards');
 
@@ -107,6 +110,60 @@
             }
             
             return $row;                   
+    }
+    
+     /**
+    * Count yellow cards by minutes 
+    *
+    * @param int $min - minutes	
+    *
+    * @return array
+    */
+
+    function count_yellow ($min) 
+    {
+        $this->db->where('min',$min); 
+        $this->db->where('card_type','yellow'); 
+        $this->db->from('z_cards');
+        $total_yellow = $this->db->count_all_results();
+
+        return $total_yellow;                
+    }
+    
+    /**
+    * Count yellow red cards by minutes 
+    *
+    * @param int $min - minutes	
+    *
+    * @return array
+    */
+
+    function count_yellow_red ($min) 
+    {
+        $this->db->where('min',$min); 
+        $this->db->where('card_type','yellow_red');
+        $this->db->from('z_cards');
+        $total_yellow_red = $this->db->count_all_results();
+
+        return $total_yellow_red;                
+    }
+    
+    /**
+    * Count yellow cards by minutes 
+    *
+    * @param int $min - minutes	
+    *
+    * @return array
+    */
+
+    function count_red ($min) 
+    {
+        $this->db->where('min',$min); 
+        $this->db->where('card_type','red');
+        $this->db->from('z_cards');
+        $total_red = $this->db->count_all_results();
+
+        return $total_red;                
     }
 
     /**

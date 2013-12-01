@@ -66,8 +66,26 @@
                     return $row;	
 	}
         
-         
-        
+      /**
+	* Get Market by name
+	*
+	* @param int $id
+	* 
+	* @return array 
+	*/   
+     function get_market_by_name($market_name) 
+        {
+		
+            $row = array();								
+            $this->db->where('market_name',$market_name);
+            $result = $this->db->get('z_markets');
+            $row =array();
+            foreach ($result->result_array() as $row) {
+                    return $row;
+            }
+
+            return $row;	
+	}   
 	 /**
 	* Get Markets
 	*
@@ -139,6 +157,26 @@
 		}
 	
 		return $markets_selects;
+
+	}  
+    
+    /**
+	* Get Markets Selects by name
+	*
+	* 
+	* @return array 
+	*/
+        
+	function markets_selects_by_name($market_select_name) 
+        {							
+		$this->db->where('market_select_name',$market_select_name);
+        $result = $this->db->get('z_markets_selects');
+	    $row =array();
+		foreach ($result->result_array() as $row) {
+                            return $row;
+                    }
+
+                    return $row;
 
 	}  
 	

@@ -28,7 +28,42 @@ class Admincp extends Admincp_Controller
     function index () 
     {
             redirect('admincp/livescore/list_competitions');		
-	}    
+	}
+
+    function update_filters()
+    {
+        $this->load->library('asciihex');
+        $filters = array();
+
+        foreach($_POST as $key=>$val) {
+                if(in_array($val,array('filter results','start date','end date'))) {
+                    unset($_POST[$key]);
+                }
+            }
+
+        if(!empty($_POST['match_date_start'])) {
+           $filters['match_date_start'] = $_POST['match_date_start'];
+        }
+        if(!empty($_POST['match_date_end'])) {
+           $filters['match_date_end'] = $_POST['match_date_end'];
+        }
+        if(!empty($_POST['country_name'])) {
+           $filters['country_name'] = $_POST['country_name'];
+        }
+        if(!empty($_POST['team1'])) {
+           $filters['team1'] = $_POST['team1'];
+        }
+        if(!empty($_POST['team2'])) {
+           $filters['team2'] = $_POST['team2'];
+        }
+        if(!empty($_POST['score'])) {
+           $filters['score'] = $_POST['score'];
+        }        
+
+        $filters = $this->CI->asciihex->AsciiToHex(base64_encode(serialize($filters)));
+
+        echo $filters;   
+    }    
 
 	function list_matches()
     {                    
@@ -127,6 +162,31 @@ class Admincp extends Admincp_Controller
                     $filters[$key] = $val;
                 } 
             }
+
+            foreach($filters as $key=>$val) {
+                if(in_array($val,array('filter results','start date','end date'))) {
+                    unset($filters[$key]);
+                }
+            }
+
+            //http://betz.banujos.ro/admincp/livescore/list_matches?filters=59546f794f6e747a4f6a45324f694a745958526a6146396b5958526c58334e3059584a30496a747a4f6a45774f6949794d44457a4c5441354c544135496a747a4f6a45304f694a745958526a6146396b5958526c583256755a434937637a6f784d446f694d6a41784d7930774f5330774f53493766513d3d&sort_dir=&sort_column=&limit=20&offset=40 
+
+            //print '<pre>';
+            //$contents = '59546f794f6e747a4f6a45324f694a745958526a6146396b5958526c58334e3059584a30496a747a4f6a45774f6949794d44457a4c5441354c544135496a747a4f6a45304f694a745958526a6146396b5958526c583256755a434937637a6f784d446f694d6a41784d7930774f5330774f53493766513d3d';
+            
+            //$this->load->library('asciihex');
+            //$this->load->model('match_model');
+
+
+            //$contents = '596a6f774f773d3d';
+            //echo "contents = $contents<br/>";
+            //$contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+            //$return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+            //print_r($contents);
+            //$aux = array('match_date_start' => '2013-09-09','match_date_end' => '2013-09-09');
+            //$aux = $this->CI->asciihex->AsciiToHex(base64_encode(serialize($aux)));           
+            //echo "aux = $aux";
+            //print '</pre>';
             
 
             $this->dataset->columns($columns);

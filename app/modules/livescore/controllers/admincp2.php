@@ -610,45 +610,51 @@ class Admincp2 extends Admincp_Controller {
 		$paper_bet = $this->input->post('paper_bet');		
 		
 		if ($action == 'new') {
-			$bet_id = $this->bet_model->new_bet(
-						$event_name,
-						$event_date,
-						$stake,
-						$profit,
-						$loss,
-						$country_name,
-						$event_type,
-						$bet_type,
-						$odds,
-						$market_type,
-                                                $market_select,
-						$comment,
-						$strategy,
-                                                $username,
-												$paper_bet
+            
+            $insert_fields = array(
+							'event_name'=> $event_name,
+							'event_date'=> $event_date,
+							'stake'=> $stake,
+							'profit'=> $profit,
+							'loss'=> $loss,
+							'country_name'=> $country_name,
+							'event_type'=> $event_type,
+							'bet_type'=> $bet_type,
+							'odds'=> $odds,
+							'market_type'=> $market_type,
+                                                        'market_select'=> $market_select,
+							'comment'=> $comment,
+							'strategy'=> $strategy,
+                                                        'username'=>$username,
+														'paper_bet'=>$paper_bet
 						);
+            
+            
+			$bet_id = $this->bet_model->new_bet($insert_fields);
 												
 			$this->notices->SetNotice('Bet added successfully.');
 		}
 		else {
-			$bet_id = $this->bet_model->update_bet(
-                                                $id_bet,
-						$event_name,
-						$event_date,
-						$stake,
-						$profit,
-						$loss,
-						$country_name,
-						$event_type,
-						$bet_type,
-						$odds,
-						$market_type,
-                                                $market_select,
-						$comment,
-						$strategy,
-                                                $username,
-												$paper_bet
+            
+            $update_fields = array(
+							'event_name'   => $event_name,
+							'event_date'   => $event_date,
+							'stake'        => $stake,
+							'profit'       => $profit,
+							'loss'         => $loss,
+							'country_name' => $country_name,
+							'event_type'   => $event_type,
+							'bet_type'     => $bet_type,
+							'odds'         => $odds,
+							'market_type'  => $market_type,
+                            'market_select'=> $market_select,
+							'comment'      => $comment,
+							'strategy'     => $strategy,
+                            'username'     => $username,
+							'paper_bet'    => $paper_bet
 						);
+            
+			$bet_id = $this->bet_model->update_bet($update_fields,$id_bet);
 
 			$this->notices->SetNotice('Bet edited successfully.');
 		}
@@ -803,7 +809,7 @@ class Admincp2 extends Admincp_Controller {
 					);
                 
                 $filters = array(); 
-                $filters['limit'] = 3;
+                $filters['limit'] = 10;
                 //$filters['id'] = $id;
                 
                 if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
@@ -1480,4 +1486,9 @@ class Admincp2 extends Admincp_Controller {
         
  //********************************** END Market LIST *******************************// 
        
+    function admin_tools() {
+        		$this->load->view('other_links');
+	 }
+    
+    
 }

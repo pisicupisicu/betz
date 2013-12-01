@@ -474,7 +474,10 @@ Date.fullYearStart = '20';
 		var dm = new RegExp(matcher);
 		var result = s.match(dm);
 		for (var i=0; i<order.length; i++) {
-			var res = result[i+1];
+			var res;
+			if(result) res = result[i+1];
+			else res = null; 
+			//var res = result[i+1];
 			switch(order[i]) {
 				case 'd':
 					d.setDate(res);

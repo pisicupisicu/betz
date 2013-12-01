@@ -191,7 +191,7 @@ $(document).ready(function() {
 				var d = selectedDates[0];
 				if (d) {
 					d = new Date(d);
-					$('form#dataset_form input.date_end').dpSetStartDate(d.addDays(1).asString());
+					$('form#dataset_form input.date_end').dpSetStartDate(d.addDays(0).asString());
 				}
 			}
 			
