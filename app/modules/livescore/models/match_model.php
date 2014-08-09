@@ -260,14 +260,20 @@
         return $row;                   
     }
 
-    function get_matches_by_team_id($id)
+    function get_matches_by_team_id($filters)
     {
         $row = array();
 
-        $this->db->or_where('team1',$id);
-        $this->db->or_where('team2',$id);
-
+        $this->db->join('z_competitions','z_matches.competition_id = z_competitions.competition_id','inner');    
+        $this->db->join('z_countries','z_competitions.country_id = z_countries.ID','left');
+        $this->db->or_where('team1',$filters['team_id']);
+        $this->db->or_where('team2',$filters['team_id']);
+        $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
         $result = $this->db->get('z_matches');
+
+        if (isset($filters['count'])) {
+            return $result->num_rows();
+        }
 
         foreach ($result->result_array() as $line) {
                 $row[] = $line;

@@ -1,6 +1,17 @@
 <?=$this->load->view(branded_view('cp/header'));?>
 
 <script>
+jQuery(document).ready(function(){
+    $('[name="country_name"]').on('change', function(event){
+      var countryID = $('[name="country_name"]').val();
+      var competitionString = "/admincp4/livescore/view_competitions_selects/"+ countryID;
+      
+      $.get(competitionString, function(data) {
+      $('[name="event_type"]').html(data);
+      });     
+                                 
+ });
+
 function displayVals() 
 {
 	var methodID = $("#strategy_select").val();
@@ -31,6 +42,8 @@ function MarketsSelectsEdit()
 	$("#marketsDiv").html(data);
 	});
 }
+
+});
 </script>
 
 <h1><?=$form_title;?></h1>
@@ -71,7 +84,7 @@ function MarketsSelectsEdit()
                             <label for="stake" class="control-label">Stake:</label>
                             
                             <div class="controls">
-                                <input type="text" id="stake" name="stake" value="<? if ($action == 'new') {  } else { echo $stake;} ?>" placeholder="E.g. 15 Euro" />
+                                <input type="text" id="stake" name="stake" value="<? if ($action == 'new') {  } else { echo number_format($stake, 2);} ?>" placeholder="E.g. 15 Euro" />
                             </div>
                         </div>
                         
@@ -85,7 +98,7 @@ function MarketsSelectsEdit()
                                 </div>
                             
                                 <div class="controls">
-                                    <input type="text" id="input_profit_loss" class="" <? if ($action == 'new') {  } else { if($profit != null && $loss == null){echo 'value='.$profit.' name="profit"';} else {echo 'value='.$loss.' name="loss"';} }?>  placeholder="E.g. 1 Euro" />
+                                    <input type="text" id="input_profit_loss" class="" <? if ($action == 'new') {  } else { if($profit != null && $loss == null){echo 'value='.number_format($profit, 2).' name="profit"';} else {echo 'value='.number_format($loss, 2).' name="loss"';} }?>  placeholder="E.g. 1 Euro" />
                                 </div>
                         </div>
                         
@@ -103,7 +116,7 @@ function MarketsSelectsEdit()
                             <label for="contact-message" class="control-label">Event Type:</label>
                             
                             <div class="controls">
-                                 <? echo form_dropdown('event_type',$event); ?>
+                                <? if ($action == 'new') { echo form_dropdown('event_type',$event); } else { echo form_dropdown('event_type',$event,$id_event);} ?>                                 
                             </div>
                         </div>
               
@@ -127,7 +140,7 @@ function MarketsSelectsEdit()
                             <label for="odds" class="control-label">Odds:</label>
                             
                             <div class="controls">
-                                <input type="text" id="odds" name="odds" value="<? if ($action == 'new') {  } else { echo $odds;} ?>" placeholder="E.g. 1.45" />
+                                <input type="text" id="odds" name="odds" value="<? if ($action == 'new') {  } else { echo number_format($odds, 2);} ?>" placeholder="E.g. 1.45" />
                             </div>
                         </div>
                         
@@ -140,22 +153,28 @@ function MarketsSelectsEdit()
 								echo form_dropdown('market_type',$market,'','id="market_selects" onChange="MarketsSelects();"');
 								echo "<div id='marketsDiv'></div>";
 								} 
-								else { echo form_dropdown('market_type',$market,$market_id,'id="market_selects" onChange="MarketsSelectsEdit();"');
+								else { echo form_dropdown('market_type',$market,$market_id,'id="market_selects" onChange="MarketsSelectsEdit();"');                      
 									   echo "<div id='marketsDiv'></div>";
-                                       echo form_dropdown('markets_selects',$market_select,$market_select_id,'id="disable_selects"');
+                     echo form_dropdown('markets_selects',$market_select,$market_select_id,'id="disable_selects"');
 									   //print_r ($market_select);
 									   //die;
                                                                 } ?>
                             </div>
                         </div>
-                        
+
+            <div class="control-group">
+                <label for="final_score" class="control-label">Final score:</label>
+              
+                <div class="controls">
+                    <input type="text" id="final_score" name="final_score" value="<? if ($action == 'new') {  } else { echo $final_score;} ?>" placeholder="E.g. 3-1" />
+                </div>
+              </div>            
                       
-                         <div class="control-group">
-                            <label for="comment" class="control-label">Comment:</label>
-                            
-                            <div class="controls">
-                                <textarea id="comment" name="comment" cols="30" rows="3"><? if ($action == 'new') {  } else { echo $comment;} ?></textarea>
-                            </div>
+           <div class="control-group">
+              <label for="comment" class="control-label">Comment:</label>              
+              <div class="controls">
+                  <textarea id="comment" name="comment" cols="30" rows="3"><? if ($action == 'new') {  } else { echo $comment;} ?></textarea>
+              </div>
 						</div>
               
                 </div>
@@ -188,13 +207,22 @@ function MarketsSelectsEdit()
                                     <input type="submit" class="btn btn-info btn-large pull-right" name="edit" value="Edit Bet" />
                                     <? } ?>
                   </div>
-           
+                  
                   <div class="checkbox span1 pull-right" style="padding-top:15px;">
                     <label>
                     <? if ($action == 'new') { echo '<input type="checkbox" name="paper_bet" value="1">'; } 
-					else { echo form_checkbox('paper_bet','1',$paper_bet); } ?>Paper Bet
+          else { echo form_checkbox('paper_bet','1',$paper_bet); } ?>Paper Bet
                     </label>
                   </div>
+
+                  <div class="checkbox span1 pull-right" style="padding-top:15px;">
+                    <label>
+                    <? if ($action == 'new') { echo '<input type="checkbox" name="live_tv" value="1">'; } 
+          else { echo form_checkbox('live_tv','1',$live_tv); } ?>Live TV
+                    </label>
+                  </div>  
+
+                  
                   
             </div>
                 

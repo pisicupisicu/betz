@@ -16,15 +16,16 @@
 if (!empty($this->dataset->data)) {
     
     //echo "<pre>";
-    //if(isset($_GET['sort_column'])); if($_GET['sort_column']='total_match' && $_GET['sort_dir']='asc'){sort($this->dataset->data[]['total']);}else{rsort($this->dataset->data[]['total']);}
+   // if(isset($_GET['sort_column'])); if($_GET['sort_column']='total_match' && $_GET['sort_dir']='asc'){sort($this->dataset->data[]['total']);}else{rsort($this->dataset->data[]['total']);}
     //print_r ($this->dataset->data);
     
 	foreach ($this->dataset->data as $key=>$row) {
 
 	?>
-		<tr>
-			<td><?=$row['country_name'];?></td>
-			<td align="center"><?=$row['total'];?></td>
+        <tr>
+            <td style="font-weight: bold;"><a href="over_competition/<?=$row['country_name'];?>" target="_blank"><?=$row['country_name'];?></a></td>
+            <td>OVER <?=$setter?></td>
+            <td align="center"><?=$row['total'];?></td>
             <td <?php if($row['percent_over'] > 70) echo 'style="color:red; font-weight:bold;"'; ?> ><?=$row['percent_over'];?>%</td>     
         </tr>
 	<?

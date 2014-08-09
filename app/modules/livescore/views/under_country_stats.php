@@ -22,9 +22,10 @@ if (!empty($this->dataset->data)) {
 	foreach ($this->dataset->data as $key=>$row) {
 
 	?>
-		<tr>
-			<td><?=$row['country_name'];?></td>
-			<td align="center"><?=$row['total'];?></td>
+	<tr>
+	    <td style="font-weight: bold;"><a href="under_competition/<?=$row['country_name'];?>" target="_blank"><?=$row['country_name'];?></a></td>
+	    <td>UNDER <?=$setter?></td>
+            <td align="center"><?=$row['total'];?></td>
             <td <?php if($row['percent_under'] > 70) echo 'style="color:red; font-weight:bold;"'; ?> ><?=$row['percent_under'];?>%</td>     
         </tr>
 	<?

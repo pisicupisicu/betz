@@ -27,6 +27,7 @@ table.dataset thead td{
 	text-transform: uppercase;
 	font-size: 9pt;
 	position: relative;
+	text-align: center;
 }
 
 table.dataset thead td a {

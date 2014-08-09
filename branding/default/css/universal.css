@@ -362,6 +362,12 @@ a:hover {
 
 }
 
+#navigation ul li.flashscore a.parent {
+
+	background-image: url(../images/nav_flashscore.png);
+
+}
+
 #navigation ul li.soccerstats a.parent {
 
 	background-image: url(../images/nav_soccerstats.png);

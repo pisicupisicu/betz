@@ -3,29 +3,16 @@
 
 
 /**
-
 * Market Model
-
 *
-
 * Manages markets
-
 *
-
 * @author Weblight.ro
-
 * @copyright Weblight.ro
-
 * @package BJ Tool
-
-
-
 */
 
-
-
 	class Market_model extends CI_Model
-
 	{
 
 		private $CI;
@@ -53,17 +40,17 @@
 	* @return array 
 	*/
 	function get_market($id) 
-        {
-		
-                    $row = array();								
-                    $this->db->where('id_market',$id);
-                    $result = $this->db->get('z_markets');
+    {
+	
+        $row = array();								
+        $this->db->where('id_market',$id);
+        $result = $this->db->get('z_markets');
 
-                    foreach ($result->result_array() as $row) {
-                            return $row;
-                    }
+        foreach ($result->result_array() as $row) {
+                return $row;
+        }
 
-                    return $row;	
+        return $row;	
 	}
         
       /**
@@ -73,18 +60,18 @@
 	* 
 	* @return array 
 	*/   
-     function get_market_by_name($market_name) 
-        {
-		
-            $row = array();								
-            $this->db->where('market_name',$market_name);
-            $result = $this->db->get('z_markets');
-            $row =array();
-            foreach ($result->result_array() as $row) {
-                    return $row;
-            }
+    function get_market_by_name($market_name) 
+    {
+	
+        $row = array();								
+        $this->db->like('market_name',$market_name);
+        $result = $this->db->get('z_markets');
+        $row =array();
+        foreach ($result->result_array() as $row) {
+                return $row;
+        }
 
-            return $row;	
+        return $row;	
 	}   
 	 /**
 	* Get Markets
@@ -94,13 +81,11 @@
 	*/
         
 	function get_markets($filters = array()) 
-        {
-            
+    {
+        
+        $result = $this->db->get('z_markets');
 
-                $result = $this->db->get('z_markets');
-	
-
-                if (isset($filters['id_market'])) {
+        if (isset($filters['id_market'])) {
 
 			$this->db->where('ID_market', $filters['id_market']);
 
@@ -140,17 +125,17 @@
 	*/
         
 	function get_markets_selects($id='4') 
-        {
-        $market = array();								
+    {
+	    $market = array();								
 		$this->db->where('markets_id',$id); // doar de test am pus id 4
-        $result = $this->db->get('z_markets_selects');
-	
+	    $result = $this->db->get('z_markets_selects');
+
 		$markets_selects = array();
 
-                foreach ($result->result_array() as $market) {
-                    
-                    $markets_selects[] = array(
-                    'market_select_id' => $market['market_select_id'],
+	            foreach ($result->result_array() as $market) {
+	                
+	                $markets_selects[] = array(
+	                'market_select_id' => $market['market_select_id'],
 					'markets_id' => $market['markets_id'],
 					'market_select_name' => $market['market_select_name'],
 				     );
@@ -167,8 +152,9 @@
 	* @return array 
 	*/
         
-	function markets_selects_by_name($market_select_name) 
-        {							
+	function markets_selects_by_name_and_id($market_select_name, $id) 
+    {							
+		$this->db->where('markets_id',$id);
 		$this->db->where('market_select_name',$market_select_name);
         $result = $this->db->get('z_markets_selects');
 	    $row =array();
@@ -186,19 +172,17 @@
 	* @return array 
 	*/
             
-    function num_rows_markets($filters = array()) {
-             if (isset($filters['id'])) {
-
+    function num_rows_markets($filters = array()) 
+    {
+        if (isset($filters['id'])) {
 			$this->db->where('ID_market', $filters['id']);
-
 		}
 
 		                
-                $result = $this->db->get('z_markets');
-                
-                
-                return $result->num_rows();
-        }         
+        $result = $this->db->get('z_markets');
+                                
+        return $result->num_rows();
+    }         
   
          /**
 	* Create New Market
@@ -207,10 +191,10 @@
 	* @return int $market_name
 	*/
 	function new_market ($market_name) 
-        {
+    {
 		$insert_fields = array(
-                                        'market_name' => $market_name,		
-				);
+                                'market_name' => $market_name,		
+		);
 						
 		$this->db->insert('z_markets', $insert_fields);
 
@@ -224,13 +208,12 @@
 	* @return void
 	*/
 	function update_market ( $id_market,$market_name) 
-        {
+    {
 		$update_fields = array(
 					'market_name' => $market_name,
-				);
+		);
 
 		$this->db->update('z_markets', $update_fields, array('ID_market' => $id_market));
-		
 								
 		return TRUE;
 	}
@@ -242,12 +225,12 @@
 	* 
 	* @return array 
 	*/
-            function delete_market ($id) 
-            {
-                    $this->db->delete('z_markets',array('id_market' => $id));
+    function delete_market ($id) 
+    {
+        $this->db->delete('z_markets',array('id_market' => $id));
 
-                    return TRUE;
-            }
+        return TRUE;
+    }
 
 
 }

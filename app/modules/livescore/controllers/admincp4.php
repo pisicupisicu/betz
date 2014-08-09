@@ -1264,16 +1264,56 @@ class Admincp4 extends Admincp_Controller
                 echo $record.'<br/>';
             }
 
-            //[2] => Over 2.5 Goals
-            $market_names = array();
-            $market_names = explode(' ',$row_fields[2]);
-            $market_type = $market_names[0];
-            $market_select = $market_names[1];
+            $temp = explode('/',$row_fields[1]);
+            $market_type = trim($temp[2]);
+            // if Over/Under the market type Over or Under is from the third column : Selection
+            if(strstr($market_type,'Over')) {
+            	$aux = explode(' ',$row_fields[2]);
+            	$market_type = trim($aux[0]);
+            	$market_select = trim($aux[1]);
+            } elseif(strstr($market_type,'Match')) {
+            	$teams = trim($temp[1]);
+            	$aux = explode(' v ',$teams);
+            	$home_team = trim($aux[0]);
+            	$away_team = trim($aux[1]);
+
+            	if($home_team == $row_fields[2]) {
+            		$market_select = 'Home';
+            	} elseif($away_team == $row_fields[2]) {
+            		$market_select = 'Away';
+            	} else {
+            		$market_select = 'Draw';
+            	}
+            } elseif(strstr($market_type,'Correct')) {
+            	$market_select = trim($row_fields[2]);
+            	$market_select = str_replace(' ','',$market_select);
+            }
+
+            // [2] => Over 2.5 Goals
+            // $market_names = array();
+            // $market_names = explode(' ',$row_fields[2]);
+            // $market_type = $market_names[0];
+            // $market_select = $market_names[1];
 
             $get_markets_id = $this->market_model->get_market_by_name($market_type);
-            $get_markets_selects_id = $this->market_model->markets_selects_by_name($market_select);
+            $get_markets_selects_id = $this->market_model->markets_selects_by_name_and_id($market_select, $get_markets_id['ID_market']);
 
-            //[1] => Fixtures 20 October   / Goias v Atletico PR / Over/Under 2.5 Goals
+            if(!array_key_exists('market_select_id', $get_markets_selects_id)) {
+            	echo 'MISSING market_type = '.$market_type.'<br/>';
+            	echo 'MISSING market_select = '.$market_select.'<br/>';
+            	var_dump($get_markets_id);
+            	var_dump($get_markets_selects_id);
+            }
+
+            if(!array_key_exists('ID_market', $get_markets_id)) {            	
+            	echo 'MISSING market_type = '.$market_type.'<br/>';
+            	echo 'MISSING market_select = '.$market_select.'<br/>';
+            	var_dump($get_markets_id);
+            	var_dump($get_markets_selects_id);
+            	echo '----------------------------------<br/>';
+            }            
+
+            // [1] => Fixtures 20 October   / Goias v Atletico PR / Over/Under 2.5 Goals
             $bet_name = $market_name = array();
             $bet_name = explode('/',$row_fields[1]);
             $market_name = trim($bet_name[1]);
@@ -1290,8 +1330,9 @@ class Admincp4 extends Admincp_Controller
                 $loss= $clean;                 
             }            
 
-            //20-Oct-13 21:28 
-            $event_date = date('Y-m-d H:i:s', strtotime($row_fields[5])); 
+            // 20-Oct-13 21:28 
+            $event_date_time = date('Y-m-d H:i:s', strtotime($row_fields[5]));
+            $event_date = date('Y-m-d', strtotime($row_fields[5])); 
 
             // username
             $username=$this->user_model->get('id');
@@ -1305,7 +1346,8 @@ class Admincp4 extends Admincp_Controller
                             'stake' => $row_fields[9],
                             'profit' => $profit,
                             'loss' => $loss,
-                            'bet_type' => $row_fields[3],                   
+                            'bet_type' => $row_fields[3],
+                            'event_date_time' => $event_date_time,                   
                             'event_date' => $event_date,
                             'paper_bet' => 0,
                             'username' => $username,
@@ -1313,9 +1355,11 @@ class Admincp4 extends Admincp_Controller
 
            
             $param['event_name']   =  $market_name;
-            $param['event_date']   =  $event_date;
+            $param['event_date_time']   =  $event_date_time;
             $param['odds']         =  $row_fields[11];
             $param['stake']        =  $row_fields[9];
+            $param['username']	   =  $username;
+
             if(!$this->bet_model->bet_exists($param)) {                        
                 $this->bet_model->new_bet($insert_fields);
                 $inserted++;                

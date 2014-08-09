@@ -20,6 +20,18 @@
     <br/>
 <div class="row">
         <div class="span12">
+            <a href="<?=site_url('admincp6/livescore/over_competition_list')?>" class="btn btn-large btn-info">
+                <span class="icon-white icon-arrow-up"></span> Over by ALL Competitions
+            </a>
+
+            <a href="<?=site_url('admincp6/livescore/under_competition_list')?>" class="btn btn-large btn-info">
+                <span class="icon-white icon-arrow-down"></span> Under by ALL Competitions
+            </a>
+        </div>
+</div>
+    <br/>
+<div class="row">
+        <div class="span12">
             <a href="<?=site_url('admincp7/livescore/list_matches_first_goal')?>" class="btn btn-large btn-info">
                 <span class="icon-gift icon-white"></span> First Goal By the 10<sup>th</sup> Min (1-90) Stats
             </a>

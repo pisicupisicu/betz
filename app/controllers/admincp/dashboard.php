@@ -91,8 +91,14 @@ class Dashboard extends Admincp_Controller {
 		// system stats
 		$system = array();
 
-		$system['PHP'] = phpversion();
-		$system['MySQL'] = mysql_get_server_info();
+		$system['PHP'] = phpversion();		
+		$row = array();								
+        $result = $this->db->query('SELECT VERSION() as mysql_version');        
+        foreach ($result->result_array() as $row) {        		
+                $system['MySQL'] = $row['mysql_version'];
+        }        
+
+		//$system['MySQL'] = mysql_get_server_info();		
 		$system[$this->config->item('app_name')] = $this->config->item('app_version');
 		$system['CodeIgniter'] = CI_VERSION;
 		$system['Theme'] = setting('theme');

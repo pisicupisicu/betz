@@ -3,23 +3,13 @@
 
 
 /**
-
 * Step Model
-
 *
-
 * Manages steps
-
 *
-
 * @author Weblight.ro
-
 * @copyright Weblight.ro
-
 * @package BJ Tool
-
-
-
 */
 
 
@@ -47,15 +37,10 @@
 	
 
             /**
-
             * Get steps
-
             * @param array $params
-
             *
-
             * @return array
-
             */
 
             function get_steps ($params) 
@@ -65,6 +50,7 @@
                     $row = array();	
 
                     $this->db->where('strategy_id',$params['strategy_id']);
+                    if (isset($params['amount'])) $this->db->where('amount >=',$params['amount']);
 
                     if (isset($params['limit'])) {
 
@@ -93,17 +79,11 @@
                 
 
             /**
-
             * Get Step
-
             *
-
             * @param int $id	
-
             *
-
             * @return array
-
             */
 
             function get_step ($id) 
@@ -133,21 +113,13 @@
 
 
             /**
-
             * Create New Steps
-
             *
-
             * Creates a new step
-
             *
-
             * @param array $insert_fields	
-
             *
-
             * @return int $insert_id
-
             */
 
             function new_step ($insert_fields) 
@@ -167,23 +139,14 @@
 
 
             /**
-
             * Update Step
-
             *
-
             * Updates step
-
             * 
-
             * @param array $update_fields
-
             * @param int $id	
-
             *
-
             * @return boolean TRUE
-
             */
 
             function update_step ($update_fields,$id) 
@@ -201,21 +164,13 @@
 
 
             /**
-
             * Delete step
-
             *
-
             * Deletes step
-
             * 	
-
             * @param int $id	
-
             *
-
             * @return boolean TRUE
-
             */
 
             function delete_step ($id) 

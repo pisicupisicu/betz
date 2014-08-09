@@ -129,7 +129,9 @@ class Admincp3 extends Admincp_Controller
         //<td class="fd"> FT </td> <td class="fh"> Dagenham &amp; Redbridge </td> <td class="fs"> <a href="/soccer/england/jp-trophy/dagenham-redbridge-vs-colchester-united/1-1560822/" class="scorelink">4 - 1</a> </td> <td class="fa"> Colchester United </td> </tr> 
         //<td class="fd"> FT </td> <td class="fh"> Gillingham </td> <td class="fs"> <a href="/soccer/england/jp-trophy/gillingham-vs-leyton-orient/1-1560823/" class="scorelink">1 - 3</a> </td>
         //$pattern = '@<td class="fd">\s*([a-zA-Z]*)\s*</td>\s*<td class="fh">\s*([a-zA-Z\s\*]*)\s*</td>\s*<td class="fs">\s*<a href="(.*)" class="scorelink">\s*(.*)\s*</a>\s*</td>\s*<td class="fa">\s*(.*)\s*</td>@U';
-        $pattern = '@<td class="fd">\s*([a-zA-Z]*)\s*</td>\s*<td class="fh">\s*([\/\á\æ\é\ø\ß\ü\w\-\#\&\;\.\s\*]*)\s*</td>\s*<td class="fs">\s*<a href="(.*)" class="scorelink">\s*(.*)\s*</a>\s*</td>\s*<td class="fa">\s*(.*)\s*</td>@U';
+        //<td class="fd"> FT </td> <td class="fh"> Manchester City </td> <td class="fs"> <a href="/soccer/england/premier-league/manchester-city-vs-chelsea/1-1474952/" class="scorelink" onclick="return false;">0 - 1</a> </td> <td class="fa"> Chelsea </td>
+        $pattern = '@<td class="fd">\s*([a-zA-Z]*)\s*</td>\s*<td class="fh">\s*([\/\á\æ\é\ø\ß\ü\w\-\#\&\;\.\s\*]*)\s*</td>\s*<td class="fs">\s*<a href="(.*)" class="scorelink" onclick="return false;">\s*(.*)\s*</a>\s*</td>\s*<td class="fa">\s*(.*)\s*</td>@U';
+        
         preg_match_all($pattern,$page,$scores);
         print '<pre>SCORES';
         print_r($scores);        

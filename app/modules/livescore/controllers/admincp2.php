@@ -11,7 +11,8 @@
 *
 */
 
-class Admincp2 extends Admincp_Controller {
+class Admincp2 extends Admincp_Controller 
+{
                 
 	function __construct()
 	{
@@ -24,209 +25,209 @@ class Admincp2 extends Admincp_Controller {
 	}	
 	
 	function index () 
-        {
+    {
             redirect('admincp2/livescore/strategies');		
 	}
         
-        function list_strategies()
-        {
-            $this->admin_navigation->module_link('Add strategy',site_url('admincp2/livescore/add_strategy'));
-            
-            $this->load->library('dataset');
-            $columns = array(
-                                array(
-                                        'name' => 'NAME',
-                                        'type' => 'name',
-                                        'width' => '15%',                                        
-                                        ),
-                                array(
-                                        'name' => 'START',
-                                        'width' => '10%',                                        
-                                        'type' => 'text'
-                                        ),
-                                array(
-                                        'name' => 'RATE',
-                                        'width' => '10%',                                        
-                                        'type' => 'text',
+    function list_strategies()
+    {
+        $this->admin_navigation->module_link('Add strategy',site_url('admincp2/livescore/add_strategy'));
+        
+        $this->load->library('dataset');
+        $columns = array(
+                            array(
+                                    'name' => 'NAME',
+                                    'type' => 'name',
+                                    'width' => '15%',                                        
+                                    ),
+                            array(
+                                    'name' => 'START',
+                                    'width' => '10%',                                        
+                                    'type' => 'text'
+                                    ),
+                            array(
+                                    'name' => 'RATE',
+                                    'width' => '10%',                                        
+                                    'type' => 'text',
 
-                                        ),
-                                array(
-                                        'name' => 'MULTIPLY',
-                                        'width' => '10%',
-                                        'type' => 'text',
-                                        ),
-                                 array(
-                                        'name' => 'STOP',
-                                        'width' => '15%',
-                                        'type' => 'text',
-                                        ),
-                                  array(
-                                        'name' => 'INTERMISSION',
-                                        'width' => '10%',
-                                        'type' => 'text',
-                                        ),
-                                  array(
-                                        'name' => 'EDIT',
-                                        'width' => '10%',
-                                        'type' => 'text',
-                                        ),
-                                  array(
-                                        'name' => 'COMPUTED',
-                                        'width' => '10%',
-                                        'type' => 'text',
-                                        ),
-                                  array(
-                                        'name' => 'VIEW',
-                                        'width' => '10%',
-                                        'type' => 'text',
-                                        ),      
-                        );
-            
-                $filters = array();    
-                $filters['limit'] = 50;
+                                    ),
+                            array(
+                                    'name' => 'MULTIPLY',
+                                    'width' => '10%',
+                                    'type' => 'text',
+                                    ),
+                             array(
+                                    'name' => 'STOP',
+                                    'width' => '15%',
+                                    'type' => 'text',
+                                    ),
+                              array(
+                                    'name' => 'INTERMISSION',
+                                    'width' => '10%',
+                                    'type' => 'text',
+                                    ),
+                              array(
+                                    'name' => 'EDIT',
+                                    'width' => '10%',
+                                    'type' => 'text',
+                                    ),
+                              array(
+                                    'name' => 'COMPUTED',
+                                    'width' => '10%',
+                                    'type' => 'text',
+                                    ),
+                              array(
+                                    'name' => 'VIEW',
+                                    'width' => '10%',
+                                    'type' => 'text',
+                                    ),      
+                    );
+        
+        $filters = array();    
+        $filters['limit'] = 50;
 
-                if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];                 
-						
-		$this->dataset->columns($columns);
-		$this->dataset->datasource('strategy_model','get_strategies',$filters);
-		$this->dataset->base_url(site_url('admincp2/livescore/strategies'));
+        if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];                 
+					
+    	$this->dataset->columns($columns);
+    	$this->dataset->datasource('strategy_model','get_strategies',$filters);
+    	$this->dataset->base_url(site_url('admincp2/livescore/strategies'));
                 $this->dataset->rows_per_page($filters['limit']);
-		
+    	
                 // total rows
-		$total_rows = $this->db->get('z_strategies')->num_rows(); 
-		$this->dataset->total_rows($total_rows);
+    	$total_rows = $this->db->get('z_strategies')->num_rows(); 
+    	$this->dataset->total_rows($total_rows);
                 
-		// initialize the dataset
-		$this->dataset->initialize();
+    	// initialize the dataset
+    	$this->dataset->initialize();
                 
                 // add actions
-		$this->dataset->action('Delete','admincp2/livescore/delete_strategy');
-                
-                $this->load->view('strategies');
+    	$this->dataset->action('Delete','admincp2/livescore/delete_strategy');
             
-        }
+            $this->load->view('strategies');
         
-        function add_strategy_form_builder_shit($action = 'new', $id = false)
-        {
-            $this->load->library('custom_fields/form_builder');
-            $this->load->library('custom_fields/fieldtype');
-            $this->load->model('strategy_model');
-            
-            $strategy = array(
-                                
-                            );
-            if(isset($id)) {
-                $strategy = $this->strategy_model->get_strategy($id);
-            }
-            
-            //print '<pre>';
-            //print_r($strategy);
-            //die;
-            
-            //$this->form_builder->reset();
-            //print '<pre>';
-            //print_r($this->fieldtype->get_fieldtype_options());die;                        
-            $this->form_builder->add_field('text')->name('name')->label('Strategy name')->validators(array('min_length[5]','trim',))->required(TRUE)->value($strategy['name']);           
-            $this->form_builder->add_field('text')->name('start')->label('START')->validators(array('trim'))->required(TRUE)->value($strategy['start']);
-            $this->form_builder->add_field('text')->name('rate')->label('RATE')->validators(array('trim'))->required(TRUE)->value($strategy['rate']);
-            $this->form_builder->add_field('text')->name('multiply')->label('MULTIPLY')->validators(array('trim'))->required(TRUE)->value($strategy['multiply']);
-            $this->form_builder->add_field('text')->name('stop')->label('STOP')->validators(array('trim'))->required(TRUE)->value($strategy['stop']);
-            $this->form_builder->add_field('text')->name('intermission')->label('INTERMISSION')->validators(array('trim'))->required(TRUE)->value($strategy['intermission']);
-            
-            $form = $this->form_builder->output_admin();            
-            $values = $this->form_builder->post_to_array();            
-            
-            if($values['name'] !== FALSE) {
-                 if ($this->form_builder->validate_post() === FALSE) {                
-                    $errors = $this->form_builder->validation_errors();     
-                    // not the best style, but we'll just print the HTML-formatted errors                    
-                    echo $errors;
-                }
-                
-                if (isset($errors)) {
-                        if ($action == 'new') {
-                                redirect('admincp2/livescore/add_strategy/new');
-                                return FALSE;
-                        }
-                        else {
-                                redirect('admincp2/livescore/add_strategy/edit/' . $id);
-                                return FALSE;
-                        }	
-                }		                
-
-                if ($action == 'new') {
-                        $this->strategy_model->new_strategy($values);
-                        $this->notices->SetNotice('Successfully added the strategy');
-                        redirect('admincp2/livescore/strategies');
-                }
-                else {
-                        $this->strategy_model->update_strategy($values,$id);												
-                        $this->notices->SetNotice('Successfully updated the strategy');
-
-                        redirect('admincp2/livescore/strategies');
-                }           
-            }
-                        	            
-            $data = array(
-                            'form' => $form,
-                            'form_title' => 'Create Your Favourite Strategy',
-                            'form_action' => site_url('admincp2/livescore/add_strategy/'.$action),
-                            'action' => 'new'
-                         );
-            
-            $this->load->view('add_strategy',$data);
-        }
+    }
         
-        function add_strategy()
-        {
-            $this->load->library('admin_form');
-            $form = new Admin_form;
-            
-            $form->fieldset('Add Strategy');
-            $form->text('Strategy name', 'name', '', 'Strategy name to be introduced', TRUE, 'e.g., Radu super strategy', TRUE);
-            $form->text('Start', 'start', '', 'start bank amount', TRUE, 'e.g., 20 &euro;', FALSE,'100px');
-            $form->text('Rate', 'rate', '', 'rate percentage from bank for growth', TRUE, 'e.g., 0.1', FALSE,'100px');
-            $form->text('Multiply', 'multiply', '', 'average odds for betting', TRUE, 'e.g., 1.5', FALSE,'100px');
-            $form->text('Stop', 'stop', '', 'target amount', TRUE, 'e.g.,10000 &euro;', FALSE,'100px');
-            $form->text('Intermission', 'intermission', '', 'the amount at which we re-calculate the wage', TRUE, 'e.g.,10 &euro;', FALSE,'100px');
-            
-            $data = array(
-                            'form' => $form->display(),
-                            'form_title' => 'Add strategy',
-                            'form_action' => site_url('admincp2/livescore/add_strategy_validate'),
-                            'action' => 'new'
+    function add_strategy_form_builder_shit($action = 'new', $id = false)
+    {
+        $this->load->library('custom_fields/form_builder');
+        $this->load->library('custom_fields/fieldtype');
+        $this->load->model('strategy_model');
+        
+        $strategy = array(
+                            
                         );
-            
-            $this->load->view('add_strategy',$data);
+        if(isset($id)) {
+            $strategy = $this->strategy_model->get_strategy($id);
         }
         
-        function add_strategy_validate($action = 'new', $id = false) 
-        {
+        //print '<pre>';
+        //print_r($strategy);
+        //die;
+        
+        //$this->form_builder->reset();
+        //print '<pre>';
+        //print_r($this->fieldtype->get_fieldtype_options());die;                        
+        $this->form_builder->add_field('text')->name('name')->label('Strategy name')->validators(array('min_length[5]','trim',))->required(TRUE)->value($strategy['name']);           
+        $this->form_builder->add_field('text')->name('start')->label('START')->validators(array('trim'))->required(TRUE)->value($strategy['start']);
+        $this->form_builder->add_field('text')->name('rate')->label('RATE')->validators(array('trim'))->required(TRUE)->value($strategy['rate']);
+        $this->form_builder->add_field('text')->name('multiply')->label('MULTIPLY')->validators(array('trim'))->required(TRUE)->value($strategy['multiply']);
+        $this->form_builder->add_field('text')->name('stop')->label('STOP')->validators(array('trim'))->required(TRUE)->value($strategy['stop']);
+        $this->form_builder->add_field('text')->name('intermission')->label('INTERMISSION')->validators(array('trim'))->required(TRUE)->value($strategy['intermission']);
+        
+        $form = $this->form_builder->output_admin();            
+        $values = $this->form_builder->post_to_array();            
+        
+        if($values['name'] !== FALSE) {
+             if ($this->form_builder->validate_post() === FALSE) {                
+                $errors = $this->form_builder->validation_errors();     
+                // not the best style, but we'll just print the HTML-formatted errors                    
+                echo $errors;
+            }
+            
+            if (isset($errors)) {
+                    if ($action == 'new') {
+                            redirect('admincp2/livescore/add_strategy/new');
+                            return FALSE;
+                    }
+                    else {
+                            redirect('admincp2/livescore/add_strategy/edit/' . $id);
+                            return FALSE;
+                    }	
+            }		                
+
+            if ($action == 'new') {
+                    $this->strategy_model->new_strategy($values);
+                    $this->notices->SetNotice('Successfully added the strategy');
+                    redirect('admincp2/livescore/strategies');
+            }
+            else {
+                    $this->strategy_model->update_strategy($values,$id);												
+                    $this->notices->SetNotice('Successfully updated the strategy');
+
+                    redirect('admincp2/livescore/strategies');
+            }           
+        }
+                    	            
+        $data = array(
+                        'form' => $form,
+                        'form_title' => 'Create Your Favourite Strategy',
+                        'form_action' => site_url('admincp2/livescore/add_strategy/'.$action),
+                        'action' => 'new'
+                     );
+        
+        $this->load->view('add_strategy',$data);
+    }
+        
+    function add_strategy()
+    {
+        $this->load->library('admin_form');
+        $form = new Admin_form;
+        
+        $form->fieldset('Add Strategy');
+        $form->text('Strategy name', 'name', '', 'Strategy name to be introduced', TRUE, 'e.g., Radu super strategy', TRUE);
+        $form->text('Start', 'start', '', 'start bank amount', TRUE, 'e.g., 20 &euro;', FALSE,'100px');
+        $form->text('Rate', 'rate', '', 'rate percentage from bank for growth', TRUE, 'e.g., 0.1', FALSE,'100px');
+        $form->text('Multiply', 'multiply', '', 'average odds for betting', TRUE, 'e.g., 1.5', FALSE,'100px');
+        $form->text('Stop', 'stop', '', 'target amount', TRUE, 'e.g.,10000 &euro;', FALSE,'100px');
+        $form->text('Intermission', 'intermission', '', 'the amount at which we re-calculate the wage', TRUE, 'e.g.,10 &euro;', FALSE,'100px');
+        
+        $data = array(
+                        'form' => $form->display(),
+                        'form_title' => 'Add strategy',
+                        'form_action' => site_url('admincp2/livescore/add_strategy_validate'),
+                        'action' => 'new'
+                    );
+        
+        $this->load->view('add_strategy',$data);
+    }
+        
+    function add_strategy_validate($action = 'new', $id = false) 
+    {
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('name','Nume','required|trim');
-                $this->form_validation->set_rules('start','Start','required|trim');
-                $this->form_validation->set_rules('rate','Rate','required|trim');
-                $this->form_validation->set_rules('multiply','Multiply','required|trim');
-                $this->form_validation->set_rules('stop','Stop','required|trim');
-                $this->form_validation->set_rules('intermission','Intermission','required|trim');
+        $this->form_validation->set_rules('start','Start','required|trim');
+        $this->form_validation->set_rules('rate','Rate','required|trim');
+        $this->form_validation->set_rules('multiply','Multiply','required|trim');
+        $this->form_validation->set_rules('stop','Stop','required|trim');
+        $this->form_validation->set_rules('intermission','Intermission','required|trim');
+	
+    	if ($this->form_validation->run() === FALSE) {
+    		$this->notices->SetError('Required fields.');
+    		$error = TRUE;
+    	}
+    	
+    	if (isset($error)) {
+    		if ($action == 'new') {
+    			redirect('admincp2/livescore/add_strategy');
+    			return FALSE;
+    		}
+    		else {
+    			redirect('admincp2/livescore/edit_strategy/' . $id);
+    			return FALSE;
+    		}	
+	}
 		
-		if ($this->form_validation->run() === FALSE) {
-			$this->notices->SetError('Required fields.');
-			$error = TRUE;
-		}
-		
-		if (isset($error)) {
-			if ($action == 'new') {
-				redirect('admincp2/livescore/add_strategy');
-				return FALSE;
-			}
-			else {
-				redirect('admincp2/livescore/edit_strategy/' . $id);
-				return FALSE;
-			}	
-		}
-		
-		$this->load->model('strategy_model');
+    	$this->load->model('strategy_model');
                 
                 $fields['name']         = $this->input->post('name');
                 $fields['start']        = $this->input->post('start');
@@ -234,206 +235,222 @@ class Admincp2 extends Admincp_Controller {
                 $fields['multiply']     = $this->input->post('multiply');
                 $fields['stop']         = $this->input->post('stop');
                 $fields['intermission'] = $this->input->post('intermission');
-		
-		if ($action == 'new') {
-			$type_id = $this->strategy_model->new_strategy($fields);
-															
-			$this->notices->SetNotice('Strategy added successfully.');
-			
-			redirect('admincp2/livescore/list_strategies/');
-		}
-		else {
-			$this->strategy_model->update_strategy($fields,$id);												
-			$this->notices->SetNotice('Strategy updated successfully.');
-			
-			redirect('admincp2/livescore/list_strategies/');
-		}
+    	
+    	if ($action == 'new') {
+    		$type_id = $this->strategy_model->new_strategy($fields);
+    														
+    		$this->notices->SetNotice('Strategy added successfully.');
+    		
+    		redirect('admincp2/livescore/list_strategies/');
+    	}
+    	else {
+    		$this->strategy_model->update_strategy($fields,$id);												
+    		$this->notices->SetNotice('Strategy updated successfully.');
+    		
+    		redirect('admincp2/livescore/list_strategies/');
+    	}
 		
 		return TRUE;		
 	}
         
-        function edit_strategy ($id) 
-        {                
-		$this->load->model('strategy_model');
-		$strategy = $this->strategy_model->get_strategy($id);
-		
-		if (empty($strategy)) {
-			die(show_error('No strategy with this ID.'));
-		}
+    function edit_strategy ($id) 
+    {                
+        $this->load->model('strategy_model');
+        $strategy = $this->strategy_model->get_strategy($id);
+
+        if (empty($strategy)) {
+        	die(show_error('No strategy with this ID.'));
+        }
                 
                 $this->load->library('admin_form');
-		$form = new Admin_form;
-		
-		$form->fieldset('Strategy');
+        $form = new Admin_form;
+
+        $form->fieldset('Strategy');
                 $form->text('Strategy name', 'name', $strategy['name'], 'Strategy name to be introduced', TRUE, 'e.g., Radu super strategy', TRUE);
                 $form->text('Start', 'start', $strategy['start'], 'start bank amount', TRUE, 'e.g., 20 &euro;', FALSE,'100px');
                 $form->text('Rate', 'rate', $strategy['rate'], 'rate percentage from bank for growth', TRUE, 'e.g., 0.1', FALSE,'100px');
                 $form->text('Multiply', 'multiply', $strategy['multiply'], 'average odds for betting', TRUE, 'e.g., 1.5', FALSE,'100px');
                 $form->text('Stop', 'stop', $strategy['stop'], 'target amount', TRUE, 'e.g.,10000 &euro;', FALSE,'100px');
                 $form->text('Intermission', 'intermission', $strategy['intermission'], 'the amount at which we re-calculate the wage', TRUE, 'e.g.,10 &euro;', FALSE,'100px');                                
-		
-		$data = array(
-					'form' => $form->display(),
-					'form_title' => 'Edit Strategy',
-					'form_action' => site_url('admincp2/livescore/add_strategy_validate/edit/'. $strategy['id']),
-					'action' => 'edit',                                        
-					);
-		
-		$this->load->view('add_strategy',$data);			
-	}
+
+        $data = array(
+        			'form' => $form->display(),
+        			'form_title' => 'Edit Strategy',
+        			'form_action' => site_url('admincp2/livescore/add_strategy_validate/edit/'. $strategy['id']),
+        			'action' => 'edit',                                        
+        			);
+
+        $this->load->view('add_strategy',$data);			
+    }
         
-        function delete_strategy ($contents,$return_url) 
-        {
-		
-		$this->load->library('asciihex');
-		$this->load->model('strategy_model');
-		
-		$contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
-		$return_url = base64_decode($this->asciihex->HexToAscii($return_url));
-		
-		foreach ($contents as $content) {
+    function delete_strategy ($contents,$return_url) 
+    {
+	
+    	$this->load->library('asciihex');
+    	$this->load->model('strategy_model');
+    	
+    	$contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+    	$return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+    	
+    	foreach ($contents as $content) {
                         $this->load->model('step_model');
                         $this->step_model->delete_strategy_steps($content);
-			$this->strategy_model->delete_strategy($content);
-		}
-		       			
-		$this->notices->SetNotice('Strategy deleted successfully.');
-				
-		redirect($return_url);
-		
-		return TRUE;
-	
-	}
+    		$this->strategy_model->delete_strategy($content);
+    	}
+    	       			
+    	$this->notices->SetNotice('Strategy deleted successfully.');
+    			
+    	redirect($return_url);
+    	
+    	return TRUE;
+
+    }
         
-        function view_strategy($id)
-        {
-            $this->load->library('dataset');
-            $columns = array(
-                                array(
-                                        'name' => 'STEP',
-                                        'type' => 'id',
-                                        'width' => '15%',                                        
-                                        ),
-                                array(
-                                        'name' => 'STAKE',
-                                        'width' => '25%',                                        
-                                        'type' => 'text'
-                                        ),
-                                array(
-                                        'name' => 'PROFIT',
-                                        'width' => '20%',                                        
-                                        'type' => 'text',
+    function view_strategy($id)
+    {
+        $this->load->library('dataset');
+        $columns = array(
+                            array(
+                                    'name' => 'STEP',
+                                    'type' => 'id',
+                                    'width' => '15%',                                        
+                                    ),
+                            array(
+                                    'name' => 'STAKE',
+                                    'width' => '25%',                                        
+                                    'type' => 'text'
+                                    ),
+                            array(
+                                    'name' => 'PROFIT',
+                                    'width' => '20%',                                        
+                                    'type' => 'text',
 
-                                        ),
-                                array(
-                                        'name' => 'BANK',
-                                        'width' => '40%',
-                                        'type' => 'text',
-                                        )
-                        );
-            
-                $filters = array();
-                $filters['strategy_id'] = $id;
-                $filters['limit'] = 50;
+                                    ),
+                            array(
+                                    'name' => 'BANK',
+                                    'width' => '40%',
+                                    'type' => 'text',
+                                    )
+                    );
+        
+        $filters = array();
+        $filters['strategy_id'] = $id;
+        $filters['limit'] = 50;
 
-                if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];                 
-						
-		$this->dataset->columns($columns);
-		$this->dataset->datasource('step_model','get_steps',$filters);
-		$this->dataset->base_url(site_url('admincp2/livescore/view_strategy/'.$id));
+        if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];                 
+					
+    	$this->dataset->columns($columns);
+    	$this->dataset->datasource('step_model','get_steps',$filters);
+    	$this->dataset->base_url(site_url('admincp2/livescore/view_strategy/'.$id));
                 $this->dataset->rows_per_page($filters['limit']);
-		
+    	
                 // total rows
-		$this->load->model('step_model');
+    	$this->load->model('step_model');
                 // total rows
-		$total_rows = $this->step_model->get_num_rows($id); 
-		$this->dataset->total_rows($total_rows);
+    	$total_rows = $this->step_model->get_num_rows($id); 
+    	$this->dataset->total_rows($total_rows);
                 
-		// initialize the dataset
-		$this->dataset->initialize();
-                
-                $this->load->view('steps');
+    	// initialize the dataset
+    	$this->dataset->initialize();
+            
+        $this->load->view('steps');
+    }
+        
+    function compute_strategy($id)
+    {
+        $this->load->model('strategy_model');
+        $strategy = $this->strategy_model->get_strategy($id);
+        
+        if(empty($strategy)) {
+            $this->notices->SetError('Strategy not found!');				
+	redirect('admincp2/livescore/list_strategies');
         }
         
-        function compute_strategy($id)
-        {
-            $this->load->model('strategy_model');
-            $strategy = $this->strategy_model->get_strategy($id);
-            
-            if(empty($strategy)) {
-                $this->notices->SetError('Strategy not found!');				
-		redirect('admincp2/livescore/list_strategies');
-            }
-            
-            $is_computed = $this->strategy_model->is_computed($id);            
-            if($is_computed) {
-                $this->notices->SetError('Strategy already computed!');				
-		redirect('admincp2/livescore/view_strategy/'.$id);
-            }
-            
-            $this->steps_recursive($strategy['id'],$strategy['start'],$strategy['start'],1,$strategy['intermission'],$strategy['rate'],$strategy['multiply'],$strategy['stop']);
+        $is_computed = $this->strategy_model->is_computed($id);            
+        if($is_computed) {
+            $this->notices->SetError('Strategy already computed!');				
+	redirect('admincp2/livescore/view_strategy/'.$id);
+        }
+        
+        $this->steps_recursive($strategy['id'],$strategy['start'],$strategy['start'],1,$strategy['intermission'],$strategy['rate'],$strategy['multiply'],$strategy['stop']);
+        $this->notices->SetNotice('Strategy computed successfully!');				
+        redirect('admincp2/livescore/list_strategies');
+                   
+    }
+        
+    function steps_recursive($strategy_id,$prev,$amount,$steps,$intermission,$rate,$multiply,$stop)
+    {                
+        $this->load->model('step_model');
+                                    
+        $diff = $amount - $prev;
+        if($diff >= $intermission) $prev += $intermission;
+
+        $stake = $prev*$rate;
+        if ($stake < 2) {
+            $stake = 2;
+        }        
+        $win = $stake*($multiply-1);
+        $amount += $win;            
+        
+        $fields = array();
+        $fields['strategy_id'] = $strategy_id;
+        $fields['steps'] = $steps;
+        $fields['stake'] = $stake;
+        $fields['win'] = $win;
+        $fields['amount'] = $amount;            
+
+        $this->step_model->new_step($fields);
+        
+        $steps++;
+        
+        if($amount >= $stop) {
             $this->notices->SetNotice('Strategy computed successfully!');				
             redirect('admincp2/livescore/list_strategies');
-                       
         }
-        
-        function steps_recursive($strategy_id,$prev,$amount,$steps,$intermission,$rate,$multiply,$stop)
-        {                
-            $this->load->model('step_model');
-                                        
-            $diff = $amount - $prev;
-            if($diff >= $intermission) $prev += $intermission;
-
-            $stake = $prev*$rate;        
-            $win = $prev*$rate*($multiply-1);
-            $amount += $win;            
-            
-            $fields = array();
-            $fields['strategy_id'] = $strategy_id;
-            $fields['steps'] = $steps;
-            $fields['stake'] = $stake;
-            $fields['win'] = $win;
-            $fields['amount'] = $amount;            
-
-            $this->step_model->new_step($fields);
-            
-            $steps++;
-            
-            if($amount >= $stop) {
-                $this->notices->SetNotice('Strategy computed successfully!');				
-                redirect('admincp2/livescore/list_strategies');
-            }
-            else $this->steps_recursive($strategy_id,$prev,$amount,$steps,$intermission,$rate,$multiply,$stop);
-        }
+        else $this->steps_recursive($strategy_id,$prev,$amount,$steps,$intermission,$rate,$multiply,$stop);
+    }
               
 //************************************* BETS LIST*******************************//  
         
-        function list_bets()
+    function list_bets()
 	{
 		$this->load->library('dataset');
 
         $this->admin_navigation->module_link('Import Bets',site_url('admincp4/livescore/import_csv'));
 		$this->admin_navigation->module_link('Add New Bet',site_url('admincp2/livescore/add_bet'));
+        $this->admin_navigation->module_link('Stat Bets Methods',site_url('admincp6/livescore/stats_bet_methods'));
+        $this->admin_navigation->module_link('Stat Bets Countries',site_url('admincp6/livescore/stats_bet_countries'));
         
 		$columns = array(
 						array(
 							'name' => 'ID',
 							'type' => 'id',
 							'width' => '1%',
-                           ),
-						array(
-							'name' => 'PB',
-							'width' => '2%',
+                           ),						
+                        array(
+                            'name' => 'PB',
+                            'width' => '2%',
                             'type' => 'text',
-							'sort_column' => 'paper_bet',
-							),
-
+                            'sort_column' => 'paper_bet',
+                            ),
+                        array(
+                            'name' => 'TV',
+                            'width' => '2%',
+                            'type' => 'text',
+                            'sort_column' => 'live_tv',
+                            ),
 						array(
 							'name' => 'Event Name',
                             'type' => 'text',
 							'width' => '17%',
 							'filter' => 'event_name',
 							),
+                        array(
+                            'name' => 'Event Date',
+                            'type' => 'text',
+                            'width' => '8%',
+                            'filter' => 'event_date',
+                            ),
                        array(
 							'name' => 'Country',
                             'type' => 'text',
@@ -471,13 +488,18 @@ class Admincp2 extends Admincp_Controller {
 							'name' => 'Mkt Select',
 							'width' => '5%',
                             'type' => 'text',
-						),
+						),                        
 						array(
 							'name' => 'Strategy Name',
-							'width' => '24%',
+							'width' => '11%',
                             'type' => 'text',
 							'filter' => 'strategy_name',
 						),
+                        array(
+                            'name' => 'Score',
+                            'width' => '3%',
+                            'type' => 'text',
+                        ),
             );
         if ($this->user_model->logged_in() and $this->user_model->is_admin()) {
             $columns[] = array(
@@ -497,10 +519,11 @@ class Admincp2 extends Admincp_Controller {
 						
 					
                 
-                $filters = array();    
-                $filters['limit'] = 30;
+        $filters = array();    
+        $filters['limit'] = 30;
 
-                if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
+        if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
+        else $filters['offset'] = 0;
                 
 		$this->dataset->columns($columns);
 		$this->dataset->datasource('bet_model','get_bets',$filters);
@@ -508,7 +531,7 @@ class Admincp2 extends Admincp_Controller {
 		$this->dataset->rows_per_page($filters['limit']);
 
 		// total rows
-                $this->load->model('bet_model');
+        $this->load->model('bet_model');
 		$total_rows = $this->bet_model->get_num_rows_bets($filters);
 
 		$this->dataset->total_rows($total_rows);
@@ -518,76 +541,85 @@ class Admincp2 extends Admincp_Controller {
 
 		// add actions
 		$this->dataset->action('Delete','admincp2/livescore/delete_bet');
+
+        $data = array(
+                'limit' => $filters['limit'],
+                'offset' => $filters['offset']
+            );
 		
-		$this->load->view('list_bets');
+		$this->load->view('list_bets', $data);
 	}
         
     function add_bet($action = 'new', $id = false) 
-        {   
-            $this->load->helper('form');
-            $this->load->library('admin_form');  
-            
-            $form = new Admin_form();
-            $form->fieldset ('Add New Bet');    
-            $this->load->model('bet_model');
-			$this->load->model('method_model');
-			$this->load->model('league_model');
-			$this->load->model('user_model');
-                        $this->load->model('market_model');
-			$this->load->model('country_model');
+    {   
+        $this->load->helper('form');
+        $this->load->library('admin_form');  
+        
+        $form = new Admin_form();
+        $form->fieldset ('Add New Bet');    
+        $this->load->model('bet_model');
+		$this->load->model('method_model');
+		$this->load->model('competition_model');
+		$this->load->model('user_model');
+        $this->load->model('market_model');
+		$this->load->model('country_model');
 
-            $countries = array();
-            $params['dropdown'] = 1;
-	    	$countries = $this->country_model->get_countries($params);
+        $countries = array();
+        $params['dropdown'] = 1;
+    	$countries = $this->country_model->get_countries($params);
 
-            
-	    	$methods = array();
-	    	$methods = $this->method_model->get_methods(); 
-            foreach($methods as $val) {
-                $strategy[$val['ID_method']] = $val['method_name'];
-            }
-            
-            $leagues = array();
-	    	$leagues = $this->league_model->get_leagues(); 
-            foreach($leagues as $val) {
-                $event[$val['ID_league']] = $val['league_name'];
-            }
-            
-            $markets = array();
-	    $markets = $this->market_model->get_markets(); 
-            array_unshift($markets,array('ID_market' => 0,'market_name'=>'Select Markets'));            
-            foreach($markets as $val) {
-                $market[$val['ID_market']] = $val['market_name'];
-            }
-		
-			$markets_selects = array();
-	    	$markets_selects = $this->market_model->get_markets_selects();
-			foreach($markets_selects as $val) {
-                $market_select[$val['market_select_id']] = $val['market_select_name'];
-            }
-            
-            $username=$this->user_model->get('id');
-            //$username = $this->user_model->get('username');
-            
-            $data = array(      
-                   	'username' => $username,
+        
+    	$methods = array();
+    	$methods = $this->method_model->get_methods(); 
+        foreach($methods as $val) {
+            $strategy[$val['ID_method']] = $val['method_name'];
+        }
+        
+        $competitions = array();
+        $competitions_filter = array();
+        $event = array();
+        $competitions_filter['country_id'] = $bet['country_name'];
+        $competitions = $this->competition_model->get_competitions($competitions_filter); 
+        foreach($competitions as $val) {
+            $event[$val['competition_id']] = $val['name'];
+        }
+        
+        $markets = array();
+        $markets = $this->market_model->get_markets(); 
+        array_unshift($markets,array('ID_market' => 0,'market_name'=>'Select Markets'));            
+        foreach($markets as $val) {
+            $market[$val['ID_market']] = $val['market_name'];
+        }
+	
+		$markets_selects = array();
+    	$markets_selects = $this->market_model->get_markets_selects();
+		foreach($markets_selects as $val) {
+            $market_select[$val['market_select_id']] = $val['market_select_name'];
+        }
+        
+        $username=$this->user_model->get('id');
+        //$username = $this->user_model->get('username');
+        
+        $data = array(      
+               	'username' => $username,
                 'strategy' => $strategy,
- 					'country_name' => $countries,
-                    'event' => $event,
-					'market_select' => $market_select,
-                    'market' => $market,
-                	'form_title' => 'Add New Bet',
-                    'form_action' => site_url('admincp2/livescore/post_bet/new'),
-					'action' => 'new',
-				);
-  
-		$this->load->view('add_bet',$data);		
+				'country_name' => $countries,
+                'event' => $event,
+				'market_select' => $market_select,
+                'market' => $market,
+            	'form_title' => 'Add New Bet',
+                'form_action' => site_url('admincp2/livescore/post_bet/new'),
+				'action' => 'new',
+			);
+
+    	$this->load->view('add_bet',$data);		
 	}        
 	
 	/**
 	* Handle New/Edit Bet Post
 	*/
-	function post_bet($action, $id = false){	       
+	function post_bet($action, $id = false, $url = '')
+    {	       
 		
 		$this->load->model('bet_model');
 		
@@ -607,26 +639,30 @@ class Admincp2 extends Admincp_Controller {
 		$comment = $this->input->post('comment');
 		$strategy = $this->input->post('strategy');
 		$username = $this->input->post('username');
+        $final_score = $this->input->post('final_score');
+        $live_tv = $this->input->post('live_tv');
 		$paper_bet = $this->input->post('paper_bet');		
 		
 		if ($action == 'new') {
             
             $insert_fields = array(
-							'event_name'=> $event_name,
-							'event_date'=> $event_date,
-							'stake'=> $stake,
-							'profit'=> $profit,
-							'loss'=> $loss,
-							'country_name'=> $country_name,
-							'event_type'=> $event_type,
-							'bet_type'=> $bet_type,
-							'odds'=> $odds,
-							'market_type'=> $market_type,
-                                                        'market_select'=> $market_select,
-							'comment'=> $comment,
-							'strategy'=> $strategy,
-                                                        'username'=>$username,
-														'paper_bet'=>$paper_bet
+							'event_name'     => $event_name,
+							'event_date'     => $event_date,
+							'stake'          => $stake,
+							'profit'         => $profit,
+							'loss'           => $loss,
+							'country_name'   => $country_name,
+							'event_type'     => $event_type,
+							'bet_type'       => $bet_type,
+							'odds'           => $odds,
+							'market_type'    => $market_type,
+                            'market_select'  => $market_select,
+							'comment'        => $comment,
+							'strategy'       => $strategy,
+                            'username'       =>$username,
+                            'final_score'    => $final_score,
+                            'live_tv'        => $live_tv,
+							'paper_bet'      =>$paper_bet
 						);
             
             
@@ -651,7 +687,9 @@ class Admincp2 extends Admincp_Controller {
 							'comment'      => $comment,
 							'strategy'     => $strategy,
                             'username'     => $username,
-							'paper_bet'    => $paper_bet
+							'paper_bet'    => $paper_bet,
+                            'final_score'  => $final_score,
+                            'live_tv'      => $live_tv,
 						);
             
 			$bet_id = $this->bet_model->update_bet($update_fields,$id_bet);
@@ -659,6 +697,10 @@ class Admincp2 extends Admincp_Controller {
 			$this->notices->SetNotice('Bet edited successfully.');
 		}
 		
+        if ($url) {
+            $url = base64_decode($url);
+            redirect($url);
+        }
                 
 		redirect('admincp2/livescore/list_bets');
 		
@@ -671,76 +713,83 @@ class Admincp2 extends Admincp_Controller {
 	* Show the bet form, preloaded with variables
 	*
 	* @param int $id the ID of the bet
-
 	*/
-	function edit_bet($id) {
+	function edit_bet($id) 
+    {
 		$this->load->model('livescore/bet_model');
 		$this->load->model('bet_model');
 		$this->load->model('method_model');
-		$this->load->model('league_model');
+		$this->load->model('competition_model');
 		$this->load->model('market_model');
 		$this->load->model('country_model');
-                $this->load->model('user_model');
-                
-            $countries = array();
-            $params['dropdown'] = 1;
-	    	$countries = $this->country_model->get_countries($params);
+        $this->load->model('user_model');
 
-            
-	    	$methods = array();
-	    	$methods = $this->method_model->get_methods(); 
-            foreach($methods as $val) {
-                $strategy[$val['ID_method']] = $val['method_name'];
-            }
-            
-            $leagues = array();
-	    	$leagues = $this->league_model->get_leagues(); 
-            foreach($leagues as $val) {
-                $event[$val['ID_league']] = $val['league_name'];
-            }
-            
-            $markets = array();
-	    	$markets = $this->market_model->get_markets(); 
-            foreach($markets as $val) {
-                $market[$val['ID_market']] = $val['market_name'];
-            }
-            
-			
-			$bet = $this->bet_model->get_bet($id);
-		
-		 	$markets_selects = array();
-			$bet['market_select_name'] = array();
-	    	$markets_selects = $this->market_model->get_markets_selects($bet['market_type']); 
-            foreach($markets_selects as $val) {
-                $market_select[$val['market_select_id']] = $val['market_select_name'];
-            }
+        $bet = $this->bet_model->get_bet($id);
+                
+        $countries = array();
+        $params['dropdown'] = 1;
+    	$countries = $this->country_model->get_countries($params);
+
+        
+    	$methods = array();
+    	$methods = $this->method_model->get_methods(); 
+        foreach($methods as $val) {
+            $strategy[$val['ID_method']] = $val['method_name'];
+        }
+        
+        $competitions = array();
+        $competitions_filter = array();
+        $event = array();
+        $competitions_filter['country_id'] = $bet['country_name'];
+    	$competitions = $this->competition_model->get_competitions($competitions_filter); 
+        foreach($competitions as $val) {
+            $event[$val['competition_id']] = $val['name'];
+        }
+        
+        $markets = array();
+    	$markets = $this->market_model->get_markets(); 
+        foreach($markets as $val) {
+            $market[$val['ID_market']] = $val['market_name'];
+        }
+        					
+	 	$markets_selects = array();
+		$bet['market_select_name'] = array();
+    	$markets_selects = $this->market_model->get_markets_selects($bet['market_type']); 
+        foreach($markets_selects as $val) {
+            $market_select[$val['market_select_id']] = $val['market_select_name'];
+        }
 		$username = $this->user_model->get('username');
 
+        $url = base64_encode($this->agent->referrer());
+
 		$data = array(
-                                        'username' => $bet['username'],
-					'ID_bet' => $bet['ID_bet'],
-					'event_name' => $bet['event_name'],
-					'event_date' => $bet['event_date'],
-					'stake' => $bet['stake'],
-					'profit' => $bet['profit'],
-					'loss' => $bet['loss'],
-					'id_country' => $bet['country_name'],
-					'country_name' => $countries,
-					'event' => $event,
-					'bet_type' => $bet['bet_type'],
-					'odds' => $bet['odds'],
-					'market_id' => $bet['market_type'],
-					'market' => $market,
+                    'username'         => $bet['username'],
+					'ID_bet'           => $bet['ID_bet'],
+					'event_name'       => $bet['event_name'],
+					'event_date'       => $bet['event_date'],
+					'stake'            => $bet['stake'],
+					'profit'           => $bet['profit'],
+					'loss'             => $bet['loss'],
+					'id_country'       => $bet['country_name'],
+					'country_name'     => $countries,
+					'event'            => $event,
+                    'id_event'         => $bet['event_type'],
+					'bet_type'         => $bet['bet_type'],
+					'odds'             => $bet['odds'],
+					'market_id'        => $bet['market_type'],
+					'market'           => $market,
                     'market_select_id' => $bet['market_select'],
-                    'market_select' => $market_select,
-					'comment' => $bet['comment'],
-					'strategy_id' => $bet['strategy'],
-					'paper_bet' => $bet['paper_bet'],
-					'strategy' => $strategy,
-					'form' => $bet,
-					'form_title' => 'Edit Bet',
-					'form_action' => site_url('admincp2/livescore/post_bet/edit/'.$bet['ID_bet']),
-                    'action' => 'edit',
+                    'market_select'    => $market_select,
+					'comment'          => $bet['comment'],
+					'strategy_id'      => $bet['strategy'],
+					'paper_bet'        => $bet['paper_bet'],
+                    'final_score'      => $bet['final_score'],
+                    'live_tv'          => $bet['live_tv'],
+					'strategy'         => $strategy,
+					'form'             => $bet,
+					'form_title'       => 'Edit Bet',
+					'form_action'      => site_url('admincp2/livescore/post_bet/edit/'.$bet['ID_bet'].'/'.$url),
+                    'action'           => 'edit',
 					);
 		//print_r ($market_select);
         //die;		
@@ -750,9 +799,9 @@ class Admincp2 extends Admincp_Controller {
         /**
 	* Delete bet
 	*/
-         function delete_bet($contents,$return_url) 
-        {
-		
+    function delete_bet($contents,$return_url) 
+    {
+	
 		$this->load->library('asciihex');
 		$this->load->model('bet_model');
 		
@@ -775,50 +824,50 @@ class Admincp2 extends Admincp_Controller {
         
 //********************************** Methods LIST *******************************//           
                 
-        function list_methods()
+    function list_methods()
 	{
 		$this->load->library('dataset');
 		$this->admin_navigation->module_link('Add New Method',site_url('admincp2/livescore/add_method/new'));
                 
                 
-                $columns = array(
-						array(
-							'name' => 'ID #',
-							'type' => 'id',
-							'width' => '5%',
-							'filter' => 'ID_method',
-                                                    ),
+        $columns = array(
+				array(
+					'name' => 'ID #',
+					'type' => 'id',
+					'width' => '5%',
+					'filter' => 'ID_method',
+                                            ),
 
-						array(
-							'name' => 'Method Name',
-                                                        'type' => 'text',
-							'width' => '15%',
-                                                        'filter' => 'method_name',
-							),
-						array(
-							'name' => 'Method Details',
-                                                        'type' => 'text',
-							'width' => '75%',
-							),
-						 array(
-							'name' => '',
-							'width' => '5%',
-                                                        'type' => 'text',
-						),
-						
-					);
+				array(
+					'name' => 'Method Name',
+                                                'type' => 'text',
+					'width' => '15%',
+                                                'filter' => 'method_name',
+					),
+				array(
+					'name' => 'Method Details',
+                                                'type' => 'text',
+					'width' => '75%',
+					),
+				 array(
+					'name' => '',
+					'width' => '5%',
+                                                'type' => 'text',
+				),
+				
+			);
                 
-                $filters = array(); 
-                $filters['limit'] = 10;
-                //$filters['id'] = $id;
-                
-                if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
-		
-                if(isset($_GET['filters'])) {
-                    $aux = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
-                    if(isset($aux['ID_method'])) $filters['ID_method'] = $aux['ID_method'];
-                    if(isset($aux['method_name'])) $filters['method_name'] = $aux['method_name'];
-                }
+        $filters = array(); 
+        $filters['limit'] = 10;
+        //$filters['id'] = $id;
+        
+        if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
+
+        if(isset($_GET['filters'])) {
+            $aux = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+            if(isset($aux['ID_method'])) $filters['ID_method'] = $aux['ID_method'];
+            if(isset($aux['method_name'])) $filters['method_name'] = $aux['method_name'];
+        }
                 
 		$this->dataset->columns($columns);
 		$this->dataset->datasource('method_model','get_methods',$filters);
@@ -838,15 +887,16 @@ class Admincp2 extends Admincp_Controller {
 		// add actions
 		$this->dataset->action('Delete','admincp2/livescore/delete_method');
 		
-		$this->load->view('list_methods');  
-        }
+		$this->load->view('list_methods');
+
+    }
         
-        /**
+    /**
 	* Delete Method
 	*
 	*/
-         function delete_method ($contents,$return_url) 
-        {
+     function delete_method ($contents,$return_url) 
+    {
 		
 		$this->load->library('asciihex');
 		$this->load->model('method_model');
@@ -865,6 +915,7 @@ class Admincp2 extends Admincp_Controller {
 		return TRUE;
 	
 	}
+
 	/**
 	*View Method description
 	*
@@ -881,11 +932,12 @@ class Admincp2 extends Admincp_Controller {
 		 
 	}
         
-        /**
+    /**
 	* Add New Method
 	*
 	*/
-	function add_method () {
+	function add_method () 
+    {
 		
 		$this->load->model('livescore/method_model');
 		
@@ -903,9 +955,9 @@ class Admincp2 extends Admincp_Controller {
 	/**
 	* Handle New/Edit Method Post
 	*/
-	function post_method ($action, $id = false) {	
-            
-		
+	function post_method ($action, $id = false) 
+    {	
+            		
 		// content
 		$id_method = $this->input->post('ID_method');
 		$method_name = $this->input->post('method_name');
@@ -946,20 +998,21 @@ class Admincp2 extends Admincp_Controller {
 	*
 	* @return string The email form view
 	*/
-	function edit_method($id) {
+	function edit_method($id) 
+    {
 		$this->load->model('livescore/method_model');
 		
 		$method = $this->method_model->get_method($id);
 		
 		$data = array(
-					'ID_method' => $method['ID_method'],
-					'method_name' => $method['method_name'],
-					'method_description' => $method['method_description'],
-					'form' => $method,
-					'form_title' => 'Edit Method',
-					'form_action' => site_url('admincp2/livescore/post_method/edit/'.$method['ID_method']),
-                                        'action' => 'edit',
-					);
+			'ID_method' => $method['ID_method'],
+			'method_name' => $method['method_name'],
+			'method_description' => $method['method_description'],
+			'form' => $method,
+			'form_title' => 'Edit Method',
+			'form_action' => site_url('admincp2/livescore/post_method/edit/'.$method['ID_method']),
+            'action' => 'edit',
+		);
 		//var_dump ($data);
                 //die;		
 		$this->load->view('add_method',$data);
@@ -969,7 +1022,7 @@ class Admincp2 extends Admincp_Controller {
  
  //********************************** Countries LIST *******************************//           
                 
-        function list_countries()
+    function list_countries()
 	{
 				
 		$this->load->model('country_model');
@@ -978,27 +1031,27 @@ class Admincp2 extends Admincp_Controller {
 		$this->admin_navigation->module_link('Add New Country',site_url('admincp2/livescore/add_country/new'));
                 
                 
-                $columns = array(
-						array(
-							'name' => 'ID #',
-							'type' => 'id',
-							'width' => '5%',
-                                                    ),
+        $columns = array(
+				array(
+					'name' => 'ID #',
+					'type' => 'id',
+					'width' => '5%',
+                                            ),
 
-						array(
-							'name' => 'Country Name',
-                            'type' => 'text',
-							'width' => '90%',
-                            'filter' => 'country_name',
-							),
+				array(
+					'name' => 'Country Name',
+                    'type' => 'text',
+					'width' => '90%',
+                    'filter' => 'country_name',
+					),
 
-						 array(
-							'name' => '',
-							'width' => '5%',
-                            'type' => 'text',
-						),
-						
-					);
+				 array(
+					'name' => '',
+					'width' => '5%',
+                    'type' => 'text',
+				),
+				
+			);
                 
        $filters = array();    
        $filters['limit'] = 30;
@@ -1022,13 +1075,14 @@ class Admincp2 extends Admincp_Controller {
 		$this->dataset->action('Delete','admincp2/livescore/delete_country');
 		
 		$this->load->view('list_countries');  
-        }
+    }
 
     /**
 	* Add New Country
 	*
 	*/
-	function add_country () {
+	function add_country () 
+    {
 		
 		$this->load->model('livescore/country_model');
 		
@@ -1047,7 +1101,8 @@ class Admincp2 extends Admincp_Controller {
 	*
 	* Show the country list, preloaded with variables
 	*/
-	function edit_country($id) {
+	function edit_country($id) 
+    {
 		$this->load->model('country_model');
 		
 		$country = $this->country_model->get_country($id);
@@ -1071,7 +1126,8 @@ class Admincp2 extends Admincp_Controller {
 	/**
 	* Handle New/Edit Country Post
 	*/
-	function post_country ($action, $id = false) {	
+	function post_country ($action, $id = false) 
+    {	
 		
 		$this->load->model('country_model');
 		
@@ -1111,24 +1167,24 @@ class Admincp2 extends Admincp_Controller {
 	* Delete Country
 	*
 	*/
-         function delete_country ($contents,$return_url) 
-        {
-		
-		$this->load->library('asciihex');
-		$this->load->model('country_model');
-		
-		$contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
-		$return_url = base64_decode($this->asciihex->HexToAscii($return_url));
-		
-		foreach ($contents as $content) {
+    function delete_country ($contents,$return_url) 
+    {
+	
+        $this->load->library('asciihex');
+        $this->load->model('country_model');
+
+        $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+        $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+
+        foreach ($contents as $content) {
                         $this->country_model->delete_country($content);
-		}
-		       			
-		$this->notices->SetNotice('Countries deleted successfully.');
-				
-		redirect($return_url);
-		
-		return TRUE;
+        }
+               			
+        $this->notices->SetNotice('Countries deleted successfully.');
+        		
+        redirect($return_url);
+
+        return TRUE;
 	
 	}
  
@@ -1166,10 +1222,10 @@ class Admincp2 extends Admincp_Controller {
 						
 					);
                 
-                $filters = array();    
-                $filters['limit'] = 30;
+        $filters = array();    
+        $filters['limit'] = 30;
 
-                if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
+        if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
                 
 			
 		$this->dataset->columns($columns);
@@ -1198,7 +1254,8 @@ class Admincp2 extends Admincp_Controller {
 	* Add New League
 	*
 	*/
-	function add_league () {
+	function add_league () 
+    {
 		
 		$this->load->model('livescore/league_model');
 		
@@ -1216,9 +1273,9 @@ class Admincp2 extends Admincp_Controller {
 	/**
 	* Handle New/Edit League Post
 	*/
-	function post_league ($action, $id = false) {	
-            
-		
+	function post_league ($action, $id = false) 
+    {	
+            		
 		// content
 		$id_league = $this->input->post('ID_league');
 		$league_name = $this->input->post('league_name');
@@ -1256,7 +1313,8 @@ class Admincp2 extends Admincp_Controller {
 	*
 	* @return string The email form view
 	*/
-	function edit_league($id) {
+	function edit_league($id) 
+    {
 		$this->load->model('livescore/league_model');
 		
 		$league = $this->league_model->get_league($id);
@@ -1274,27 +1332,26 @@ class Admincp2 extends Admincp_Controller {
 		$this->load->view('add_league',$data);
 	} 
         
-        /**
+    /**
 	* Delete League
 	*/
-         function delete_league($contents,$return_url) 
-        {
-		
-		$this->load->library('asciihex');
-		$this->load->model('league_model');
-		
-		$contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
-		$return_url = base64_decode($this->asciihex->HexToAscii($return_url));
-		
-		foreach ($contents as $content) {
+    function delete_league($contents,$return_url) 
+    {	
+    	$this->load->library('asciihex');
+    	$this->load->model('league_model');
+    	
+    	$contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+    	$return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+    	
+    	foreach ($contents as $content) {
                         $this->league_model->delete_league($content);
-		}
-		       			
-		$this->notices->SetNotice('Leagues deleted successfully.');
-				
-		redirect($return_url);
-		
-		return TRUE;
+    	}
+    	       			
+    	$this->notices->SetNotice('Leagues deleted successfully.');
+    			
+    	redirect($return_url);
+    	
+    	return TRUE;
 	
 	}
         
@@ -1332,10 +1389,10 @@ class Admincp2 extends Admincp_Controller {
 						
 					);
                 
-                $filters = array();    
-                $filters['limit'] = 30;
+        $filters = array();    
+        $filters['limit'] = 30;
 
-                if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
+        if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
                 
 			
 		$this->dataset->columns($columns);
@@ -1376,16 +1433,15 @@ class Admincp2 extends Admincp_Controller {
             }
                         
                 if(empty($market_select)) $market_select = array(0=>'None');              
-		echo form_dropdown('markets_selects',$market_select); 
-		
-		
+		echo form_dropdown('markets_selects',$market_select); 			
 	}	 
         
         /**
 	* Add New Market
 	*
 	*/
-	function add_market () {
+	function add_market () 
+    {
 		
 		$this->load->model('livescore/market_model');
 		
@@ -1403,9 +1459,9 @@ class Admincp2 extends Admincp_Controller {
 	/**
 	* Handle New/Edit Market Post
 	*/
-	function post_market ($action, $id = false) {	
-            
-		
+	function post_market ($action, $id = false) 
+    {	
+            		
 		// content
 		$id_market = $this->input->post('ID_market');
 		$market_name = $this->input->post('market_name');
@@ -1443,7 +1499,8 @@ class Admincp2 extends Admincp_Controller {
 	*
 	* @return string The email form view
 	*/
-	function edit_market($id) {
+	function edit_market($id) 
+    {
 		$this->load->model('livescore/market_model');
 		
 		$market = $this->market_model->get_market($id);
@@ -1460,35 +1517,35 @@ class Admincp2 extends Admincp_Controller {
 		$this->load->view('add_market',$data);
 	} 
         
-        /**
+    /**
 	* Delete Market
 	*/
-         function delete_market($contents,$return_url) 
-        {
-		
-		$this->load->library('asciihex');
-		$this->load->model('market_model');
-		
-		$contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
-		$return_url = base64_decode($this->asciihex->HexToAscii($return_url));
-		
-		foreach ($contents as $content) {
-                        $this->market_model->delete_market($content);
-		}
-		       			
-		$this->notices->SetNotice('Leagues deleted successfully.');
-				
-		redirect($return_url);
-		
-		return TRUE;
+    function delete_market($contents,$return_url) 
+    {
 	
+        $this->load->library('asciihex');
+        $this->load->model('market_model');
+
+        $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+        $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+
+        foreach ($contents as $content) {
+                        $this->market_model->delete_market($content);
+        }
+               			
+        $this->notices->SetNotice('Leagues deleted successfully.');
+        		
+        redirect($return_url);
+
+        return TRUE;	
 	}
         
  //********************************** END Market LIST *******************************// 
        
-    function admin_tools() {
-        		$this->load->view('other_links');
-	 }
+    function admin_tools() 
+    {
+		$this->load->view('other_links');
+	}
     
     
 }

@@ -449,7 +449,7 @@ class Admincp5 extends Admincp_Controller
             $this->team_model->delete_team($team_star_id);
             $i++;
 
-            // $matches = $this->match_model->get_matches_by_team_id($team_star_id);
+            // $matches = $this->match_model->get_matches_by_team_id(array('team_id' => $team_star_id);
             // if(!empty($matches)) {
             //     print '<pre>MATCH';
             //     print_r($matches);
@@ -474,7 +474,7 @@ class Admincp5 extends Admincp_Controller
                 $teamz = $this->team_model->get_team_by_country_and_name($filters);
                 print_r($teamz);
                 foreach($teamz as $tz) {
-                    $matches = $this->match_model->get_matches_by_team_id($tz['team_id']);
+                    $matches = $this->match_model->get_matches_by_team_id(array('team_id' => $tz['team_id']));
                     $count = count($matches);
                     if($count) {
                        echo "COUNT = ".count($matches).'<br/>';
@@ -493,6 +493,152 @@ class Admincp5 extends Admincp_Controller
         }
 
         
+    }
+
+    function list_duplicate_teams()
+    {
+        $this->load->library('dataset');
+        $this->load->model('team_model');
+        
+        $duplicates_count = $this->team_model->get_null_teams_num_rows();                       
+                         
+        $columns = array(
+                            array(
+                                    'name' => 'NAME',
+                                    'type' => 'name',
+                                    'width' => '15%',                                        
+                                    ),                               
+                            array(
+                                    'name' => 'COUNTRY',
+                                    'width' => '15%',                                        
+                                    'filter' => 'country_name',
+                                    'type' => 'text',                                        
+                                    'sort_column' => 'country_name',
+                                    ),
+                            array(
+                                    'name' => 'SIMILAR TEAMS',
+                                    'type' => 'text',
+                                    'width' => '15%',                                        
+                                    ),
+                            array(
+                                    'name' => '# OF MATCHES',
+                                    'type' => 'text',
+                                    'width' => '15%',                                        
+                                    ),
+                            array(
+                                    'name' => 'MATCHES',
+                                    'type' => 'text',
+                                    'width' => '15%',                                        
+                                    ),                                                                 
+                            array(
+                                    'name' => 'EDIT',
+                                    'width' => '15%',                                        
+                                    'type' => 'text',
+                                    ),        
+                    );
+        
+        $filters = array();    
+        $filters['limit'] = 20;
+        $filters['sort']  = 'name';
+
+        if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];                 
+        if(isset($_GET['country_name'])) $filters['country_name'] = $_GET['country_name'];
+
+        if(isset($_GET['filters']))  $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));       
+
+        if(isset($filters_decode) && is_array($filters_decode)) {
+           foreach($filters_decode as $key=>$val) {
+                $filters[$key] = $val;
+            } 
+        }
+                                    
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('team_model','get_null_teams',$filters);
+               
+        $this->dataset->base_url(site_url('admincp5/livescore/list_duplicate_teams/'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->team_model->get_null_teams_num_rows($filters);
+ 
+        $this->dataset->total_rows($total_rows);                
+               
+        // initialize the dataset
+        $this->dataset->initialize();               
+        // add actions
+        $this->dataset->action('Delete','admincp/livescore/delete_team');                
+        $this->load->view('list_teams_duplicate');
+    }
+
+    function list_similar_teams_by_team_id($id)
+    {
+        $this->load->library('dataset');
+        $this->load->model('team_model');                                
+                         
+        $columns = array(
+                            array(
+                                    'name' => 'NAME',
+                                    'type' => 'name',
+                                    'width' => '15%',                                        
+                                    ),                               
+                            array(
+                                    'name' => 'COUNTRY',
+                                    'width' => '15%',                                        
+                                    'filter' => 'country_name',
+                                    'type' => 'text',                                        
+                                    'sort_column' => 'country_name',
+                                    ),                            
+                            array(
+                                    'name' => '# OF MATCHES',
+                                    'type' => 'text',
+                                    'width' => '15%',                                        
+                                    ),
+                            array(
+                                    'name' => 'MATCHES',
+                                    'type' => 'text',
+                                    'width' => '15%',                                        
+                                    ),                                                                 
+                            array(
+                                    'name' => 'EDIT',
+                                    'width' => '15%',                                        
+                                    'type' => 'text',
+                                    ),        
+                    );
+        
+        $filters = array();    
+        $filters['limit'] = 20;
+        $filters['sort']  = 'name';
+
+        if(isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];                 
+        if(isset($_GET['country_name'])) $filters['country_name'] = $_GET['country_name'];
+
+        if(isset($_GET['filters']))  $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));       
+
+        if(isset($filters_decode) && is_array($filters_decode)) {
+           foreach($filters_decode as $key=>$val) {
+                $filters[$key] = $val;
+            } 
+        }
+        
+        $filters['id'] = $id;                            
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('team_model','get_similar_teams_by_team_id',$filters);
+               
+        $this->dataset->base_url(site_url('admincp5/livescore/list_similar_teams_by_team_id/'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->team_model->get_similar_teams_by_team_id_num_rows($filters);
+ 
+        $this->dataset->total_rows($total_rows);                
+               
+        // initialize the dataset
+        $this->dataset->initialize();               
+        // add actions
+        $this->dataset->action('Delete','admincp/livescore/delete_team');                
+        $this->load->view('list_teams');
     }
 
 }

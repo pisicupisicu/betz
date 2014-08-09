@@ -20,7 +20,7 @@
 <div class="row">
     <div class="span12">
         <a href="<?=site_url('admincp2/livescore/list_methods')?>" class="btn btn-large btn-info">
-        <span class="icon-thumbs-up  icon-white"></span> List Strategies&nbsp;
+        <span class="icon-thumbs-up  icon-white"></span> List Methods
         </a>
         
         <a href="<?=site_url('admincp2/livescore/list_markets')?>" class="btn btn-large btn-info offset1">
