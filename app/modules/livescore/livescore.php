@@ -35,9 +35,7 @@ class Livescore extends Module {
 		// set the active module
 
 		$this->active_module = $this->name;	
-
 		
-
 		parent::__construct();
 
 	}
