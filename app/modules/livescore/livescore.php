@@ -22,15 +22,13 @@
 
 */
 
-
+// back in the game bitches :D
 
 class Livescore extends Module {
 
 	var $version = '1.0';
 
 	var $name = 'livescore';
-
-
 
 	function __construct () {
 
@@ -43,9 +41,7 @@ class Livescore extends Module {
 		parent::__construct();
 
 	}
-
-	
-
+        
 	/*
 
 	* Pre-admin function
