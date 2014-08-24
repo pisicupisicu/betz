@@ -22,7 +22,7 @@
 
 */
 
-
+// back in the game bitches :D
 
 class Livescore extends Module {
 
@@ -30,22 +30,16 @@ class Livescore extends Module {
 
 	var $name = 'livescore';
 
-
-
 	function __construct () {
 
 		// set the active module
 
 		$this->active_module = $this->name;	
-
 		
-
 		parent::__construct();
 
 	}
-
-	
-
+        
 	/*
 
 	* Pre-admin function
