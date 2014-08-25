@@ -1,5 +1,5 @@
-<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
-
+<?php if (!defined('BASEPATH')) require_once('index.php');
+if (!defined('BASEPATH')) exit('No direct script access allowed');
 
 
 /**
@@ -118,4 +118,9 @@ class Admincp extends Admincp_Controller {
                                                 array(
 							'name' => 'Over 3.5',
                                                         'type' => 'text',
-							'width
+							'width' => '10%',
+                                                    )
+                    );
+        }
+      
+}
