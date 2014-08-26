@@ -1,0 +1,106 @@
+<?php
+
+/** This file is part of KCFinder project
+  *
+  *      @desc Object initializations
+  *   @package KCFinder
+  *   @version {version}
+  *    @author Pavel Tzonkov <pavelc@users.sourceforge.net>
+  * @copyright 2010 KCFinder Project
+  *   @license http://www.opensource.org/licenses/gpl-2.0.php GPLv2
+  *   @license http://www.opensource.org/licenses/lgpl-2.1.php LGPLv2
+  *      @link http://kcfinder.sunhater.com
+  */?>
+
+browser.init = function() {
+    if (!this.checkAgent()) return;
+
+    $('body').click(function() {
+        browser.hideDialog();
+    });
+    $('#shadow').click(function() {
+        return false;
+    });
+    $('#dialog').unbind();
+    $('#dialog').click(function() {
+        return false;
+    });
+    this.initOpeners();
+    this.initSettings();
+    this.initContent();
+    this.initToolbar();
+    this.initResizer();
+};
+
+browser.checkAgent = function() {
+    if (!$.browser.version ||
+        ($.browser.msie && (parseInt($.browser.version) < 7) && !this.support.chromeFrame) ||
+        ($.browser.opera && (parseInt($.browser.version) < 10)) ||
+        ($.browser.mozilla && (parseFloat($.browser.version.replace(/^(\d+(\.\d+)?)([^\d].*)?$/, "$1")) < 1.8))
+    ) {
+        var html = '<div style="padding:10px">Your browser is not capable to display KCFinder. Please update your browser or install another one: <a href="http://www.mozilla.com/firefox/" target="_blank">Mozilla Firefox</a>, <a href="http://www.apple.com/safari" target="_blank">Apple Safari</a>, <a href="http://www.google.com/chrome" target="_blank">Google Chrome</a>, <a href="http://www.opera.com/browser" target="_blank">Opera</a>.';
+        if ($.browser.msie)
+            html += ' You may also install <a href="http://www.google.com/chromeframe" target="_blank">Google Chrome Frame ActiveX plugin</a> to get Internet Explorer 6 working.';
+        html += '</div>';
+        $('body').html(html);
+        return false;
+    }
+    return true;
+};
+
+browser.initOpeners = function() {
+    if (this.opener.TinyMCE && (typeof(tinyMCEPopup) == 'undefined'))
+        this.opener.TinyMCE = null;
+
+    if (this.opener.TinyMCE)
+        this.opener.callBack = true;
+
+    if ((!this.opener.name || (this.opener.name == 'fckeditor')) &&
+        window.opener && window.opener.SetUrl
+    ) {
+        this.opener.FCKeditor = true;
+        this.opener.callBack = true;
+    }
+
+    if (this.opener.CKEditor) {
+        if (window.parent && window.parent.CKEDITOR)
+            this.opener.CKEditor.object = window.parent.CKEDITOR;
+        else if (window.opener && window.opener.CKEDITOR) {
+            this.opener.CKEditor.object = window.opener.CKEDITOR;
+            this.opener.callBack = true;
+        } else
+            this.opener.CKEditor = null;
+    }
+
+    if (!this.opener.CKFinder && !this.opener.FCKEditor && !this.TinyMCE) {
+        if ((window.opener && window.opener.KCFinder && window.opener.KCFinder.callBack) ||
+            (window.parent && window.parent.KCFinder && window.parent.KCFinder.callBack)
+        )
+            this.opener.callBack = window.opener
+                ? window.opener.KCFinder.callBack
+                : window.parent.KCFinder.callBack;
+
+        if ((
+                window.opener &&
+                window.opener.KCFinder &&
+                window.opener.KCFinder.callBackMultiple
+            ) || (
+                window.parent &&
+                window.parent.KCFinder &&
+                window.parent.KCFinder.callBackMultiple
+            )
+        )
+            this.opener.callBackMultiple = window.opener
+                ? window.opener.KCFinder.callBackMultiple
+                : window.parent.KCFinder.callBackMultiple;
+    }
+};
+
+browser.initContent = function() {
+    $('div#folders').html(this.label("Loading folders..."));
+    $('div#files').html(this.label("Loading files..."));
+    $.ajax({
+        type: 'GET',
+        url: browser.baseGetData('init'),
+        async: false,
+        su
