@@ -223,7 +223,7 @@ class Admincp extends Admincp_Controller {
             
             $this->parse_introstats_info($link);
             
-            echo '<br/><div align="center"><a href="http://betz.banujos.ro/admincp/soccerstats/parse_form_view">Back</a></div>';
+            echo '<br/><div align="center"><a href="http://betz.dev/admincp/soccerstats/parse_form_view">Back</a></div>';
 
             return TRUE;
         }
