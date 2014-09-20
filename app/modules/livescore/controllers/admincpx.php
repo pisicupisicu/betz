@@ -14,7 +14,7 @@ if (!defined('BASEPATH')) {
  * @package BJ Tool
  *
  */
-class Admincp9 extends Admincp_Controller
+class Admincpx extends Admincp_Controller
 {
 
     public function __construct()

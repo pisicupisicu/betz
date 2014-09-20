@@ -45,11 +45,11 @@
 * or your site will break.
 */
 if (file_exists(APPPATH . 'config/default_routes.php')) {
-	include(APPPATH . 'config/default_routes.php');
+    include(APPPATH . 'config/default_routes.php');
 }
 
 if (file_exists(FCPATH . 'writeable/routes.php')) {
-	include(FCPATH . 'writeable/routes.php');
+    include(FCPATH . 'writeable/routes.php');
 }
 
 /* End of file routes.php */
