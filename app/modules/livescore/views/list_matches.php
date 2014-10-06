@@ -40,7 +40,7 @@ $('#search').on('click', function(event){
 			<a href="#" id="search">Search</a>
 			</li>
 		</ul>
-            <?		
+            <?php
 
             if (!empty($this->dataset->data)) {
 

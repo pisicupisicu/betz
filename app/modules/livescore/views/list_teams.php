@@ -19,11 +19,12 @@
 			<tr>							
 
 				<td><input type="checkbox" name="check_<?=$row['team_id'];?>" value="1" class="action_items" /></td>
-                <td align="center"><b><?=$row['name'];?></b></td>                                
+            <td align="center"><b><?=$row['name'];?></b></td>
+            <td align="center"><b><?=$row['team_id'];?></b></td>
 				<td align="center"><b><?=$row['country_name'];?></b></td>
 				<td align="center"><b><?=$row['matches'];?></b></td>
 				<td align="center"><b><a href="/admincp/livescore/list_matches_by_team_id/<?=$row['team_id'];?>" target="_blank">matches</a></b></td>							
-                <td align="center"><b><a href="/admincp/livescore/edit_team/<?=$row['team_id'];?>" target="_blank">edit</a></b></td>                                
+            <td align="center"><b><a href="/admincp/livescore/edit_team/<?=$row['team_id'];?>" target="_blank">edit</a></b></td>                                
 
 			</tr>
 
