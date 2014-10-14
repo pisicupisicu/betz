@@ -384,6 +384,19 @@ class Match_model extends CI_Model {
 
         return $row;
     }
+    
+    function get_matches_by_team_id_simple($filters) 
+    {
+        $this->load->model('team_model');       
+        
+        $this->db->or_where('team1', $filters['team_id']);
+        $this->db->or_where('team2', $filters['team_id']);
+        $this->db->select('*');
+        
+        $result = $this->db->get('z_matches');
+
+        return $result->result_array();
+    }
 
     function get_next_match() {
         $row = array();

@@ -347,7 +347,8 @@ class Team_model extends CI_Model {
      *
      * @return array
      */
-    function get_team($id) {
+    function get_team($id) 
+    {
 
         $row = array();
         $this->db->join('z_countries', 'z_teams.country_id = z_countries.ID', 'left');
@@ -357,7 +358,7 @@ class Team_model extends CI_Model {
         foreach ($result->result_array() as $row) {
             return $row;
         }
-
+        
         return $row;
     }
 
@@ -460,5 +461,40 @@ class Team_model extends CI_Model {
 
         return $row;
     }
-
+    
+    public function merge_teams($team_to_keep, $team_to_remove)
+    {
+        $this->load->model('match_model');                
+          
+        $team_to_keep_matches = $this->match_model->get_matches_by_team_id_simple(array('team_id' => $team_to_keep));
+        $team_to_remove_matches = $this->match_model->get_matches_by_team_id_simple(array('team_id' => $team_to_remove));        
+        
+        foreach ($team_to_keep_matches as $row) {
+            $links[] = $row['link_complete'];
+        }                
+        
+        foreach ($team_to_remove_matches as $key => $row) {
+            $update_fields = array();
+            if (!in_array($row['link_complete'], $links)) {                
+                // new match -> update match with $team_to_keep id
+                if ($row['team1'] == $team_to_remove) {
+                    $update_fields['team1'] = $team_to_keep;
+                } else if ($row['team2'] == $team_to_remove) {
+                    $update_fields['team2'] = $team_to_keep;
+                }
+                $this->match_model->update_match($update_fields, $row['id']);
+            } else {
+                // old match -> delete match
+                 $this->match_model->delete_match($row['id']);
+            }
+        }
+        
+        // finally delete the $team_to_remove team
+        $this->delete_team($team_to_remove);
+    }
+    
+    public function get_dummy($filters)
+    {
+        return $this->get_team($filters['id']);
+    }        
 }

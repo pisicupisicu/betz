@@ -648,7 +648,8 @@ class Admincp5 extends Admincp_Controller {
         $this->load->view('merge_teams', $data);
     }
 
-    public function merge_teams_list() {
+    public function merge_teams_list() 
+    {
         $team_to_keep = $this->input->post('team_to_keep');
         $team_to_remove = $this->input->post('team_to_remove');
 
@@ -658,7 +659,7 @@ class Admincp5 extends Admincp_Controller {
         $this->load->model('match_model');
 
         $this->load->library('dataset');
-        $this->admin_navigation->module_link('Merge teams', site_url('admincp2/livescore/merge_teams_validate/' . $team_to_keep . '/' . $team_to_remove));
+        $this->admin_navigation->module_link('Merge teams', site_url('admincp5/livescore/merge_teams_validate/' . $team_to_keep . '/' . $team_to_remove));
 
         $data = array(
             'team_to_keep' => $team_to_keep,
@@ -667,5 +668,102 @@ class Admincp5 extends Admincp_Controller {
 
         $this->load->view('merge_teams_list', $data);
     }
+    
+    public function merge_teams_validate($team_to_keep, $team_to_remove)
+    {
+        $this->load->model('match_model');
+        $this->load->model('team_model');
+        $this->load->library('dataset');
+        $columns = array(
+            array(
+                'name' => 'COMPETITION',
+                'type' => 'name',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'DATE',
+                'width' => '15%',                
+                'type' => 'text',                
+            ),
+            array(
+                'name' => 'HOME TEAM',
+                'type' => 'text',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'AWAY TEAM',
+                'type' => 'text',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'SCORE',
+                'width' => '15%',
+                'type' => 'text',
+            ),
+            array(
+                'name' => 'LINK',
+                'width' => '15%',
+                'type' => 'text',
+            ),
+        );
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('team_model', 'get_dummy', array('id' => 1));
+        $this->dataset->rows_per_page(1);
+        $this->dataset->total_rows(1);
 
+        // initialize the dataset
+        $this->dataset->initialize();
+        
+        $team = $this->team_model->get_team($team_to_keep);
+        $team_to_keep_name = $team['name'];
+        $team = $this->team_model->get_team($team_to_remove);
+        $team_to_remove_name = $team['name'];
+        
+        $filters['team_to_keep'] = $team_to_keep;
+        $filters['team_to_remove'] = $team_to_remove;
+        $filters['which_team'] = 2;
+        $old = $new = 0;
+        
+        $matches_second_team = $this->match_model->get_matches_by_team_id_partial($filters);        
+        
+        foreach ($matches_second_team as $key => $value) {
+            if ($matches_second_team[$key]['status'] == 'old') {
+                $old++;
+            } elseif ($matches_second_team[$key]['status'] == 'new') {
+                $new++;
+            }
+        }                
+        
+        $data = array(
+            'team_to_keep' => $team_to_keep,
+            'team_to_keep_name' => $team_to_keep_name,
+            'team_to_remove' => $team_to_remove,
+            'team_to_remove_name' => $team_to_remove_name,
+            'old' => $old,
+            'new' => $new,
+            'matches_second_team' => $matches_second_team
+        );
+        
+        $this->load->view('merge_teams_validate', $data);
+    }
+    
+    public function merge_teams_ok($team_to_keep, $team_to_remove)
+    {
+        $this->load->model('match_model');
+        $this->load->model('team_model');
+        
+        $team = $this->team_model->get_team($team_to_keep);
+        $team_to_keep_name = $team['name'];
+        $team = $this->team_model->get_team($team_to_remove);
+        $team_to_remove_name = $team['name'];
+        
+        $this->team_model->merge_teams($team_to_keep, $team_to_remove);
+                        
+        $data = array(
+            'team_to_keep_name' => $team_to_keep_name,
+            'team_to_remove_name' => $team_to_remove_name
+        );
+        
+        $this->load->view('merge_teams_ok', $data);
+    }
 }
