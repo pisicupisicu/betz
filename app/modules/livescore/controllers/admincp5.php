@@ -13,7 +13,8 @@ if (!defined('BASEPATH'))
  * @package BJ Tool
  *
  */
-class Admincp5 extends Admincp_Controller {
+class Admincp5 extends Admincp_Controller 
+{
 
     function __construct() {
 
@@ -766,4 +767,28 @@ class Admincp5 extends Admincp_Controller {
         
         $this->load->view('merge_teams_ok', $data);
     }
+    
+    // fk_country_name (country_id, name)
+    public function trim_teams()
+    {
+        $this->load->model('team_model');
+        $teams = $this->team_model->get_teams();
+        foreach ($teams as $team) {
+            $team = $this->team_model->get_team($team['team_id']);
+            $update_fields = array('name' => trim($team['name']));
+            $this->team_model->update_team($update_fields, $team['team_id']);
+        }
+        
+        echo '<div align="center">';
+        echo count($teams) . ' team names successfully trimmed<br/>';
+        echo '<a href="' . site_url('admincp/livescore/list_teams') . '">Back</a>';
+        echo '</div>';
+        
+    }
+    
+    public function multiple_teams()
+    {
+        $this->load->model('team_model');
+        $this->team_model->get_multiple_teams();
+    }        
 }

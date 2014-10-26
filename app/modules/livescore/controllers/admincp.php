@@ -635,10 +635,13 @@ class Admincp extends Admincp_Controller {
         return TRUE;
     }
 
-    function list_teams($duplicate = 0) {
+    function list_teams($duplicate = 0) 
+    {
         $this->load->library('dataset');
         $this->load->model('team_model');
 
+        $this->admin_navigation->module_link('Multiple teams', site_url('admincp5/livescore/multiple_teams'));
+        $this->admin_navigation->module_link('Trim teams', site_url('admincp5/livescore/trim_teams'));    
         $this->admin_navigation->module_link('Merge teams', site_url('admincp5/livescore/merge_teams'));
         $this->admin_navigation->module_link('Similar teams detection', site_url('admincp5/livescore/list_duplicate_teams'));
         $this->admin_navigation->module_link('Add team', site_url('admincp/livescore/add_team'));
@@ -766,13 +769,144 @@ class Admincp extends Admincp_Controller {
         }
     }
 
-    function fix_duplicate_teams($filters = array()) {
+    function fix_duplicate_teams($filters = array()) 
+    {
         $deleted = 0;
         $this->load->model('team_model');
         $deleted = $this->team_model->fix_duplicate_teams($filters);
 
         $this->notices->SetNotice($deleted . ' duplicate teams deleted!');
         redirect('admincp/livescore/list_teams/');
+    }
+    
+    function merge_duplicate_teams()
+    {
+        $this->load->model('team_model');
+        $duplicateTeams = $this->team_model->get_duplicate_teams();
+        $i = 0;
+        $team1 = $team2 = array();
+        
+        foreach($duplicateTeams as $team) {
+            if (!($i % 2)) {
+                $team1['id'] = $team['team_id'];
+                $team1['name'] = $team['name'];
+                $team1['matches'] = $team['matches'];
+            } else {
+                $team2['id'] = $team['team_id'];
+                $team2['name'] = $team['name'];
+                $team2['matches'] = $team['matches'];
+                
+                if ($team1['name'] == $team2['name']) {
+                    if ($team1['matches'] > $team2['matches']) {
+                        $this->team_model->merge_teams($team1['id'], $team2['id']);
+                    } else {                        
+                        $this->team_model->merge_teams($team2['id'], $team1['id']);
+                    }
+                }
+            }
+            $i++;            
+        }
+        
+        //        print '<pre>';
+        //        print_r($duplicateTeams);
+        //        print '</pre>';
+        
+        $this->notices->SetNotice($i/2 . ' teams merged!');
+        redirect('admincp/livescore/list_teams/');
+    }
+    
+    function merge_star_teams($filters = array())
+    {
+        $this->load->model('team_model');
+        $starTeams = $this->team_model->get_star_teams_simple($filters);
+        $i = 0;
+        
+        foreach ($starTeams as $team) {
+            $name = trim(str_replace('*', '', $team['name']));
+            $duplicateTeams = $this->team_model->get_team_by_country_and_name(array('country_id' => $team['country_id'], 'name' => $name));
+            
+            foreach ($duplicateTeams as $duplicateTeam) {
+                if ($team['country_id'] == $duplicateTeam['country_id']) {
+                    $this->team_model->merge_teams($duplicateTeam['team_id'], $team['team_id']);
+                    $i++;
+                }
+            }
+            
+            //print '<pre>ITERATION';
+            //print_r($team);
+            //print_r($duplicateTeams);
+            //print '</pre>';                        
+        }                
+        
+        $this->notices->SetNotice($i . ' teams merged!');
+        redirect('admincp/livescore/list_teams/');
+    }
+    
+    function merge_teams_country_null($filters = array())
+    {
+        $this->load->model('team_model');
+        $nullTeams = $this->team_model->get_null_teams($filters);
+        $i = 0;
+        
+        $forbidden = array(
+            'Europe' => 242,
+            'World' => 243,
+            'America' => 244,
+            'ASIA' => 245
+        );
+        
+        foreach ($nullTeams as $team) {
+            $similarTeams = $this->team_model->get_teams(array('equal' => true, 'name' => $team['name']));
+            //if ($team['name'] != 'Albania U21') continue;
+            //print '<pre>SIMILAR';
+            //print_r($similarTeams);
+            //print '</pre>';
+            //echo PHP_EOL . 'Sim Count = ' . count($similarTeams) . PHP_EOL;
+            // the team without country and the other one
+            if (count($similarTeams) == 3) {
+                /*
+                $world = $diff = 0;
+                
+                foreach ($similarTeams as $similarTeam) {
+                    if ($similarTeam['country_id'] != $team['country_id']) {
+                        if ($similarTeam['country_id'] == 243) {
+                            $world = $similarTeam['team_id'];
+                        } else {
+                            $diff = $similarTeam['team_id'];
+                        }                                               
+                    }                    
+                }
+                 if ($world && $diff) {
+                    // diff with null
+                    echo 'MERGE ' . $diff . ' with ' . $team['team_id'] . PHP_EOL;
+                    $this->team_model->merge_teams($diff, $team['team_id']);
+                    // diff with world
+                    echo 'MERGE ' . $diff . ' with ' . $world . PHP_EOL;
+                    $this->team_model->merge_teams($diff, $world);
+                }               
+                 *                  */
+                                
+                foreach ($similarTeams as $similarTeam) {
+                    //if (!in_array($similarTeam['country_id'], array_merge($forbidden, array($team['country_id'])))) {
+                    if ($similarTeam['country_id'] != $team['country_id']) {
+                        //$this->team_model->merge_teams($similarTeam['team_id'], $team['team_id']);
+                        //$this->team_model->update_team(array('country_id' => 243), $similarTeam['team_id']);
+                        print '<pre>MERGE';
+                        print_r($team);
+                        print_r($similarTeam);
+                        print '</pre>';
+                    }
+                }
+                $i++;
+                                     
+            }
+            
+            
+        }
+        
+        echo $i . ' merged teams';
+
+         
     }
 
     function add_team() {
