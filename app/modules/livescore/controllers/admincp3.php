@@ -33,11 +33,6 @@ class Admincp3 extends Admincp_Controller
         redirect('admincp3/livescore/list_matches');
     }
 
-    function list_matches() 
-    {
-        echo 'Urmeaza sublime...';
-    }
-
     function parse_matches() 
     {
         $this->load->library('admin_form');
@@ -85,16 +80,22 @@ class Admincp3 extends Admincp_Controller
         return TRUE;
     }
 
-    private function parse_info_per_date($link) 
+    private function parse_info_per_date($link)
     {
         $link = utf8_decode($link);
         $page = $this->getUrl($link);
         $countries = $teams = $score = $competitions = array();
+        
+        // echo "link = $link<br/>";
+        $temp = explode('/', $link);
+        // print_r($temp);
+        $match_date = $temp[4];
+        // echo '<b>match date = '.$match_date.'</b><br/>';        
 
-        $this->load->model('competition_model');
+        $this->load->model('competition_pre_model');
         $this->load->model('country_model');
-        $this->load->model('team_model');
-        $this->load->model('match_model');
+        $this->load->model('team_pre_model');        
+        $this->load->model('match_pre_model');
 
         //$pattern = '|<dt>(.*?)</dt>[\s\S]*?<dd>([\s\S]*?)</dd>|';
 
@@ -139,18 +140,18 @@ class Admincp3 extends Admincp_Controller
         $match = new stdClass();
 
         foreach ($countries[2] as $key => $country) {
-            $competition->country = $country;
-            $competition->country_link = substr($countries[1][$key], 1, -1);
-            $competition->competition_name = $countries[4][$key];
-            $competition->competition_link = substr(str_replace('soccer/', '', $countries[3][$key]), 1, -1);
+            $competition->country = trim($country);
+            $competition->country_link = trim(substr($countries[1][$key], 1, -1));
+            $competition->competition_name = trim($countries[4][$key]);
+            $competition->competition_link = trim(substr(str_replace('soccer/', '', $countries[3][$key]), 1, -1));
             $competition->matches = array();
             $competitions[] = clone $competition;
         }
 
         foreach ($scores[2] as $key => $val) {
-            $match->team_home = $scores[2][$key];
-            $match->team_away = $scores[5][$key];
-            $match->score_link = substr(str_replace('soccer/', '', $scores[3][$key]), 1);
+            $match->team_home = trim($scores[2][$key]);
+            $match->team_away = trim($scores[5][$key]);
+            $match->score_link = trim(substr(str_replace('soccer/', '', $scores[3][$key]), 1));
             $match->score = trim($scores[4][$key]);
 
             $matches[] = clone $match;
@@ -167,32 +168,60 @@ class Admincp3 extends Admincp_Controller
         }
 
         foreach ($competitions as $c) {
-            $c->competition_link = str_replace('soccer/', '', $c->competition_link);
+            $param = array();
+            $c->competition_link = trim(str_replace('soccer/', '', $c->competition_link));
             $param['link'] = $c->competition_link;
             $country_id = $this->country_model->get_country_by_name($c->country);
-            //competitions
-            $competition_id = $this->competition_model->competition_exists($param);
-            if ($competition_id) {
-                $update_fields = array(
-                    'name' => $c->competition_name,
-                    'link_complete' => 'http://www.livescore.com/soccer/' . $c->competition_link,
-                );
-                $this->competition_model->update_competition_by_link($update_fields, $c->competition_link);
-            } else {
-                if (!$country_id) {
-                    //default World
-                    $country_id = 243;
+            // if competition international it results country INTERNATIONAL which we don't have
+            if (!$country_id) {
+                if (strstr($c->competition_link, 'africa')) {
+                    $country_id = $this->country_model->get_country_by_name('AFRICA');
+                } elseif (strstr($c->competition_link, 'concacaf')) {
+                    $country_id = $this->country_model->get_country_by_name('AMERICA');
+                } elseif (strstr($c->competition_link, 'america')) {
+                    $country_id = $this->country_model->get_country_by_name('AMERICA');
+                } elseif (strstr($c->competition_link, 'asia')) {
+                    $country_id = $this->country_model->get_country_by_name('ASIA');
+                } elseif (strstr($c->competition_link, 'oceania')) {
+                    $country_id = $this->country_model->get_country_by_name('ASIA');
+                } elseif (strstr($c->competition_link, 'euro')) {
+                    $country_id = $this->country_model->get_country_by_name('EUROPE');
+                } elseif (strstr($c->competition_link, 'nextgen')) {
+                    $country_id = $this->country_model->get_country_by_name('EUROPE');
+                } elseif (strstr($c->competition_link, 'toulon')) {
+                    $country_id = $this->country_model->get_country_by_name('EUROPE');
+                } else {
+                    // default WORLD
+                    $country_id = $this->country_model->get_country_by_name('WORLD');
                 }
-
-                $insert_fields = array(
-                    'country_id' => $country_id,
+            }
+            
+            // competitions
+            if (!$this->competition_pre_model->competition_exists_id($param)) {
+                /*$update_fields = array(
                     'name' => $c->competition_name,
-                    'link' => $c->competition_link,
                     'link_complete' => 'http://www.livescore.com/soccer/' . $c->competition_link,
                 );
-                $competition_id = $this->competition_model->new_competition($insert_fields);
+                /$this->competition_model->update_competition_by_link($update_fields, $c->competition_link);*/
+                
+                $competition_id = $this->competition_pre_model->competition_exists($param);
+                // does not exist as old competition id
+                if (!$competition_id) {
+                    $insert_fields = array(
+                        'country_id' => $country_id,
+                        'name' => $c->competition_name,
+                        'link' => $c->competition_link,
+                        'link_complete' => 'http://www.livescore.com/soccer/' . $c->competition_link,
+                    );
+                    $competition_id = $this->competition_pre_model->new_competition($insert_fields);
+                } else {
+                    $insert_fields = array(
+                        'competition_id' => $competition_id
+                    );
+                    $competition_id = $this->competition_pre_model->new_competition($insert_fields);
+                }
             }
-            //teams
+            // teams
             $teams = array();
             $param = array();
             foreach ($c->matches as $m) {
@@ -201,44 +230,55 @@ class Admincp3 extends Admincp_Controller
                 foreach ($teams as $t) {
                     $param['name'] = $t;
                     $param['country_id'] = $country_id;
-                    if (!$this->team_model->team_exists($param)) {
-                        $this->team_model->new_team($param);
+                    $param['matches'] = 0;
+                    
+                    if (!$this->team_pre_model->team_exists_id($param)) {
+                        $team_id = $this->team_pre_model->team_exists($param);
+                        // does not exist as old team id
+                        if (!$team_id) {
+                            $this->team_pre_model->new_team($param);
+                        } else {
+                            $insert_fields = array(
+                              'team_id' =>  $team_id
+                            );
+                            $this->team_pre_model->new_team($insert_fields);
+                        }
                     }
                 }
             }
 
-            //matches
-            //echo "link = $link<br/>";
-            $temp = explode('/', $link);
-            //print_r($temp);
-            $match_date = $temp[4];
-            //echo '<b>match date = '.$match_date.'</b><br/>';   
+            // matches
             foreach ($c->matches as $m) {
-                $team1_id = $this->team_model->team_exists(array('name' => $m->team_home, 'country_id' => $country_id));
-                $team2_id = $this->team_model->team_exists(array('name' => $m->team_away, 'country_id' => $country_id));
+                $team1_id = $this->team_pre_model->team_exists_id(array('name' => $m->team_home, 'country_id' => $country_id));
+                $team2_id = $this->team_pre_model->team_exists_id(array('name' => $m->team_away, 'country_id' => $country_id));
                 $link_complete = 'http://www.livescore.com/soccer/' . $m->score_link;
 
                 $match_data = array(
-                    'competition_id' => $competition_id,
+                    'competition_id_pre' => $competition_id,
                     'match_date' => $match_date,
-                    'team1' => $team1_id,
-                    'team2' => $team2_id,
+                    'team1_pre' => $team1_id,
+                    'team2_pre' => $team2_id,
                     'score' => str_replace(' ', '', $m->score),
                     'link' => $m->score_link,
-                    'link_complete' => $link_complete,
-                    'parsed' => 0,
+                    'link_complete' => $link_complete                    
                 );
+                
+//                if (strstr($m->team_home, 'AC Milan')) {
+//                    echo '<br/>---------------';
+//                    echo 'country_id = ' . $country_id . ' team1_id = ' . $team1_id . ' team2_id = ' . $team2_id;
+//                    echo '<br/>';
+//                    die;
+//                }
 
-                $match_id = $this->match_model->match_exists(array('link' => $m->score_link));
+                $match_id = $this->match_pre_model->match_exists(array('link' => $m->score_link));
 
                 if (!$match_id) {
-                    $this->match_model->new_match($match_data);
+                    $this->match_pre_model->new_match($match_data);
                 } else {
-                    $match_db = $this->match_model->get_match($match_id);
-                    //if matched is not parsed yet we can still update it
-                    if (!$match_db['parsed']) {
-                        $this->match_model->update_match($match_data, $match_id);
-                    }
+                    $match_db = $this->match_pre_model->get_match($match_id);
+                    // if matched is not parsed yet we can still update it                    
+                    $this->match_pre_model->update_match($match_data, $match_db['index']);
+                    
                 }
             }
         }
@@ -390,6 +430,288 @@ class Admincp3 extends Admincp_Controller
         curl_close($cUrl);
 
         return $pageContent;
+    }
+    
+    public function list_matches_pre()
+    {
+        $this->load->model('match_pre_model');
+        $this->load->library('dataset');
+
+        $filters = array();       
+        
+        $this->admin_navigation->module_link('List teams pre', site_url('admincp3/livescore/list_teams_pre'));
+        $this->admin_navigation->module_link('List competitions pre', site_url('admincp3/livescore/list_competitions_pre'));
+
+        $columns = array(
+            array(
+                'name' => 'COUNTRY',
+                'width' => '10%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => 'COMPETITION',
+                'width' => '10%',
+                'filter' => 'competition_name',
+                'type' => 'name',
+                'sort_column' => 'competition_name',
+            ),
+            array(
+                'name' => 'DATE',
+                'width' => '15%',
+                'filter' => 'match_date',
+                'type' => 'date',
+                'field_start_date' => '2013-01-01',
+                'field_end_date' => '2013-12-31',
+                'sort_column' => 'match_date',
+            ),
+            array(
+                'name' => 'HOME',
+                'width' => '15%',
+                'filter' => 'team1',
+                'type' => 'text',
+                'sort_column' => 'team1',
+            ),
+            array(
+                'name' => 'AWAY',
+                'width' => '15%',
+                'filter' => 'team2',
+                'type' => 'text',
+                'sort_column' => 'team2',
+            ),
+            array(
+                'name' => 'SCORE',
+                'width' => '5%',
+                'filter' => 'score',
+                'type' => 'text',
+                'sort_column' => 'score',
+            ),
+            array(
+                'name' => 'LINK COMPLETE',
+                'width' => '20%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'View',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'Edit',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+        );
+
+        $filters = array();
+        $filters['limit'] = 20;
+
+        if (isset($_GET['filters'])) {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+        }
+
+        if (isset($_GET['offset']))
+            $filters['offset'] = $_GET['offset'];
+        if (isset($_GET['country_name']))
+            $filters['country_name'] = $_GET['country_name'];
+        if (isset($_GET['competition_name']))
+            $filters['competition_name'] = $_GET['competition_name'];
+        if (isset($_GET['team1']))
+            $filters['team1'] = $_GET['team1'];
+        if (isset($_GET['team2']))
+            $filters['team2'] = $_GET['team2'];
+        if (isset($_GET['score']))
+            $filters['score'] = $_GET['score'];
+        if (isset($_GET['match_date_start']))
+            $filters['match_date_start'] = $_GET['match_date_start'];
+        if (isset($_GET['match_date_end']))
+            $filters['match_date_end'] = $_GET['match_date_end'];
+
+        if (isset($filters_decode) && !empty($filters_decode)) {
+            foreach ($filters_decode as $key => $val) {
+                $filters[$key] = $val;
+            }
+        }
+
+        foreach ($filters as $key => $val) {
+            if (in_array($val, array('filter results', 'start date', 'end date'))) {
+                unset($filters[$key]);
+            }
+        }       
+//unset($filters['limit']);
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('match_pre_model', 'get_matches', $filters);
+        $this->dataset->base_url(site_url('admincp3/livescore/list_matches_pre'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->match_pre_model->get_num_rows($filters);
+        $this->dataset->total_rows($total_rows);
+
+        // initialize the dataset
+        $this->dataset->initialize();
+        // add actions
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_match_pre');
+        $this->load->view('list_matches_pre');
+    }
+    
+    function list_competitions_pre() 
+    {
+                
+                ini_set('display_errors', 1);
+        $this->load->model('competition_pre_model');
+        $this->admin_navigation->module_link('Fix competitions', site_url('admincp/livescore/fix_competitions'));
+        $this->admin_navigation->module_link('Add competition', site_url('admincp/livescore/add_competition'));
+        $this->load->library('dataset');
+
+        $columns = array(
+            array(
+                'name' => 'NAME',
+                'type' => 'name',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'COUNTRY',
+                'width' => '15%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => 'MATCHES',
+                'type' => 'name',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'LINK',
+                'width' => '15%',
+                'type' => 'text'
+            ),
+            array(
+                'name' => 'LINK COMPLETE',
+                'width' => '35%',
+                'type' => 'text'
+            ),            
+            array(
+                'name' => 'EDIT',
+                'width' => '5%',
+                'type' => 'text',
+            ),
+        );
+
+        $filters = array();
+        $filters['limit'] = 20;
+
+        if (isset($_GET['filters'])) {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+        }
+
+        if (isset($_GET['offset']))
+            $filters['offset'] = $_GET['offset'];
+        if (isset($_GET['country_name']))
+            $filters['country_name'] = $_GET['country_name'];
+
+        if (isset($filters_decode) && !empty($filters_decode)) {
+            foreach ($filters_decode as $key => $val) {
+                $filters[$key] = $val;
+            }
+        }
+
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('competition_pre_model', 'get_competitions', $filters);
+        $this->dataset->base_url(site_url('admincp3/livescore/list_competitions_pre'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->competition_pre_model->get_num_rowz($filters);
+        $this->dataset->total_rows($total_rows);
+
+        // initialize the dataset
+        $this->dataset->initialize();
+        // add actions
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_competition');
+        $this->load->view('list_competitions_pre');
+    }
+    
+    function list_teams_pre() 
+    {
+        $this->load->library('dataset');
+        $this->load->model('team_pre_model');
+
+        $columns = array(
+            array(
+                'name' => 'NAME',
+                'type' => 'name',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'ID',
+                'type' => 'id',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'COUNTRY',
+                'width' => '15%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => '# OF MATCHES',
+                'type' => 'text',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'MATCHES',
+                'type' => 'text',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'EDIT',
+                'width' => '15%',
+                'type' => 'text',
+            ),
+        );
+
+        $filters = array();
+        $filters['limit'] = 20;
+        $filters['sort'] = 'name';
+
+        if (isset($_GET['offset']))
+            $filters['offset'] = $_GET['offset'];
+        if (isset($_GET['country_name']))
+            $filters['country_name'] = $_GET['country_name'];
+
+        if (isset($_GET['filters']))
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+
+        if (isset($filters_decode) && is_array($filters_decode)) {
+            foreach ($filters_decode as $key => $val) {
+                $filters[$key] = $val;
+            }
+        }
+        
+        $this->dataset->datasource('team_pre_model', 'get_teams', $filters);
+
+        $this->dataset->columns($columns);
+
+        $this->dataset->base_url(site_url('admincp3/livescore/list_teams_pre/'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->team_pre_model->get_num_rowz($filters);
+
+        $this->dataset->total_rows($total_rows);
+
+        // initialize the dataset
+        $this->dataset->initialize();
+        // add actions
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_team_pre');
+        $this->load->view('list_teams_pre');
     }
 
 }

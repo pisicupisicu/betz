@@ -150,19 +150,15 @@
 
 
         function get_country_by_name($name)
-
         {
 
-            $this->db->like('country_name',$name);
+            $this->db->where('country_name',$name);
 
             $result = $this->db->get('z_countries');
 
             foreach ($result->result_array() as $row) {
-
                 return $row['ID'];
-
             }
-
         }
 
 			 

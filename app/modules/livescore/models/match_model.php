@@ -478,6 +478,15 @@ class Match_model extends CI_Model {
 
         return $result->num_rows();
     }
+    
+    function get_no_of_matches_by_competition_id($competition_id) 
+    {
+        $this->db->or_where('competition_id', $competition_id);
+
+        $result = $this->db->get('z_matches');
+
+        return $result->num_rows();
+    }
 
     function fix_score() {
         $row = array();

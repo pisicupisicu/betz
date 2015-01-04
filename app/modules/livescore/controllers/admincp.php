@@ -13,7 +13,8 @@ if (!defined('BASEPATH'))
  * @package BJ Tool
  *
  */
-class Admincp extends Admincp_Controller {
+class Admincp extends Admincp_Controller 
+{
 
     function __construct() {
 
@@ -63,7 +64,8 @@ class Admincp extends Admincp_Controller {
         echo $filters;
     }
 
-    function list_matches() {
+    function list_matches() 
+    {
         $this->load->model('match_model');
         $this->load->library('dataset');
 
@@ -460,18 +462,23 @@ class Admincp extends Admincp_Controller {
                 'width' => '15%',
             ),
             array(
+                'name' => 'MATCHES',
+                'type' => 'name',
+                'width' => '15%',
+            ),
+            array(
                 'name' => 'LINK',
                 'width' => '15%',
                 'type' => 'text'
             ),
             array(
                 'name' => 'LINK COMPLETE',
-                'width' => '40%',
+                'width' => '35%',
                 'type' => 'text'
             ),
             array(
                 'name' => 'COUNTRY',
-                'width' => '15%',
+                'width' => '5%',
                 'filter' => 'country_name',
                 'type' => 'text',
                 'sort_column' => 'country_name',

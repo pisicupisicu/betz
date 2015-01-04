@@ -185,14 +185,13 @@ class Team_model extends CI_Model {
             return $row;
         }
     }
-    
-    function get_star_teams_simple($filters)
-    {
+
+    function get_star_teams_simple($filters) {
         $filters_team = array_merge($filters, array('name' => '*'));
         unset($filters_team['offset']);
         unset($filters_team['limit']);
-        
-        return $this->get_teams($filters_team);                
+
+        return $this->get_teams($filters_team);
     }
 
     function get_num_rowz_similar($filters = array()) {
@@ -203,14 +202,13 @@ class Team_model extends CI_Model {
         return count($this->get_star_teams($filters, 1));
     }
 
-    function fix_duplicate_teams($filters = array()) 
-    {
+    function fix_duplicate_teams($filters = array()) {
         $this->load->model('match_model');
         $duplicate_teams = array();
 
         $duplicate_teams = $this->get_duplicate_teams_helper($filters);
         $deleted = 0;
-        
+
         // first run admincp/livescore/team_matches to update the number of matches field, to gain in speed !!!
         foreach ($duplicate_teams as $team) {
             if (!$team['matches']) {
@@ -219,30 +217,30 @@ class Team_model extends CI_Model {
             }
         }
         /* old variant -> not sure if it is correct
-        foreach ($duplicate_teams as $team) {
-            $row = array();
-            $no_of_matches = 0;
-            $this->db->where('country_id', $team['country_id']);
-            $this->db->where('name', $team['name']);
-            $this->db->join('z_countries', 'z_teams.country_id = z_countries.ID', 'left');
-            $result = $this->db->get('z_teams');
-            foreach ($result->result_array() as $linie) {
-                $linie['no_of_matches'] = $this->match_model->get_no_of_matches_by_team_id($linie['team_id']);
-                if ($linie['no_of_matches']) {
-                    $no_of_matches++;
-                }
-                $row[] = $linie;
-            }
+          foreach ($duplicate_teams as $team) {
+          $row = array();
+          $no_of_matches = 0;
+          $this->db->where('country_id', $team['country_id']);
+          $this->db->where('name', $team['name']);
+          $this->db->join('z_countries', 'z_teams.country_id = z_countries.ID', 'left');
+          $result = $this->db->get('z_teams');
+          foreach ($result->result_array() as $linie) {
+          $linie['no_of_matches'] = $this->match_model->get_no_of_matches_by_team_id($linie['team_id']);
+          if ($linie['no_of_matches']) {
+          $no_of_matches++;
+          }
+          $row[] = $linie;
+          }
 
-            if ($no_of_matches) {
-                foreach ($row as $linie) {
-                    if (!$linie['no_of_matches']) {
-                        $this->delete_team($linie['team_id']);
-                        $deleted++;
-                    }
-                }
-            }
-        }
+          if ($no_of_matches) {
+          foreach ($row as $linie) {
+          if (!$linie['no_of_matches']) {
+          $this->delete_team($linie['team_id']);
+          $deleted++;
+          }
+          }
+          }
+          }
          */
 
         return $deleted;
@@ -431,7 +429,8 @@ class Team_model extends CI_Model {
         return $result->num_rows();
     }
 
-    function team_exists($team) {
+    function team_exists($team) 
+    {
         $this->db->where('name', $team['name']);
         $this->db->where('country_id', $team['country_id']);
         $result = $this->db->get('z_teams');
@@ -465,8 +464,7 @@ class Team_model extends CI_Model {
         return $result->num_rows();
     }
 
-    function get_team_by_country_and_name($filters) 
-    {
+    function get_team_by_country_and_name($filters) {
         $row = array();
 
         $this->db->where('country_id', $filters['country_id']);
@@ -489,8 +487,7 @@ class Team_model extends CI_Model {
      * 
      * @return vooid
      */
-    public function merge_teams($team_to_keep, $team_to_remove) 
-    {
+    public function merge_teams($team_to_keep, $team_to_remove) {
         $this->load->model('match_model');
 
         $team_to_keep_matches = $this->match_model->get_matches_by_team_id_simple(array('team_id' => $team_to_keep));
@@ -526,9 +523,8 @@ class Team_model extends CI_Model {
     public function get_dummy($filters) {
         return $this->get_team($filters['id']);
     }
-    
-    function get_teams_by_name($filters)
-    {
+
+    function get_teams_by_name($filters) {
         $row = array();
 
         //$this->db->where('country_id', $filters['country_id']);
@@ -543,27 +539,23 @@ class Team_model extends CI_Model {
 
         return $row;
     }
-    
-    function get_multiple_teams($filters = array(), $count = 0) 
-    {
+
+    function get_multiple_teams($filters = array(), $count = 0) {
         $row = array();
         //unset($filters_team['offset']);
         //unset($filters_team['limit']);
         $teams = $this->get_teams($filters);
 
         foreach ($teams as $team) {
-            $multipleTeams = $this->get_teams_by_name(array('name' => $team['name']));            
+            $multipleTeams = $this->get_teams_by_name(array('name' => $team['name']));
             if (count($multipleTeams) > 1) {
-                $row[$multipleTeams[0]['name']] = $multipleTeams;                
-            }                        
-           
+                $row[$multipleTeams[0]['name']] = $multipleTeams;
+            }
         }
         echo count($row) . ' multiple teams cases ' . PHP_EOL;
         print '<pre>';
         print_r($row);
         print '</pre>';
-        
-
     }
 
 }
