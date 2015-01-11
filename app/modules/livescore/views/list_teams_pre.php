@@ -20,6 +20,7 @@
 
 				<td><input type="checkbox" name="check_<?=$row['team_id'];?>" value="1" class="action_items" /></td>
             <td align="center" <?php if (!$row['ok'])  { echo 'style="color:red;"'; }?>><b><?=$row['name'];?></b></td>
+            <td align="center"><b><?=$row['similar_teams'];?></b></td>
             <td align="center"><b><?=$row['team_id'];?></b></td>
 				<td align="center"><b><?=$row['country_name'];?></b></td>
 				<td align="center"><b><?=$row['matches'];?></b></td>

@@ -559,11 +559,10 @@ class Admincp3 extends Admincp_Controller
     
     function list_competitions_pre() 
     {
-                
                 ini_set('display_errors', 1);
         $this->load->model('competition_pre_model');
-        $this->admin_navigation->module_link('Fix competitions', site_url('admincp/livescore/fix_competitions'));
-        $this->admin_navigation->module_link('Add competition', site_url('admincp/livescore/add_competition'));
+        $new_competitions = $this->competition_pre_model->get_num_rows(array('competition_id' => true));
+        $this->admin_navigation->module_link('Move new competitions:' . $new_competitions, site_url('admincp3/livescore/move_competitions_pre'));
         $this->load->library('dataset');
 
         $columns = array(
@@ -593,7 +592,7 @@ class Admincp3 extends Admincp_Controller
                 'name' => 'LINK COMPLETE',
                 'width' => '35%',
                 'type' => 'text'
-            ),            
+            ),
             array(
                 'name' => 'EDIT',
                 'width' => '5%',
@@ -602,16 +601,25 @@ class Admincp3 extends Admincp_Controller
         );
 
         $filters = array();
+        
+        $filters['new_competitions'] = $new_competitions;
+        $filters['country_name_sort'] = true;
+        $data = $this->competition_pre_model->get_competitions($filters);
+        $filters['data'] = $data;
+        
         $filters['limit'] = 20;
 
         if (isset($_GET['filters'])) {
             $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
         }
 
-        if (isset($_GET['offset']))
+        if (isset($_GET['offset'])) {
             $filters['offset'] = $_GET['offset'];
-        if (isset($_GET['country_name']))
+        }
+            
+        if (isset($_GET['country_name'])) {
             $filters['country_name'] = $_GET['country_name'];
+        }
 
         if (isset($filters_decode) && !empty($filters_decode)) {
             foreach ($filters_decode as $key => $val) {
@@ -620,7 +628,7 @@ class Admincp3 extends Admincp_Controller
         }
 
         $this->dataset->columns($columns);
-        $this->dataset->datasource('competition_pre_model', 'get_competitions', $filters);
+        $this->dataset->datasource('competition_pre_model', 'get_competitions_by_country_with_filters', $filters);
         $this->dataset->base_url(site_url('admincp3/livescore/list_competitions_pre'));
         $this->dataset->rows_per_page($filters['limit']);
 
@@ -640,7 +648,9 @@ class Admincp3 extends Admincp_Controller
     {
         $this->load->library('dataset');
         $this->load->model('team_pre_model');
-
+        $new_teams = $this->team_pre_model->get_num_rows(array('team_id' => true));
+        $this->admin_navigation->module_link('Move new teams:' . $new_teams, site_url('admincp3/livescore/list_teams_pre/#'));
+        
         $columns = array(
             array(
                 'name' => 'NAME',
@@ -648,9 +658,14 @@ class Admincp3 extends Admincp_Controller
                 'width' => '15%',
             ),
             array(
+                'name' => 'SIMILAR TEAMS',
+                'type' => 'id',
+                'width' => '10%',
+            ),
+            array(
                 'name' => 'ID',
                 'type' => 'id',
-                'width' => '15%',
+                'width' => '5%',
             ),
             array(
                 'name' => 'COUNTRY',
@@ -675,18 +690,26 @@ class Admincp3 extends Admincp_Controller
                 'type' => 'text',
             ),
         );
-
+        
         $filters = array();
+        $filters['new_teams'] = $new_teams;
+        $filters['country_name_sort'] = true;
+        $data = $this->team_pre_model->get_teams($filters);
+        $filters['data'] = $data;
         $filters['limit'] = 20;
         $filters['sort'] = 'name';
 
-        if (isset($_GET['offset']))
+        if (isset($_GET['offset'])) {
             $filters['offset'] = $_GET['offset'];
-        if (isset($_GET['country_name']))
+        }
+            
+        if (isset($_GET['country_name'])) {
             $filters['country_name'] = $_GET['country_name'];
+        }            
 
-        if (isset($_GET['filters']))
+        if (isset($_GET['filters'])) {
             $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+        }
 
         if (isset($filters_decode) && is_array($filters_decode)) {
             foreach ($filters_decode as $key => $val) {
@@ -694,7 +717,7 @@ class Admincp3 extends Admincp_Controller
             }
         }
         
-        $this->dataset->datasource('team_pre_model', 'get_teams', $filters);
+        $this->dataset->datasource('team_pre_model', 'get_teams_by_country_with_filters', $filters);
 
         $this->dataset->columns($columns);
 
@@ -713,5 +736,20 @@ class Admincp3 extends Admincp_Controller
         $this->dataset->action('Delete', 'admincp3/livescore/delete_team_pre');
         $this->load->view('list_teams_pre');
     }
+    
+    public function move_competitions_pre()
+    {
+        $this->load->model('competition_pre_model');
+        $this->competition_pre_model->move_competitions_pre();
+        
+        redirect('admincp3/livescore/list_competitions_pre');
+    }
 
+    public function move_teams_pre()
+    {
+        $this->load->model('team_pre_model');
+        
+        $this->team_pre_model->move_teams_pre();
+        redirect('admincp3/livescore/list_teams_pre');
+    }        
 }

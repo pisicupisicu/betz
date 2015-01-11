@@ -30,6 +30,7 @@ class Team_pre_model extends CI_Model
     {
         $this->load->model('country_model');
         $this->load->model('team_model');
+        $new_teams = $this->team_pre_model->get_num_rows(array('team_id' => true));
         $row = array();
 
         $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';
@@ -37,6 +38,11 @@ class Team_pre_model extends CI_Model
         if (isset($filters['limit'])) {
             $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
             $this->db->limit($filters['limit'], $offset);
+        }
+        
+        if ($filters['new_teams']) {
+            $this->db->order_by('team_id', $order_dir);
+            unset($filters['country_name_sort']);
         }
 
         if (isset($filters['equal'])) {
@@ -76,7 +82,19 @@ class Team_pre_model extends CI_Model
                 continue;
             }
             
+            if (!$linie['team_id']) {
+                $this->db->like('name', $linie['name']);
+                $result2 = $this->db->get('z_teams');
+                $linie['similar_teams'] = $result2->num_rows();
+            } else {
+                $linie['similar_teams'] = 0;
+            }
+            
             $row[] = $linie;
+        }
+        
+        if (isset($filters['country_name_sort'])) {
+            usort($row, array('Team_pre_model', 'cmp'));
         }
         
 //        print '<pre>';
@@ -88,8 +106,17 @@ class Team_pre_model extends CI_Model
     
     function get_num_rowz($filters = array()) 
     {
-
-        return count($this->get_teams($filters));        
+        return count($this->get_teams($filters));
+    }
+    
+    private static function cmp($a, $b) 
+    {
+        return strcasecmp($a['country_name'], $b['country_name']);
+    }
+    
+    function get_teams_by_country_with_filters($filters = array())
+    {
+        return array_slice($filters['data'], isset($filters['offset']) ? (int) $filters['offset'] : 0, isset($filters['limit']) ? (int) $filters['limit'] : 20);
     }
 
     /**
@@ -231,11 +258,13 @@ class Team_pre_model extends CI_Model
         return TRUE;
     }
 
-    function get_num_rows($team_id) 
+    function get_num_rows($filters)
     {
-        $this->db->where('team_id', $team_id);
+        if (isset($filters['team_id'])) {
+            $this->db->where('team_id', null);
+        }
         $result = $this->db->get('z_teams_pre');
-
+        
         return $result->num_rows();
     }
 
@@ -270,10 +299,69 @@ class Team_pre_model extends CI_Model
         $this->db->order_by('team_id');
         $result = $this->db->get('z_teams_pre');
 
-        foreach ($result->result_array() as $line) {
-            $row[] = $line;
+        foreach ($result->result_array() as $linie) {
+            $row[] = $linie;
         }
 
         return $row;
+    }
+    
+    function move_teams_pre()
+    {
+        $this->load->model('team_model');
+        
+        $continents = array(254, 245, 244, 243, 242); // AFRICA, ASIA, AMERICA, WORLD, EUROPE
+        $this->db->where('team_id', null);
+        $result = $this->db->get('z_teams_pre');
+        
+        foreach ($result->result_array() as $linie) {
+            $this->db->like('name', $linie['name']);
+            $result2 = $this->db->get('z_teams');
+            $similar_teams = $result2->num_rows();
+            
+            switch ($similar_teams) {
+                // new team -> we know the country just add the team in z_teams
+                // if team from no country, just continent add manually
+                case 0:
+                    if (!in_array($linie['country_id'], $continents)) {                         
+                        $insert_fields = array(
+                          'country_id' => $linie['country_id'],
+                          'name' => $linie['name'],
+                          'matches' => $linie['matches']  
+                        );
+                        
+                        $team_id = $this->team_model->new_team($insert_fields);
+                        
+                        $update_fields = array(
+                          'team_id' =>  $team_id, 
+                          'country_id' => null,
+                          'name' => null,
+                          'matches' => null
+                        );
+                        
+                        $this->update_team($update_fields, $linie['index']);
+                        
+                    }
+                    break;
+                // just one old team -> it is the one, then just update it, nothing else here
+                case 1:
+                    foreach ($result2->result_array() as $linie2) {
+                        $team_id = $linie2['team_id'];
+                        $update_fields = array(
+                          'team_id' =>  $team_id, 
+                          'country_id' => null,
+                          'name' => null,
+                          'matches' => null
+                        );
+                        
+                        $this->update_team($update_fields, $linie['index']);
+                    }
+                    break;
+                // multiple results, edit manually
+                default:
+                    break;
+            }
+            break; // for testing purposes, one team at a time
+        }
     }
 }

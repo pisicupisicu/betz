@@ -36,12 +36,17 @@ class Competition_pre_model extends CI_Model
         $row = array();
 
         $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';
-            
+
         if (isset($filters['limit'])) {
             $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
             $this->db->limit($filters['limit'], $offset);
         }
 
+        if ($filters['new_competitions']) {
+            $this->db->order_by('competition_id', $order_dir);
+            unset($filters['country_name_sort']);
+        }
+        
         $result = $this->db->get('z_competitions_pre');
 
         foreach ($result->result_array() as $linie) {
@@ -67,12 +72,21 @@ class Competition_pre_model extends CI_Model
             }
             
             $row[] = $linie;
+            if (isset($filters['country_name_sort'])) {
+                usort($row, array('Competition_pre_model', 'cmp'));
+            }
+            
 //            print '<pre>';
 //            print_r($linie);
 //            die;
         }
 
         return $row;
+    }
+    
+    private static function cmp($a, $b) 
+    {
+        return strcasecmp($a['country_name'], $b['country_name']);
     }
 
     /**
@@ -188,9 +202,11 @@ class Competition_pre_model extends CI_Model
         return true;
     }
 
-    function get_num_rows($index, $filters) 
+    function get_num_rows($filters)
     {
-        $this->db->where('index', $index);
+        if (isset($filters['competition_id'])) {
+            $this->db->where('competition_id', null);
+        }
         $result = $this->db->get('z_competitions_pre');
 
         return $result->num_rows();
@@ -207,33 +223,7 @@ class Competition_pre_model extends CI_Model
         return $result->num_rows();
     }
 
-    function fix_competitions()
-    {
-        $row = array();
-        $result = $this->db->get('z_competitions_pre');
-
-        $this->load->model('country_model');
-
-        foreach ($result->result_array() as $linie) {
-            $link = $linie['link'];
-            $aux = explode('/', $link);
-            $country_name = ucfirst(trim($aux[0]));
-            $country_id = $this->country_model->get_country_by_name($country_name);
-            $name = ucfirst(trim($aux[1]));
-            $data_competition = array(
-                'country_id' => $country_id,
-                'name' => $name,
-                'link_complete' => 'http://www.livescore.com/soccer/' . $link . '/',
-            );
-            if (!$linie['country_id'] || !$linie['name'] || !$linie['link_complete']) {
-                $this->update_competition($data_competition, $linie['index']);
-            }
-        }
-
-        return $row;
-    }
-
-    function fix_competitions_name() 
+    function fix_competitions_name()
     {
         $row = array();
         $result = $this->db->get('z_competitions_pre');
@@ -256,5 +246,33 @@ class Competition_pre_model extends CI_Model
     function get_competitions_by_country_with_filters($filters = array())
     {
         return array_slice($filters['data'], isset($filters['offset']) ? (int) $filters['offset'] : 0, isset($filters['limit']) ? (int) $filters['limit'] : 20);
+    }
+    
+    function move_competitions_pre()
+    {
+        $this->load->model('competition_model');
+        $this->db->where('competition_id', null);
+        $result = $this->db->get('z_competitions_pre');
+        
+        foreach ($result->result_array() as $linie) {
+            $insert_fields = array(
+              'country_id' => $linie['country_id'],
+              'name' => $linie['name'],
+              'link' => $linie['link'],
+              'link_complete' => $linie['link_complete']
+            );
+            $competition_id = $this->competition_model->new_competition($insert_fields);
+            
+            if ($competition_id) {
+                $update_fields = array(
+                    'competition_id' => $competition_id,
+                    'country_id' => null,
+                    'name' => null,
+                    'link' => null,
+                    'link_complete' => null
+                );
+                $this->update_competition($update_fields, $linie['index']);
+            }
+        }
     }
 }
