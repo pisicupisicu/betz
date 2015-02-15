@@ -162,16 +162,17 @@ class Match_pre_model extends CI_Model
         $row = array();
 
         if (!isset($filters['count'])) {
-            $this->db->join('z_competitions_pre', 'z_matches_pre.competition_id = z_competitions_pre.competition_id', 'inner');
+            $this->db->join('z_competitions_pre', 'z_matches_pre.competition_id_pre = z_competitions_pre.index', 'inner');
+            $this->db->join('z_competitions', 'z_competitions.competition_id = z_competitions_pre.competition_id', 'left');
             $this->db->join('z_countries', 'z_competitions_pre.country_id = z_countries.ID', 'left');
         }
 
-        $this->db->or_where('team1', $filters['team_id']);
-        $this->db->or_where('team2', $filters['team_id']);
+        $this->db->or_where('team1_pre', $filters['team_id']);
+        $this->db->or_where('team2_pre', $filters['team_id']);
         if (isset($filters['count'])) {
             $this->db->select('*');
         } else {
-            $this->db->select('*,z_competitions_pre.name AS competition_name,z_matches_pre.link_complete AS link_match');
+            $this->db->select('*,z_competitions.name AS competition_name,z_matches_pre.link_complete AS link_match');
             $this->db->order_by('z_matches_pre.match_date');
         }
 
@@ -187,13 +188,22 @@ class Match_pre_model extends CI_Model
         }
 
         foreach ($result->result_array() as $line) {
-            $temp = $this->team_pre_model->get_team($line['team1']);
+            $temp = $this->team_pre_model->get_team($line['team1_pre']);
             $line['team1'] = $temp['name'];
-            $temp = $this->team_pre_model->get_team($line['team2']);
+            $temp = $this->team_pre_model->get_team($line['team2_pre']);
             $line['team2'] = $temp['name'];
-
+            
+            $line['competition_id'] ? $line['ok_competition'] = 1 : $line['ok_competition'] = 0;
+            $line['team1'] ? $line['ok_team1'] = 1 : $line['ok_team1'] = 0;
+            $line['team2'] ? $line['ok_team2'] = 1 : $line['ok_team2'] = 0;
+            
+           
             $row[] = $line;
         }
+        
+        //print '<pre>';
+        //print_r($row);
+        //print '</pre>';
 
         return $row;
     }

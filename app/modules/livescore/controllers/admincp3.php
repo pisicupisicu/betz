@@ -648,8 +648,8 @@ class Admincp3 extends Admincp_Controller
     {
         $this->load->library('dataset');
         $this->load->model('team_pre_model');
-        $new_teams = $this->team_pre_model->get_num_rows(array('team_id' => true));
-        $this->admin_navigation->module_link('Move new teams:' . $new_teams, site_url('admincp3/livescore/list_teams_pre/#'));
+        $nr_new_teams = $this->team_pre_model->get_num_rows(array('team_id' => true));
+        $this->admin_navigation->module_link('Move new teams:' . $nr_new_teams, site_url('admincp3/livescore/move_teams_pre/'));
         
         $columns = array(
             array(
@@ -692,7 +692,7 @@ class Admincp3 extends Admincp_Controller
         );
         
         $filters = array();
-        $filters['new_teams'] = $new_teams;
+        $filters['nr_new_teams'] = $nr_new_teams;
         $filters['country_name_sort'] = true;
         $data = $this->team_pre_model->get_teams($filters);
         $filters['data'] = $data;
@@ -749,7 +749,261 @@ class Admincp3 extends Admincp_Controller
     {
         $this->load->model('team_pre_model');
         
-        $this->team_pre_model->move_teams_pre();
+        $nr_teams_moved = $this->team_pre_model->move_teams_pre();
+        $this->notices->SetNotice("$nr_teams_moved teams moved successfully.");
         redirect('admincp3/livescore/list_teams_pre');
-    }        
+    }
+    
+    function list_matches_by_team_id_pre($id) {
+        $this->load->model('match_pre_model');
+        $this->load->library('dataset');
+
+        $filters = array();
+
+        $columns = array(
+            array(
+                'name' => 'COUNTRY',
+                'width' => '10%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => 'COMPETITION',
+                'width' => '10%',
+                'filter' => 'competition_name',
+                'type' => 'name',
+                'sort_column' => 'competition_name',
+            ),
+            array(
+                'name' => 'DATE',
+                'width' => '15%',
+                'filter' => 'match_date',
+                'type' => 'date',
+                'field_start_date' => '2013-01-01',
+                'field_end_date' => '2013-12-31',
+                'sort_column' => 'match_date',
+            ),
+            array(
+                'name' => 'HOME',
+                'width' => '15%',
+                'filter' => 'team1',
+                'type' => 'text',
+                'sort_column' => 'team1',
+            ),
+            array(
+                'name' => 'AWAY',
+                'width' => '15%',
+                'filter' => 'team2',
+                'type' => 'text',
+                'sort_column' => 'team2',
+            ),
+            array(
+                'name' => 'SCORE',
+                'width' => '5%',
+                'filter' => 'score',
+                'type' => 'text',
+                'sort_column' => 'score',
+            ),
+            array(
+                'name' => 'LINK COMPLETE',
+                'width' => '20%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'View',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'Edit',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+        );
+
+        $filters = array();
+        $filters['limit'] = 20;
+
+        if (isset($_GET['filters'])) {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+        }
+
+        if (isset($_GET['offset']))
+            $filters['offset'] = $_GET['offset'];
+        if (isset($_GET['country_name']))
+            $filters['country_name'] = $_GET['country_name'];
+        if (isset($_GET['competition_name']))
+            $filters['competition_name'] = $_GET['competition_name'];
+        if (isset($_GET['team1']))
+            $filters['team1'] = $_GET['team1'];
+        if (isset($_GET['team2']))
+            $filters['team2'] = $_GET['team2'];
+        if (isset($_GET['score']))
+            $filters['score'] = $_GET['score'];
+        if (isset($_GET['match_date_start']))
+            $filters['match_date_start'] = $_GET['match_date_start'];
+        if (isset($_GET['match_date_end']))
+            $filters['match_date_end'] = $_GET['match_date_end'];
+
+        if (isset($filters_decode) && !empty($filters_decode)) {
+            foreach ($filters_decode as $key => $val) {
+                $filters[$key] = $val;
+            }
+        }
+
+        foreach ($filters as $key => $val) {
+            if (in_array($val, array('filter results', 'start date', 'end date'))) {
+                unset($filters[$key]);
+            }
+        }
+
+        $filters['team_id'] = $id;
+
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('match_pre_model', 'get_matches_by_team_id', $filters);
+        $this->dataset->base_url(site_url('admincp3/livescore/list_matches_by_team_id_pre/' . $id . '/'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+
+
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->match_pre_model->get_matches_by_team_id(array('team_id' => $id, 'count' => true));
+        $this->dataset->total_rows($total_rows);
+
+        // initialize the dataset
+        $this->dataset->initialize();
+        // add actions
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_match_pre');
+        $this->load->view('list_matches_pre');
+    }
+    
+    function edit_team_pre($id) 
+    {
+        $this->load->model('country_model');
+        $this->load->model('team_pre_model');
+        $team = $this->team_pre_model->get_team($id);
+//        print '<pre>';
+//        print_r($team);
+//        print '</pre>';
+        if (empty($team)) {
+            die(show_error('No team with this ID.'));
+        }
+
+        $this->load->library('admin_form');
+        $form = new Admin_form;
+        $countries = $params = array();
+        $params['dropdown'] = 1;
+        $countries = $this->country_model->get_countries($params);
+
+        $form->fieldset('Team');
+        $form->text('Name', 'name', $team['name'], 'Team name to be introduced', true, 'e.g., AC Milan', true);
+        $form->dropdown('Country', 'country_id', $countries, $team['country_id']);
+
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Edit Team',
+            'form_action' => site_url('admincp3/livescore/add_team_validate_pre/edit/' . $team['index']),
+            'action' => 'edit',
+        );
+
+        $this->load->view('add_team', $data);
+    }
+    
+    function add_team_validate_pre($action = 'new', $id = false) 
+    {
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('name', 'Name', 'required|trim');
+        $this->form_validation->set_rules('country_id', 'Country', 'required|trim');
+
+        if ($this->form_validation->run() === false) {
+            $this->notices->SetError('Required fields.');
+            $error = true;
+        }
+
+        if (isset($error)) {
+            if ($action == 'new') {
+                redirect('admincp3/livescore/list_teams_pre');
+                return false;
+            } else {
+                redirect('admincp3/livescore/edit_team_pre/' . $id);
+                return false;
+            }
+        }
+
+        $this->load->model('team_pre_model');
+
+        $fields['name'] = $this->input->post('name');
+        $fields['country_id'] = $this->input->post('country_id');
+
+        if ($action == 'new') {
+            $this->team_pre_model->new_team($fields);
+            $this->notices->SetNotice('Team pre added successfully.');
+            redirect('admincp3/livescore/list_teams_pre/');
+        } else {
+            $this->team_pre_model->update_team($fields, $id);
+            $this->notices->SetNotice('Team pre updated successfully.');
+            redirect('admincp3/livescore/list_teams_pre/');
+        }
+
+        return true;
+    }
+    
+    function edit_team_pre_similar($id) 
+    {
+        $this->load->model('country_model');
+        $this->load->model('team_pre_model');
+        
+        $params = array();
+        $params['dropdown'] = 1;
+        $params['team_pre_id'] = $id;
+        
+        $similar_teams = $this->team_pre_model->get_similar_teams($params);
+     
+        $this->load->library('admin_form');
+        $form = new Admin_form;
+
+        $form->fieldset('Similar teams');
+        $form->dropdown('Teams', 'team_id', $similar_teams, false, false, true, false, true);
+
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Edit Team',
+            'form_action' => site_url('admincp3/livescore/similar_team_validate_pre/' . $id)
+        );
+
+        $this->load->view('edit_team_pre_similar', $data);
+    }
+    
+    function similar_team_validate_pre($id = 0)
+    {
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('team_id', 'Team', 'is_natural_no_zero|trim');
+
+        if ($this->form_validation->run() === false) {
+            $this->notices->SetError('Required fields.');
+            $error = true;
+        }
+
+        if (isset($error)) {
+            redirect('admincp3/livescore/edit_team_pre_similar/' . $id);
+            return false;
+        }
+
+        $this->load->model('team_pre_model');
+        
+        $fields = array(
+            'team_id' => $this->input->post('team_id'),
+            'name' => null,
+            'country_id' => null,
+            'matches' => null
+        );
+
+        $this->team_pre_model->update_team($fields, $id);
+        $this->notices->SetNotice('Team pre with similar teams updated successfully.');
+        redirect('admincp3/livescore/list_teams_pre/');
+
+        return true;
+    }
 }

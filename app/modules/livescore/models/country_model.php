@@ -1,142 +1,118 @@
 <?php
 
-
-
 /**
 
-* Country Model
+ * Country Model
 
-*
+ *
 
-* Manages steps
+ * Manages steps
 
-*
+ *
 
-* @author Weblight.ro
+ * @author Weblight.ro
 
-* @copyright Weblight.ro
+ * @copyright Weblight.ro
 
-* @package BJ Tool
-
-
-
-*/
+ * @package BJ Tool
 
 
 
-	class Country_model extends CI_Model
+ */
+class Country_model extends CI_Model {
 
-	{
+    private $CI;
 
-            private $CI;
+    function __construct() {
 
-
-
-            function __construct()
-
-            {
-
-                    parent::__construct();
+        parent::__construct();
 
 
 
-                    $this->CI =& get_instance();
+        $this->CI = & get_instance();
+    }
 
-            }
+    /**
 
-	
+     * Get countries
 
-            /**
+     * @param array $params
 
-            * Get countries
+     *
 
-            * @param array $params
+     * @return array
 
-            *
+     */
+    function get_countries($params = array()) {
 
-            * @return array
+        $row = array();
 
-            */
+        if (isset($params['country_id']))
+            $this->db->where('ID', $params['country_id']);
 
-            function get_countries ($params = array()) 
+        if (isset($params['limit'])) {
 
-            {
+            $offset = (isset($params['offset'])) ? $params['offset'] : 0;
 
-                    $row = array();	
+            $this->db->limit($params['limit'], $offset);
+        }
 
-                    if(isset($params['country_id'])) $this->db->where('ID',$params['country_id']);
+        if (isset($params['dropdown'])) {
+            $row[0] = 'Select Country';
+        }
 
-                    if (isset($params['limit'])) {
-
-                                $offset = (isset($params['offset'])) ? $params['offset'] : 0;
-
-                                $this->db->limit($params['limit'], $offset);
-
-                        }
-						
-					if(isset($params['dropdown'])) {
-								$row[0] = 'Select Country';
-					}
-					
-                    $result = $this->db->get('z_countries');
+        $result = $this->db->get('z_countries');
 
 
 
-                    foreach ($result->result_array() as $linie) {
+        foreach ($result->result_array() as $linie) {
 
-                            $row[$linie['ID']] = $linie['country_name'];
+            $row[$linie['ID']] = $linie['country_name'];
+        }
 
-                    }
+        return $row;
+    }
 
-                    return $row;														
-
-            }
-
-            
-   
-	 /**
-	* Get Countries
-	*
-	* 
-	* @return array 
-	*/
-        
-	function get_countries_list ($filters = array())  {
+    /**
+     * Get Countries
+     *
+     * 
+     * @return array 
+     */
+    function get_countries_list($filters = array()) {
 
         if (isset($filters['ID'])) {
-     		$this->db->where('ID', $filters['ID_country']);
-		}
- 
- 		if (isset($filters['country_name'])) {
-			$this->db->like('country_name', $filters['country_name']);
-		}
-            
-		if (isset($filters['limit'])) {
-                            $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
-                            $this->db->limit($filters['limit'], $offset);
-                    }
-		
-       $result = $this->db->get('z_countries');              
-               
-		if ($result->num_rows() == 0) {
-			return FALSE;
-		}
- 
-	  $countries = array();
+            $this->db->where('ID', $filters['ID_country']);
+        }
 
-      foreach ($result->result_array() as $country) {
-                   
-         $countries[] = array(
-         'ID' => $country['ID'],
-		 'country_name' => $country['country_name'] );
-		}
-	
-		return $countries;
+        if (isset($filters['country_name'])) {
+            $this->db->like('country_name', $filters['country_name']);
+        }
 
-	}
-			
+        if (isset($filters['limit'])) {
+            $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
+            $this->db->limit($filters['limit'], $offset);
+        }
 
-      /**
+        $result = $this->db->get('z_countries');
+
+        if ($result->num_rows() == 0) {
+            return FALSE;
+        }
+
+        $countries = array();
+
+        foreach ($result->result_array() as $country) {
+
+            $countries[] = array(
+                'ID' => $country['ID'],
+                'country_name' => $country['country_name']);
+        }
+
+        return $countries;
+    }
+
+    /**
 
      * Get country
 
@@ -146,171 +122,135 @@
 
      * @return array
 
-     */ 
+     */
+    function get_country_by_name($name) {
 
+        $this->db->where('country_name', $name);
 
-        function get_country_by_name($name)
-        {
+        $result = $this->db->get('z_countries');
 
-            $this->db->where('country_name',$name);
+        foreach ($result->result_array() as $row) {
+            return $row['ID'];
+        }
+    }
 
-            $result = $this->db->get('z_countries');
+    /**
 
-            foreach ($result->result_array() as $row) {
-                return $row['ID'];
-            }
+     * Get Country
+
+     *
+
+     * @param int $id	
+
+     *
+
+     * @return array
+
+     */
+    function get_country($id) {
+
+        $row = array();
+
+        $this->db->where('ID', $id);
+
+        $result = $this->db->get('z_countries');
+
+        foreach ($result->result_array() as $row) {
+
+            return $row;
         }
 
-			 
+        return $row;
+    }
 
-            /**
+    /**
 
-            * Get Country
+     * Create New Countries
 
-            *
+     *
 
-            * @param int $id	
+     * Creates a new step
 
-            *
+     *
 
-            * @return array
+     * @param array $insert_fields	
 
-            */
+     *
 
-            function get_country ($id) 
+     * @return int $insert_id
 
-            {
+     */
+    function new_country($insert_fields) {
 
-                    $row = array();								
+        $this->db->insert('z_countries', $insert_fields);
 
-                    $this->db->where('ID',$id);
+        $insert_id = $this->db->insert_id();
 
-                    $result = $this->db->get('z_countries');
+        return $insert_id;
+    }
 
-                    foreach ($result->result_array() as $row) {
+    /**
 
-                            return $row;
+     * Update Country
 
-                    }
+     * 
 
-                    return $row;														
+     * @param array $update_fields
 
-            }
+     * @param int $id	
 
+     *
 
+     * @return boolean TRUE
 
-            /**
+     */
+    function update_country($update_fields, $id) {
+        $this->db->update('z_countries', $update_fields, array('ID' => $id));
+        return TRUE;
+    }
 
-            * Create New Countries
+    /**
 
-            *
+     * Delete step
 
-            * Creates a new step
+     *
 
-            *
+     * Deletes step
 
-            * @param array $insert_fields	
+     * 	
 
-            *
+     * @param int $id	
 
-            * @return int $insert_id
+     *
 
-            */
+     * @return boolean TRUE
 
-            function new_country ($insert_fields){																					
+     */
+    function delete_country($id) {
 
-                    $this->db->insert('z_countries', $insert_fields);		
+        $this->db->delete('z_countries', array('ID' => $id));
 
-                    $insert_id = $this->db->insert_id();
 
-                    return $insert_id;
 
-            }
+        return TRUE;
+    }
 
+    function delete_countries_ids($country_id) {
 
+        $this->db->delete('z_countries', array('country_id' => $country_id));
 
-            /**
 
-            * Update Country
 
-            * 
+        return TRUE;
+    }
 
-            * @param array $update_fields
+    function get_num_rows($country_id) {
 
-            * @param int $id	
+        $this->db->where('ID', $country_id);
 
-            *
+        $result = $this->db->get('z_countries');
 
-            * @return boolean TRUE
-
-            */
-
-            function update_country ($update_fields,$id) 
-
-            {		
-                    $this->db->update('z_countries',$update_fields,array('ID' => $id));
-                    return TRUE;
-            }
-
-
-
-            /**
-
-            * Delete step
-
-            *
-
-            * Deletes step
-
-            * 	
-
-            * @param int $id	
-
-            *
-
-            * @return boolean TRUE
-
-            */
-
-            function delete_country ($id) 
-
-            {		
-
-                $this->db->delete('z_countries',array('ID' => $id));
-
-
-
-                return TRUE;
-
-            }
-
-            
-
-            function delete_countries_ids($country_id)
-
-            {
-
-                $this->db->delete('z_countries',array('country_id' => $country_id));
-
-                
-
-                return TRUE;
-
-            }
-
-            
-
-            function get_num_rows($country_id)
-
-            {
-
-                $this->db->where('ID',$country_id);
-
-                $result = $this->db->get('z_countries');
-
-                return $result->num_rows();        
-
-            }
+        return $result->num_rows();
+    }
 
 }
-
