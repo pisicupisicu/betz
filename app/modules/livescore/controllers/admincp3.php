@@ -148,7 +148,18 @@ class Admincp3 extends Admincp_Controller
             $competition->competition_link = trim(substr(str_replace('soccer/', '', $countries[3][$key]), 1, -1));
             $competition->matches = array();
             $competitions[] = clone $competition;
-        }             
+        }
+        
+        // add fake world competition
+        $competition->country = 'WORLD';
+        $competition->country_link = 'soccer/world';
+        $competition->competition_name = 'WORLD';
+        $competition->competition_link = 'world';
+        $competition->matches = array();
+        $competitions[] = clone $competition;
+        
+        //print '<pre>COMPETITIONS';
+        //print_r($competitions);
 
         foreach ($scores[0] as $key => $val) {
             //$match->team_home = trim($scores[1][$key]);
@@ -170,7 +181,7 @@ class Admincp3 extends Admincp_Controller
             if (strstr($val, 'href')) {
                 $match->team_home = trim($scoresPrecise[1][0]);
                 $match->team_away = trim($scoresPrecise[4][0]);
-                $match->score_link = trim(substr(str_replace('/soccer/', '', $scoresPrecise[2][0]), 1));
+                $match->score_link = trim(str_replace('/soccer/', '', $scoresPrecise[2][0]));
                 $match->score = trim($scoresPrecise[3][0]);
             } else {
                 $match->team_home = trim($scoresPrecise[1][0]);
@@ -181,15 +192,26 @@ class Admincp3 extends Admincp_Controller
             
             $matches[] = clone $match;
         }
-
+        
+        print '<pre>MATCHES';
+        print_r($matches);
+                
         foreach ($matches as $m) {
+            $found = false;
+            $match = clone $m;
             foreach ($competitions as $key => $c) {
                 if (strstr($m->score_link, $c->competition_link)) {
-                    $match = clone $m;
                     $competitions[$key]->matches[] = $match;
+                    $found = true;
                     break;
                 }
             }
+                
+            if (!$found) {
+                $match->score_link = 'world';
+                $competitions[count($competitions) - 1]->matches[] = $match;
+            }
+            
         }
 
         foreach ($competitions as $c) {
@@ -223,11 +245,11 @@ class Admincp3 extends Admincp_Controller
             
             // competitions
             if (!$this->competition_pre_model->competition_exists_id($param)) {
-                /*$update_fields = array(
-                    'name' => $c->competition_name,
-                    'link_complete' => 'http://www.livescore.com/soccer/' . $c->competition_link,
-                );
-                /$this->competition_model->update_competition_by_link($update_fields, $c->competition_link);*/
+//                $update_fields = array(
+//                    'name' => $c->competition_name,
+//                    'link_complete' => 'http://www.livescore.com/soccer/' . $c->competition_link,
+//                );
+//                $this->competition_model->update_competition_by_link($update_fields, $c->competition_link);
                 
                 $competition_id = $this->competition_pre_model->competition_exists($param);
                 // does not exist as old competition id
@@ -238,13 +260,15 @@ class Admincp3 extends Admincp_Controller
                         'link' => $c->competition_link,
                         'link_complete' => 'http://www.livescore.com/soccer/' . $c->competition_link,
                     );
-                    //$competition_id = $this->competition_pre_model->new_competition($insert_fields);
+                    $competition_id = $this->competition_pre_model->new_competition($insert_fields);
                 } else {
                     $insert_fields = array(
                         'competition_id' => $competition_id
                     );
-                    //$competition_id = $this->competition_pre_model->new_competition($insert_fields);
+                    $competition_id = $this->competition_pre_model->new_competition($insert_fields);
                 }
+            } else {
+                $competition_id = $this->competition_pre_model->competition_exists($param);
             }
             // teams
             $teams = array();
@@ -261,16 +285,18 @@ class Admincp3 extends Admincp_Controller
                         $team_id = $this->team_pre_model->team_exists($param);
                         // does not exist as old team id
                         if (!$team_id) {
-                            //$this->team_pre_model->new_team($param);
+                            $this->team_pre_model->new_team($param);
                         } else {
                             $insert_fields = array(
                               'team_id' =>  $team_id
                             );
-                            //$this->team_pre_model->new_team($insert_fields);
+                            $this->team_pre_model->new_team($insert_fields);
                         }
                     }
                 }
             }
+            
+            //print("competition_id = $competition_id");
 
             // matches
             foreach ($c->matches as $m) {
@@ -285,24 +311,30 @@ class Admincp3 extends Admincp_Controller
                     'team2_pre' => $team2_id,
                     'score' => str_replace(' ', '', $m->score),
                     'link' => $m->score_link,
-                    'link_complete' => $link_complete                    
+                    'link_complete' => $link_complete
                 );
                 
-//                if (strstr($m->team_home, 'AC Milan')) {
-//                    echo '<br/>---------------';
-//                    echo 'country_id = ' . $country_id . ' team1_id = ' . $team1_id . ' team2_id = ' . $team2_id;
-//                    echo '<br/>';
-//                    die;
-//                }
+                //echo 'Treating match ' . $match_data['link_complete'];
 
-                $match_id = $this->match_pre_model->match_exists(array('link' => $m->score_link));
+                
+                $match_id = $this->match_pre_model->match_exists(
+                    array(
+                        'link' => $match_data['link'],
+                        'match_date' => $match_data['match_date'],
+                        'team1_pre' => $match_data['team1_pre'],
+                        'team2_pre' => $match_data['team2_pre'],
+                ));
+               
 
                 if (!$match_id) {
-                    //$this->match_pre_model->new_match($match_data);
+                    // echo ' New match ' . PHP_EOL;
+                    $this->match_pre_model->new_match($match_data);
                 } else {
+                    // echo ' Old match id ' . $match_id . PHP_EOL;
                     $match_db = $this->match_pre_model->get_match($match_id);
-                    // if matched is not parsed yet we can still update it                    
-                    //$this->match_pre_model->update_match($match_data, $match_db['index']);
+                    // add condition parse=0
+                    // if matched is not parsed yet we can still update it
+                    $this->match_pre_model->update_match($match_data, $match_id);
                     
                 }
             }

@@ -144,7 +144,7 @@ class Match_pre_model extends CI_Model
     {
         $row = array();
 
-        $this->db->join('z_competitions_pre', 'z_matches_pre.competition_id_pre = z_competitions_pre.index', 'inner');        
+        //$this->db->join('z_competitions_pre', 'z_matches_pre.competition_id_pre = z_competitions_pre.index', 'inner'); // not ok because of competition_id_pre = 0       
         $this->db->where('z_matches_pre.index', $id);
         $this->db->select('*,z_matches_pre.link AS link_match,z_matches_pre.link_complete AS link_match_complete');
         $result = $this->db->get('z_matches_pre');
@@ -335,7 +335,22 @@ class Match_pre_model extends CI_Model
     // checked
     function match_exists($match)
     {
-        $this->db->where('link', $match['link']);
+        if (isset($match['link'])) {
+            $this->db->where('link', $match['link']);
+        }
+        
+        if (isset($match['match_date'])) {
+            $this->db->where('match_date', $match['match_date']);
+        }
+        
+        if (isset($match['team1_pre'])) {
+            $this->db->where('team1_pre', $match['team1_pre']);
+        }
+        
+        if (isset($match['team2_pre'])) {
+            $this->db->where('team2_pre', $match['team2_pre']);
+        }
+
         $result = $this->db->get('z_matches_pre');
 
         foreach ($result->result_array() as $row) {
