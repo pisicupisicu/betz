@@ -307,7 +307,7 @@ class Match_pre_model extends CI_Model
      *
      * @return int $insert_id
      */
-    function new_match($insert_fields) 
+    function new_match($insert_fields)
     {
         $this->db->insert('z_matches_pre', $insert_fields);
         $insert_id = $this->db->insert_id();
@@ -380,7 +380,7 @@ class Match_pre_model extends CI_Model
         return $result->num_rows();
     }
 
-    function fix_score() 
+    function fix_score()
     {
         $row = array();
         $result = $this->db->get('z_matches_pre');
@@ -398,5 +398,49 @@ class Match_pre_model extends CI_Model
         }
 
         return $row;
+    }
+    
+    function move_matches_pre()
+    {
+        $this->load->model('competition_pre_model');
+        $this->load->model('team_pre_model');
+        $this->load->model('match_model');
+                        
+        $result = $this->db->get('z_matches_pre');
+        $insert_fields = array();
+        $i = 0;
+        
+        foreach ($result->result_array() as $linie) {
+            $temp = $this->competition_pre_model->get_competition($linie['competition_id_pre']);
+            $insert_fields['competition_id'] = $temp['competition_id'];
+            $temp = $this->team_pre_model->get_team($linie['team1_pre']);
+            $insert_fields['team1'] = $temp['team_id'];
+            $temp = $this->team_pre_model->get_team($linie['team2_pre']);
+            $insert_fields['team2'] = $temp['team_id'];
+            
+            $insert_fields['match_date'] = $linie['match_date'];
+            $insert_fields['score'] = $linie['score'];
+            $insert_fields['link'] = $linie['link'];
+            $insert_fields['link_complete'] = $linie['link_complete'];
+            $insert_fields['parse_date'] = $linie['parse_date'];
+            $insert_fields['parsed'] = 0;
+            
+            // copy match
+            $this->match_model->new_match($insert_fields);
+            $i++;
+            
+            //print '<pre>';
+            //print_r($linie);
+            //print_r($insert_fields);
+            //print '</pre>';
+            //die;
+        }
+        
+        // truncate pre tables !!!
+        $this->db->query('truncate table z_competitions_pre');
+        $this->db->query('truncate table z_teams_pre');
+        $this->db->query('truncate table z_matches_pre');
+        
+        return $i;
     }
 }

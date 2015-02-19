@@ -66,7 +66,7 @@ class Admincp3 extends Admincp_Controller
 
         $link = $this->input->post('link');
 
-        if (strstr($link, '2013') || strstr($link, '2014')) {
+        if (strstr($link, '2013') || strstr($link, '2014') || strstr($link, '2015')) {
             $link = utf8_encode($link);
             $this->parse_info_per_date($link);
         } else {
@@ -105,20 +105,20 @@ class Admincp3 extends Admincp_Controller
         // <span class="league"> <a href="/soccer/england/"><strong>England</strong></a> - <span><a href="/soccer/england/premier-league/">Premier League</a></span></span>
         //phpinfo();die;
         //<span class="league"> <a href="/soccer/italy/"><strong>Italy</strong></a> - <span><a href="/soccer/italy/serie-b/">Serie B</a></span> </span> <span class="date">September 2</span>
-        $pattern = '@<span class="league">\s*<a href="(.*)"><strong>(.*)</strong></a>\s*-\s*<span><a href="(.*)">(.*)</a></span>\s*</span>@U';
+        $pattern = '@<div class="left">\s*<a href="(.*)"><strong>(.*)</strong></a>\s*-\s*<a href="(.*)">(.*)</a>\s*</div>@U';
         preg_match_all($pattern, $page, $countries);
         print '<pre>COUNTRIES';
         print_r($countries);
 
         //<td class="fh"> St.Kickers </td> <td class="fs"> <a href="/soccer/germany/3-liga/st-kickers-vs-unterhaching/1-1485980/" class="scorelink">2 - 3</a> </td> <td class="fa"> Unterhaching </td>
-        $pattern = '@<td class="fh">\s*(.*)\s*</td>@U';
+        $pattern = '@<div class="ply tright name">\s*(.*)\s*</div>@U';
         preg_match_all($pattern, $page, $teams_home);
         print '<pre>TEAMS HOME';
         print_r($teams_home);
 
         //<td class="fh"> Saarbrucken </td> <td class="fs"> <a href="/soccer/germany/3-liga/saarbrucken-vs-fc-heidenheim/1-1485981/" class="scorelink">2 - 3</a> </td> <td class="fa"> FC Heidenheim </td> </tr> <tr class="even"> <td class="fd"> FT </td> 
         //<td class="fh"> St.Kickers </td> <td class="fs"> <a href="/soccer/germany/3-liga/st-kickers-vs-unterhaching/1-1485980/" class="scorelink">2 - 3</a> </td> <td class="fa"> Unterhaching </td>
-        $pattern = '@<td class="fa">\s*(.*)\s*</td>@U';
+        $pattern = '@<div class="ply name">\s*(.*)\s*</div>@U';
         preg_match_all($pattern, $page, $teams_away);
         print '<pre>TEAMS AWAY';
         print_r($teams_away);
@@ -130,6 +130,8 @@ class Admincp3 extends Admincp_Controller
         //$pattern = '@<td class="fd">\s*([a-zA-Z]*)\s*</td>\s*<td class="fh">\s*([a-zA-Z\s\*]*)\s*</td>\s*<td class="fs">\s*<a href="(.*)" class="scorelink">\s*(.*)\s*</a>\s*</td>\s*<td class="fa">\s*(.*)\s*</td>@U';
         //<td class="fd"> FT </td> <td class="fh"> Manchester City </td> <td class="fs"> <a href="/soccer/england/premier-league/manchester-city-vs-chelsea/1-1474952/" class="scorelink" onclick="return false;">0 - 1</a> </td> <td class="fa"> Chelsea </td>
         $pattern = '@<td class="fd">\s*([a-zA-Z]*)\s*</td>\s*<td class="fh">\s*([\/\á\æ\é\ø\ß\ü\w\-\#\&\;\.\s\*]*)\s*</td>\s*<td class="fs">\s*<a href="(.*)" class="scorelink" onclick="return false;">\s*(.*)\s*</a>\s*</td>\s*<td class="fa">\s*(.*)\s*</td>@U';
+        // <div class="ply tright name"> Preston North End </div> <div class="sco"> <a href="/soccer/england/fa-cup/preston-north-end-vs-manchester-united/1-1906622/" class="scorelink" onclick="return false;">1 - 3</a> </div> <div class="ply name"> Manchester United </div>
+        $pattern = '@<div class="ply tright name">\s*(.*)\s*</div>\s*<div class="sco">\s*(.*)*(<a href="(.*)" class="scorelink" onclick="return false;">(.*)</a>)*\s*</div>\s*<div class="ply name">\s*(.*)\s*</div>@U';
 
         preg_match_all($pattern, $page, $scores);
         print '<pre>SCORES';
@@ -146,14 +148,37 @@ class Admincp3 extends Admincp_Controller
             $competition->competition_link = trim(substr(str_replace('soccer/', '', $countries[3][$key]), 1, -1));
             $competition->matches = array();
             $competitions[] = clone $competition;
-        }
+        }             
 
-        foreach ($scores[2] as $key => $val) {
-            $match->team_home = trim($scores[2][$key]);
-            $match->team_away = trim($scores[5][$key]);
-            $match->score_link = trim(substr(str_replace('soccer/', '', $scores[3][$key]), 1));
-            $match->score = trim($scores[4][$key]);
+        foreach ($scores[0] as $key => $val) {
+            //$match->team_home = trim($scores[1][$key]);
+            //$match->team_away = trim($scores[6][$key]);
+            //$match->score_link = trim(substr(str_replace('soccer/', '', $scores[3][$key]), 1));
+            //$match->score = trim($scores[4][$key]);
 
+            //$matches[] = clone $match;
+            if (strstr($val, 'href')) {
+                $pattern = '@<div class="ply tright name">\s*(.*)\s*</div>\s*<div class="sco">\s*<a href="(.*)" class="scorelink" onclick="return false;">(.*)</a>\s*</div>\s*<div class="ply name">\s*(.*)\s*</div>@U';
+            } else {
+                $pattern = '@<div class="ply tright name">\s*(.*)\s*</div>\s*<div class="sco">\s*(.*)\s*</div>\s*<div class="ply name">\s*(.*)\s*</div>@U';
+            }
+            
+            preg_match_all($pattern, $val, $scoresPrecise);
+            print '<pre>SCORES PRECISE';
+            print_r($scoresPrecise);
+            
+            if (strstr($val, 'href')) {
+                $match->team_home = trim($scoresPrecise[1][0]);
+                $match->team_away = trim($scoresPrecise[4][0]);
+                $match->score_link = trim(substr(str_replace('/soccer/', '', $scoresPrecise[2][0]), 1));
+                $match->score = trim($scoresPrecise[3][0]);
+            } else {
+                $match->team_home = trim($scoresPrecise[1][0]);
+                $match->team_away = trim($scoresPrecise[3][0]);
+                $match->score_link = '';
+                $match->score = trim($scoresPrecise[2][0]);
+            }
+            
             $matches[] = clone $match;
         }
 
@@ -213,12 +238,12 @@ class Admincp3 extends Admincp_Controller
                         'link' => $c->competition_link,
                         'link_complete' => 'http://www.livescore.com/soccer/' . $c->competition_link,
                     );
-                    $competition_id = $this->competition_pre_model->new_competition($insert_fields);
+                    //$competition_id = $this->competition_pre_model->new_competition($insert_fields);
                 } else {
                     $insert_fields = array(
                         'competition_id' => $competition_id
                     );
-                    $competition_id = $this->competition_pre_model->new_competition($insert_fields);
+                    //$competition_id = $this->competition_pre_model->new_competition($insert_fields);
                 }
             }
             // teams
@@ -236,12 +261,12 @@ class Admincp3 extends Admincp_Controller
                         $team_id = $this->team_pre_model->team_exists($param);
                         // does not exist as old team id
                         if (!$team_id) {
-                            $this->team_pre_model->new_team($param);
+                            //$this->team_pre_model->new_team($param);
                         } else {
                             $insert_fields = array(
                               'team_id' =>  $team_id
                             );
-                            $this->team_pre_model->new_team($insert_fields);
+                            //$this->team_pre_model->new_team($insert_fields);
                         }
                     }
                 }
@@ -273,11 +298,11 @@ class Admincp3 extends Admincp_Controller
                 $match_id = $this->match_pre_model->match_exists(array('link' => $m->score_link));
 
                 if (!$match_id) {
-                    $this->match_pre_model->new_match($match_data);
+                    //$this->match_pre_model->new_match($match_data);
                 } else {
                     $match_db = $this->match_pre_model->get_match($match_id);
                     // if matched is not parsed yet we can still update it                    
-                    $this->match_pre_model->update_match($match_data, $match_db['index']);
+                    //$this->match_pre_model->update_match($match_data, $match_db['index']);
                     
                 }
             }
@@ -436,11 +461,14 @@ class Admincp3 extends Admincp_Controller
     {
         $this->load->model('match_pre_model');
         $this->load->library('dataset');
+        
+        $count_matches_pre = $this->match_pre_model->get_num_rows();
 
         $filters = array();       
         
         $this->admin_navigation->module_link('List teams pre', site_url('admincp3/livescore/list_teams_pre'));
         $this->admin_navigation->module_link('List competitions pre', site_url('admincp3/livescore/list_competitions_pre'));
+        $this->admin_navigation->module_link('Move matches pre: ' . $count_matches_pre, site_url('admincp3/livescore/move_matches_pre'));
 
         $columns = array(
             array(
@@ -1005,5 +1033,14 @@ class Admincp3 extends Admincp_Controller
         redirect('admincp3/livescore/list_teams_pre/');
 
         return true;
+    }
+    
+    public function move_matches_pre()
+    {
+        $this->load->model('match_pre_model');
+        $moved = $this->match_pre_model->move_matches_pre();
+        
+        $this->notices->SetNotice($moved . ' matches successfully moved to z_matches normal table');
+        redirect('admincp3/livescore/list_matches_pre/');
     }
 }
