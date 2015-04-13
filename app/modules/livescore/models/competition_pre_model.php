@@ -42,7 +42,7 @@ class Competition_pre_model extends CI_Model
             $this->db->limit($filters['limit'], $offset);
         }
 
-        if ($filters['new_competitions']) {
+        if (isset($filters['new_competitions'])) {
             $this->db->order_by('competition_id', $order_dir);
             unset($filters['country_name_sort']);
         }
@@ -107,6 +107,62 @@ class Competition_pre_model extends CI_Model
 
         foreach ($result->result_array() as $row) {
 
+            return $row;
+        }
+        
+        return $row;
+    }
+    
+    /**
+     * Get Competition by competition id
+     *
+     * @param int $competition_id	
+     *
+     * @return array
+     */
+    function get_competition_by_competition_id($competition_id)
+    {
+        $row = array();
+
+        $this->db->join('z_countries', 'z_competitions_pre.country_id = z_countries.ID', 'left');
+        $this->db->where('competition_id', $competition_id);
+
+        $result = $this->db->get('z_competitions_pre');
+
+        foreach ($result->result_array() as $row) {
+            return $row;
+        }
+        
+        return $row;
+    }
+    
+    /**
+     * Get Competition by competition id
+     *
+     * @param array $fields	
+     *
+     * @return array
+     */
+    function get_competition_by_criteria($fields)
+    {
+        $row = array();
+
+        //$this->db->join('z_countries', 'z_competitions_pre.country_id = z_countries.ID', 'left');
+        if (isset($fields['name'])) {
+            $this->db->where('name', $fields['name']);
+        }
+        
+        if (isset($fields['link'])) {
+            $this->db->where('link', $fields['link']);
+        }
+        
+        if (isset($fields['link_complete'])) {
+            $this->db->where('link_complete', $fields['link_complete']);
+        }
+                
+        $result = $this->db->get('z_competitions_pre');
+
+        foreach ($result->result_array() as $row) {
             return $row;
         }
         
@@ -274,5 +330,31 @@ class Competition_pre_model extends CI_Model
                 $this->update_competition($update_fields, $linie['index']);
             }
         }
+    }
+    
+    /**
+     * Get all pre competitions
+     * 
+     * @return array
+     */
+    public function get_all_competitions()
+    {
+        $this->load->model('competition_model');
+        $this->load->model('country_model');
+        $result = $this->db->get('z_competitions_pre');
+        $rows = array();
+        
+        foreach ($result->result_array() as $linie) {
+            if (!$linie['competition_id']) {
+                $country = $this->country_model->get_country($linie['country_id']);
+                $rows[$linie['index']] = $country['country_name'] . ' - ' . $linie['name'];
+                continue;
+            }
+            
+            $competition = $this->competition_model->get_competition($linie['competition_id']);            
+            $rows[$linie['index']] = $competition['country_name'] . ' - ' . $competition['name'];
+        }
+        
+        return $rows;
     }
 }

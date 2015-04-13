@@ -29,7 +29,7 @@ class Team_pre_model extends CI_Model
     function get_teams($filters = array())
     {
         $this->load->model('country_model');
-        $this->load->model('team_model');        
+        $this->load->model('team_model');
         $row = array();
 
         $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';
@@ -39,7 +39,7 @@ class Team_pre_model extends CI_Model
             $this->db->limit($filters['limit'], $offset);
         }
         
-        if ($filters['nr_new_teams']) {
+        if (isset($filters['nr_new_teams'])) {
             $this->db->order_by('team_id', $order_dir);
             unset($filters['country_name_sort']);
         }
@@ -53,7 +53,7 @@ class Team_pre_model extends CI_Model
             if (isset($filters['name'])) {
                 $this->db->like('name', $filters['name']);
             }
-        }        
+        }
 
         $this->db->order_by('name', $order_dir);
 
@@ -92,9 +92,9 @@ class Team_pre_model extends CI_Model
             $row[] = $linie;
         }
         
-        if (isset($filters['country_name_sort'])) {
+        //if (isset($filters['country_name_sort'])) {
             usort($row, array('Team_pre_model', 'cmp'));
-        }
+        //}
         
 //        print '<pre>';
 //        print_r($linie);
@@ -103,7 +103,7 @@ class Team_pre_model extends CI_Model
         return $row;
     }
     
-    function get_num_rowz($filters = array()) 
+    function get_num_rowz($filters = array())
     {
         return count($this->get_teams($filters));
     }
@@ -241,6 +241,21 @@ class Team_pre_model extends CI_Model
         return $result->num_rows();
     }
 
+    function team_exists_team_id($team_id)
+    {
+        $this->db->where('team_id', $team_id);
+        $result = $this->db->get('z_teams_pre');
+        return $result->num_rows();
+    }
+    
+    function team_exists_name_country($team)
+    {
+        $this->db->where('country_id', $team['country_id']);
+        $this->db->where('name', $team['name']);
+        $result = $this->db->get('z_teams_pre');
+        return $result->num_rows();
+    }
+    
     /**
      * Delete team
      *

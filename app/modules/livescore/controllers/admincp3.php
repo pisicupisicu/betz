@@ -54,14 +54,14 @@ class Admincp3 extends Admincp_Controller
         $this->load->library('form_validation');
         $this->form_validation->set_rules('link', 'Link', 'required|trim');
 
-        if ($this->form_validation->run() === FALSE) {
+        if ($this->form_validation->run() === false) {
             $this->notices->SetError('Required fields.');
-            $error = TRUE;
+            $error = true;
         }
 
         if (isset($error)) {
             redirect('admincp3/livescore/parse_matches');
-            return FALSE;
+            return false;
         }
 
         $link = $this->input->post('link');
@@ -77,24 +77,27 @@ class Admincp3 extends Admincp_Controller
 
         echo '<br/><div align="center"><a href="http://betz.dev/admincp3/livescore/parse_matches">Back</a></div>';
 
-        return TRUE;
+        return true;
     }
 
     private function parse_info_per_date($link)
     {
         $link = utf8_decode($link);
         $page = $this->getUrl($link);
+        print '<pre>';
+        //print_r($page);
+        //die;
         $countries = $teams = $score = $competitions = array();
         
         // echo "link = $link<br/>";
         $temp = explode('/', $link);
         // print_r($temp);
         $match_date = $temp[4];
-        // echo '<b>match date = '.$match_date.'</b><br/>';        
+        // echo '<b>match date = '.$match_date.'</b><br/>';
 
         $this->load->model('competition_pre_model');
         $this->load->model('country_model');
-        $this->load->model('team_pre_model');        
+        $this->load->model('team_pre_model');
         $this->load->model('match_pre_model');
 
         //$pattern = '|<dt>(.*?)</dt>[\s\S]*?<dd>([\s\S]*?)</dd>|';
@@ -105,6 +108,10 @@ class Admincp3 extends Admincp_Controller
         // <span class="league"> <a href="/soccer/england/"><strong>England</strong></a> - <span><a href="/soccer/england/premier-league/">Premier League</a></span></span>
         //phpinfo();die;
         //<span class="league"> <a href="/soccer/italy/"><strong>Italy</strong></a> - <span><a href="/soccer/italy/serie-b/">Serie B</a></span> </span> <span class="date">September 2</span>
+        
+        //<div class="left"> <a href="/soccer/intl/"><strong>International</strong></a> - <a href="/soccer/intl/champions-cup-group-b/">Champions Cup:: group B</a> </div>
+        //<div class="left"> <a href="/soccer/denmark/"><strong>Denmark</strong></a> - <a href="/soccer/denmark/sas-ligaen/">Superligaen</a> </div>
+        //$pattern = '@<div class="left">\s*<a href="(.*)"><strong>(.*)</strong></a>\s*-\s*<a href="(.*)">([\/\á\æ\é\ø\ß\ü\w\-\#\&\;\.\s\*\:]*)</a>\s*</div>@U';
         $pattern = '@<div class="left">\s*<a href="(.*)"><strong>(.*)</strong></a>\s*-\s*<a href="(.*)">(.*)</a>\s*</div>@U';
         preg_match_all($pattern, $page, $countries);
         print '<pre>COUNTRIES';
@@ -501,6 +508,9 @@ class Admincp3 extends Admincp_Controller
         $this->admin_navigation->module_link('List teams pre', site_url('admincp3/livescore/list_teams_pre'));
         $this->admin_navigation->module_link('List competitions pre', site_url('admincp3/livescore/list_competitions_pre'));
         $this->admin_navigation->module_link('Move matches pre: ' . $count_matches_pre, site_url('admincp3/livescore/move_matches_pre'));
+        $this->admin_navigation->module_link('Add match pre', site_url('admincp3/livescore/add_match_pre'));
+        $this->admin_navigation->module_link('Add competition pre', site_url('admincp3/livescore/add_competition_pre'));
+        $this->admin_navigation->module_link('Add team pre', site_url('admincp3/livescore/add_team_pre'));
 
         $columns = array(
             array(
@@ -619,10 +629,11 @@ class Admincp3 extends Admincp_Controller
     
     function list_competitions_pre() 
     {
-                ini_set('display_errors', 1);
+        ini_set('display_errors', 1);
         $this->load->model('competition_pre_model');
         $new_competitions = $this->competition_pre_model->get_num_rows(array('competition_id' => true));
         $this->admin_navigation->module_link('Move new competitions:' . $new_competitions, site_url('admincp3/livescore/move_competitions_pre'));
+        $this->admin_navigation->module_link('Add competition pre', site_url('admincp3/livescore/add_competition_pre'));
         $this->load->library('dataset');
 
         $columns = array(
@@ -700,7 +711,7 @@ class Admincp3 extends Admincp_Controller
         // initialize the dataset
         $this->dataset->initialize();
         // add actions
-        $this->dataset->action('Delete', 'admincp3/livescore/delete_competition');
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_competition_pre');
         $this->load->view('list_competitions_pre');
     }
     
@@ -710,6 +721,7 @@ class Admincp3 extends Admincp_Controller
         $this->load->model('team_pre_model');
         $nr_new_teams = $this->team_pre_model->get_num_rows(array('team_id' => true));
         $this->admin_navigation->module_link('Move new teams:' . $nr_new_teams, site_url('admincp3/livescore/move_teams_pre/'));
+        $this->admin_navigation->module_link('Add team pre', site_url('admincp3/livescore/add_team_pre/'));
         
         $columns = array(
             array(
@@ -775,7 +787,7 @@ class Admincp3 extends Admincp_Controller
             foreach ($filters_decode as $key => $val) {
                 $filters[$key] = $val;
             }
-        }
+        }                
         
         $this->dataset->datasource('team_pre_model', 'get_teams_by_country_with_filters', $filters);
 
@@ -939,7 +951,7 @@ class Admincp3 extends Admincp_Controller
         $this->load->view('list_matches_pre');
     }
     
-    function edit_team_pre($id) 
+    function xedit_team_pre($id) 
     {
         $this->load->model('country_model');
         $this->load->model('team_pre_model');
@@ -1074,5 +1086,614 @@ class Admincp3 extends Admincp_Controller
         
         $this->notices->SetNotice($moved . ' matches successfully moved to z_matches normal table');
         redirect('admincp3/livescore/list_matches_pre/');
+    }
+    
+    function add_competition_pre() 
+    {
+        $this->load->library('admin_form');
+        $form = new Admin_form;
+        $this->load->model('country_model');
+        $countries = $params = $competitions = array('' => 'Country competitions');
+        $params['dropdown'] = 1;
+        $countries = $this->country_model->get_countries($params);
+
+        $form->fieldset('Add Competition Pre');
+        $form->dropdown('Country', 'country_id_before', $countries);
+        $form->dropdown('Competitions', 'competitions_before', $competitions);
+        $form->text('Competition name', 'name', '', 'Competition name to be introduced', false, 'e.g., Bundesliga', true);
+        $form->text('Link', 'link', '', 'Link', false, 'e.g., russia/premier-league', true);
+        $form->text('Link complete', 'link_complete', '', 'Link complete', false, 'e.g., http://www.livescore.com/soccer/russia/premier-league/', true);
+        $form->dropdown('Country', 'country_id', $countries);
+
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Add Competition Pre',
+            'form_action' => site_url('admincp3/livescore/add_competition_pre_validate'),
+            'action' => 'new',
+        );
+
+        $this->load->view('add_competition_pre', $data);
+    }
+
+    function add_competition_pre_validate($action = 'new', $id = false) 
+    {
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('name', 'Nume', 'trim');
+        $this->form_validation->set_rules('link', 'Link', 'trim');
+        $this->form_validation->set_rules('country_id', 'Country', 'trim');
+
+        if ($this->form_validation->run() === false) {
+            $this->notices->SetError('Required fields.');
+            $error = true;
+        }
+
+        if (isset($error)) {
+            if ($action == 'new') {
+                redirect('admincp3/livescore/list_competitions_pre');
+                return false;
+            } else {
+                redirect('admincp3/livescore/edit_competition_pre/' . $id);
+                return false;
+            }
+        }
+
+        $this->load->model('competition_pre_model');
+        $this->load->model('competition_model');
+        
+        $competition_before = $this->input->post('competitions_before');
+                        
+        if (strlen($competition_before)) {
+            $fields['competition_id'] = $competition_before;
+        } else {
+            $temp = $this->input->post('link_complete');
+            if ($temp[strlen($temp) - 1] == '/') {
+                $link_complete = substr($temp, 0, -1);
+            } else {
+                $link_complete = $temp;
+            }
+            
+            // search first the competition by link
+            $competition = $this->competition_model->get_competition_by_link_complete($link_complete);
+                        
+            if (!empty($competition)) {
+                $fields['competition_id'] = $competition['competition_id'];
+            } else {
+                $name = $this->input->post('name');
+                $link = $this->input->post('link');
+                $country_id = $this->input->post('country_id');
+                
+                if (!strlen($name) || !strlen($link) || !strlen($country_id)) {
+                    $this->notices->SetError('Competition not found.Add more details like name, link and country.');
+                    redirect('admincp3/livescore/list_competitions_pre');
+                    return false;
+                } else {
+                    $fields['name'] = $this->input->post('name');
+                    $fields['link'] = $this->input->post('link');
+                    $fields['link_complete'] = $link_complete;
+                    $fields['country_id'] = $this->input->post('country_id');
+                }                                
+            }
+        }
+        
+        if ($action == 'new') {
+            if (strlen($competition_before)) {
+                $competition_exists = $this->competition_pre_model->get_competition_by_competition_id($fields['competition_id']);
+                if (!empty($competition_exists)) {
+                    $this->notices->SetNotice('Competition pre already exists.');                    
+                    redirect('admincp3/livescore/list_competitions_pre/');
+                    return false;
+                }                
+            } else {
+                $competition_exists = $this->competition_pre_model->get_competition_by_criteria($fields);
+                if (!empty($competition_exists)) {
+                    $this->notices->SetNotice('Competition pre already exists.');                    
+                    redirect('admincp3/livescore/list_competitions_pre/');
+                    return false;                    
+                }
+            }
+            
+            $this->competition_pre_model->new_competition($fields);
+            $this->notices->SetNotice('Competition pre added successfully.');
+            redirect('admincp3/livescore/list_competitions_pre/');
+        } else {
+            if (strlen($competition_before)) {
+                $competition_exists = $this->competition_pre_model->get_competition_by_competition_id($fields['competition_id']);                   
+            } else {
+                $competition_exists = $this->competition_pre_model->get_competition_by_criteria($fields);
+            }
+            
+            if (!empty($competition_exists)) {
+                $this->notices->SetNotice('Competition pre already exists.');                    
+                redirect('admincp3/livescore/list_competitions_pre/');
+                return false;                    
+            }
+            
+            $this->competition_pre_model->update_competition($fields, $id);
+            $this->notices->SetNotice('Competition pre updated successfully.');
+            redirect('admincp3/livescore/list_competitions_pre/');
+        }
+
+        return true;
+    }
+
+    function edit_competition_pre($id) 
+    {
+        $this->load->model('competition_pre_model');
+        $this->load->model('competition_model');
+        $this->load->model('country_model');
+        
+        $competition_pre = $this->competition_pre_model->get_competition($id);
+        
+        if (empty($competition_pre)) {
+            die(show_error('No competition pre with this ID.'));
+        }
+
+        $this->load->library('admin_form');
+        $form = new Admin_form;
+        
+        
+        if (isset($competition_pre['competition_id'])) {
+            $competition = $this->competition_model->get_competition($competition_pre['competition_id']);
+            $competitions_all = $this->competition_model->get_competitions(array('country_id' => $competition['country_id']));
+            
+            foreach ($competitions_all as $c) {
+                $competitions[$c['competition_id']] = $c['name'];
+            }
+                        
+            $competition_pre['name'] = $competition_pre['link'] = $competition_pre['link_complete'] = $competition_pre['country_id'] = '';
+        } else {
+            $competitions = array('' => 'Country competitions');
+            $competition['country_id'] = false;
+            $competitions['country_id'] = false;            
+        }
+                        
+        $countries = $params = array();
+        $params['dropdown'] = 1;
+        $countries = $this->country_model->get_countries($params);                
+
+        $form->fieldset('Edit Competition Pre');
+        $form->dropdown('Country', 'country_id_before', $countries, $competition['country_id']);
+        $form->dropdown('Competitions', 'competitions_before', $competitions, $competition_pre['competition_id']);
+        $form->text('Competition name', 'name', $competition_pre['name'], 'Competition name to be introduced', false, 'e.g., Bundesliga', true);
+        $form->text('Link', 'link', $competition_pre['link'], 'Competition link', false, 'e.g., russia/premier-league', true);
+        $form->text('Link complete', 'link_complete', $competition_pre['link_complete'], 'Competition link complete', false, 'e.g., http://www.livescore.com/soccer/russia/premier-league/', true);
+        $form->dropdown('Country', 'country_id', $countries, $competition_pre['country_id']);
+
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Edit Competition Pre',
+            'form_action' => site_url('admincp3/livescore/add_competition_pre_validate/edit/' . $competition_pre['index']),
+            'action' => 'edit',
+        );
+
+        $this->load->view('add_competition_pre', $data);
+    }
+
+    function delete_competition_pre($contents, $return_url)
+    {
+        $this->load->library('asciihex');
+        $this->load->model('competition_pre_model');
+
+        $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+        $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+
+        foreach ($contents as $content) {            
+            $this->competition_pre_model->delete_competition($content);
+        }
+
+        $this->notices->SetNotice('Competition pre deleted successfully.');
+
+        redirect($return_url);
+
+        return true;
+    }
+    
+    function add_team_pre() 
+    {
+        $this->load->model('country_model');        
+        
+        $this->load->library('admin_form');
+        $form = new Admin_form;
+        $countries = $params = array();
+        $params['dropdown'] = 1;
+        $countries = $this->country_model->get_countries($params);
+        $teams = array(0 => 'Choose team from country');
+
+        $form->fieldset('Add Team Pre');
+        $form->dropdown('Country', 'country_id', $countries);
+        $form->dropdown('Teams', 'team_id', $teams);
+        $form->text('Team name', 'name', '', 'Team name to be introduced', false, 'e.g., AC Milan', true);
+        $form->dropdown('Country', 'country', $countries);
+
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Add team pre',
+            'form_action' => site_url('admincp3/livescore/add_team_pre_validate'),
+            'action' => 'new',
+        );
+
+        $this->load->view('add_team_pre', $data);
+    }
+
+    function add_team_pre_validate($action = 'new', $id = false)
+    {
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('country_id', 'Team Country', 'trim');
+        $this->form_validation->set_rules('team_id', 'Team Name', 'trim');
+        $this->form_validation->set_rules('name', 'Name', 'trim');
+        $this->form_validation->set_rules('country', 'Country', 'trim');
+        
+        if ($this->form_validation->run() === false) {
+            $this->notices->SetError('Required fields.');
+            $error = true;
+        }
+
+        if (isset($error)) {
+            if ($action == 'new') {
+                redirect('admincp3/livescore/list_teams_pre');
+                return false;
+            } else {
+                redirect('admincp3/livescore/edit_team_pre/' . $id);
+                return false;
+            }
+        }
+
+        $this->load->model('team_pre_model');
+        $team_id = (int) $this->input->post('team_id');
+        
+        if ($action == 'new') {
+            if ($team_id) {
+                $team_exists = $this->team_pre_model->team_exists_team_id($team_id);
+
+                if ($team_exists) {
+                    $this->notices->SetError('Team id already exists.');
+                    redirect('admincp3/livescore/list_teams_pre');
+                    return false;
+                }
+
+                $fields = array(
+                    'team_id' => $team_id,
+                    'country_id' => null,
+                    'name' => null,
+                    'matches' => 0
+                );
+            } else {
+                $team_exists = $this->team_pre_model->team_exists_name_country(
+                    array(
+                        'country_id' => (int) $this->input->post('country'),
+                        'name' => $this->input->post('name')
+                    )
+                );
+
+                if ($team_exists) {
+                    $this->notices->SetError('Team with country and name already exists.');
+                    redirect('admincp3/livescore/list_teams_pre');
+                    return false;
+                }
+
+                $fields = array(
+                    'team_id' => null,
+                    'country_id' => (int) $this->input->post('country'),
+                    'name' => $this->input->post('name'),
+                    'matches' => 0
+                );
+            }
+        } else {
+            $team = $this->team_pre_model->get_team($id);
+            
+            if (empty($team)) {
+                $this->notices->SetError('Team not found.');
+                redirect('admincp3/livescore/list_teams_pre');
+                return false;
+            }
+            
+            if ($team_id) {
+                $fields = array(
+                    'team_id' => $team_id,
+                    'country_id' => null,
+                    'name' => null,
+                    'matches' => 0
+                );
+            } else {
+                $fields = array(
+                    'team_id' => null,
+                    'country_id' => (int) $this->input->post('country'),
+                    'name' => $this->input->post('name'),
+                    'matches' => 0
+                );
+            }
+        }
+                
+        if ($action == 'new') {
+            $team_id = $this->team_pre_model->new_team($fields);
+            $this->notices->SetNotice('Team pre added successfully.');
+            redirect('admincp3/livescore/list_teams_pre/');
+        } else {
+            $this->team_pre_model->update_team($fields, $id);
+            $this->notices->SetNotice('Team pre updated successfully.');
+            redirect('admincp3/livescore/list_teams_pre/');
+        }
+
+        return true;
+    }
+
+    function edit_team_pre($id) 
+    {
+        $this->load->model('country_model');
+        $this->load->model('team_pre_model');
+        $team = $this->team_pre_model->get_team($id);
+        
+        if (!$team['team_id']) {
+            $teams[0] = 'Select team';
+        }
+        
+        $all_teams = $this->team_model->get_teams(array('country_id' => $team['country_id']));
+        foreach ($all_teams as $t) {
+            $teams[$t['team_id']] = $t['name'];
+        }        
+        
+        if (empty($team)) {
+            die(show_error('No team pre with this ID.'));
+        }
+
+        $this->load->library('admin_form');
+        $form = new Admin_form;
+        $this->load->model('team_pre_model');
+        $countries = $params = array();
+        $params['dropdown'] = 1;
+        $countries = $this->country_model->get_countries($params);        
+        
+        $form->fieldset('Edit Team Pre');
+        $form->dropdown('Country', 'country_id', $countries, $team['country_id']);
+        $form->dropdown('Teams', 'team_id', $teams, $team['team_id']);
+        $form->text('Team name', 'name', $team['name'], 'Team name to be introduced', false, 'e.g., AC Milan', true);
+        $form->dropdown('Country', 'country', $countries, $team['country_id']);
+
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Edit Team pre',
+            'form_action' => site_url('admincp3/livescore/add_team_pre_validate/edit/' . $team['index']),
+            'action' => 'edit',
+        );
+
+        $this->load->view('add_team_pre', $data);
+    }
+
+    function delete_team_pre($contents, $return_url) 
+    {
+        $this->load->library('asciihex');
+        $this->load->model('competition_pre_model');
+        $this->load->model('team_pre_model');
+
+        $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+        $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+
+        foreach ($contents as $content) {            
+            $this->team_pre_model->delete_team($content);
+        }
+
+        $this->notices->SetNotice('Team pre deleted successfully.');
+
+        redirect($return_url);
+
+        return true;
+    }
+    
+   /**
+    * Add Match
+    *
+    * Add new Match form, preloaded with variables
+    *
+    * @param int $id the ID of the bet
+    */
+    function add_match_pre($action = 'new', $id = false) 
+    {
+        $this->load->model('match_pre_model');
+        $this->load->model('competition_pre_model');
+        $this->load->model('team_pre_model');
+        $this->load->model('country_model');
+        
+        $match = $this->match_pre_model->get_match($id);
+        
+        $competitions = array();
+        $params['dropdown'] = 1;
+        $competitions = $this->competition_pre_model->get_all_competitions($params);
+        
+        $teams = array();
+        $teams = $this->team_pre_model->get_teams();
+        foreach ($teams as $team) {		
+            $team_name[$team['index']] = $team['country_name'] . ' - ' .$team['name'];
+            $team_country[$team['country_id']] = $team['country_name'];
+        }
+
+       //echo"<pre>";
+       //print_r ($match);
+       //die;
+
+        $data = array(
+            'competitions' => $competitions,
+            'team_name' => $team_name,
+            'form' => $match,
+            'form_title' => 'Add New Match Pre',
+            'form_action' => site_url('admincp3/livescore/post_match_pre/new'),
+            'action' => 'new',
+        );
+
+        $this->load->view('add_match_pre',$data);
+
+    }
+    
+   /**
+    * Edit Match
+    *
+    * Show the Match form, preloaded with variables
+    *
+    * @param int $id the ID of the bet
+    */
+    function edit_match_pre($id) 
+    {
+        $this->load->model('match_pre_model');
+        $this->load->model('competition_pre_model');
+        $this->load->model('team_pre_model');        
+        $this->load->model('country_model');
+        $match = $this->match_pre_model->get_match($id);
+
+        $filters['country_id'] = $match['country_id'];
+
+        $countries = array();
+        $countries = $this->country_model->get_countries();
+
+        $competition = array();
+        $competition = $this->competition_pre_model->get_competitions($filters);           
+        foreach ($competition as $comp) {		
+            $competition_name[$comp['index']] = $comp['name'];  
+        }			        
+        
+        $teams = array();
+        $teams = $this->team_pre_model->get_teams($filters);
+        foreach ($teams as $team) {		
+            $team_name[$team['index']] = $team['name'];
+            $team_country[$team['country_id']] = $team['country_name'];  
+        }
+
+        if(!isset($match) || empty($match)) {
+            $this->notices->SetError('No pre match found');
+            redirect('admincp3/livescore/list_matches_pre');
+        }
+
+        $home   =   $this->team_pre_model->get_team($match['team1']);
+        $away   =   $this->team_pre_model->get_team($match['team2']);        
+
+        $data = array(
+            'match' =>  $match,
+            'home'  =>  $home,
+            'away'  =>  $away,           
+            'id_match' => $match['id'],
+            'id_country' => $match['country_id'],
+            'country_name' => $countries,
+            'id_competition' => $match['competition_id'],
+            'competition_name' => $competition_name,
+            'home_team_id' => $match['team1'],
+            'away_team_id' => $match['team2'],
+            'team_name' => $team_name,
+            'score' => $match['score'],
+            'link' => $match['link_match'],
+            'livescore_link' => $match['link_match_complete'],
+            'match_date' => $match['match_date'],
+            'form' => $match,
+            'form_title' => 'Edit Match Pre',
+            'form_action' => site_url('admincp3/livescore/post_match/edit/'.$match['id']),
+            'action' => 'edit',
+        );
+        
+        $this->load->view('edit_match_pre',$data);
+    }
+    
+   /**
+    * Handle New/Edit Match Post
+    */
+    function post_match($action, $id = false)
+    {
+        $this->load->model('match_model');
+
+        // content
+        $ID_match = $this->input->post('ID_match');
+        $competition_name = $this->input->post('competition_name');
+        $match_date = $this->input->post('match_date');
+        $home_team = $this->input->post('home_team');
+        $away_team = $this->input->post('away_team');                
+        $score = $this->input->post('score');
+        $link = $this->input->post('link_user');
+        $link_complete = $this->input->post('link_complete');
+
+        $update_fields = array(
+            //'id'            => $ID_match,
+            'competition_id'=> $competition_name,
+            'match_date'    => $match_date,
+            'team1'         => $home_team,
+            'team2'         => $away_team,
+            'score'         => $score,
+            'link'          => $link,
+            'link_complete' => $link_complete,
+        );
+
+        $insert_fields = array(
+            'competition_id'=> $competition_name,
+            'match_date'    => $match_date,
+            'team1'         => $home_team,
+            'team2'         => $away_team,
+            'score'         => $score,
+            'link'          => $link,
+            'link_complete' =>  $link_complete,
+        );
+
+        //print_r ($insert_fields);
+        //die;
+
+        if ($action == 'new') {
+            $bet_id = $this->match_model->new_match($insert_fields);
+            $this->notices->SetNotice('Match pre added successfully.');            
+        }
+        else {
+            $bet_id = $this->match_model->update_match($update_fields, $ID_match);
+            $this->notices->SetNotice('Match pre edited successfully.');
+        }
+
+        redirect('admincp3/livescore/list_matches');
+
+        return true;
+    }
+    
+    function post_match_pre($action, $id = false)
+    {
+        $this->load->model('match_pre_model');
+
+        // content
+        $competition_id_pre = $this->input->post('competitions');
+        $match_date = $this->input->post('match_date');
+        $team1_pre = $this->input->post('home_team');
+        $team2_pre = $this->input->post('away_team');
+        $score = $this->input->post('score');
+        $link_complete = $this->input->post('link_complete');
+        
+        $link = str_replace('http://www.livescore.com/', '', $link_complete);
+        $link = substr($link, 0, -1);
+
+        $update_fields = array(
+            //'id'            => $ID_match,
+            'competition_id'=> $competition_id_pre,
+            'match_date'    => $match_date,
+            'team1'         => $team1_pre,
+            'team2'         => $team2_pre,
+            'score'         => $score,
+            'link'          => $link,
+            'link_complete' => $link_complete,
+        );
+
+        $insert_fields = array(
+            'competition_id_pre'    => $competition_id_pre,
+            'match_date'            => $match_date,
+            'team1_pre'             => $team1_pre,
+            'team2_pre'             => $team2_pre,
+            'score'                 => $score,
+            'link'                  => $link,
+            'link_complete'         => $link_complete,
+        );
+
+        //print_r ($insert_fields);
+        //die;
+
+        if ($action == 'new') {
+            $bet_id = $this->match_pre_model->new_match($insert_fields);
+            $this->notices->SetNotice('Match pre added successfully.');            
+        }
+        else {
+            $bet_id = $this->match_pre_model->update_match($update_fields, $id);
+            $this->notices->SetNotice('Match pre edited successfully.');
+        }
+
+        redirect('admincp3/livescore/list_matches_pre');
+
+        return true;
     }
 }
