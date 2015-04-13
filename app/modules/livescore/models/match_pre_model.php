@@ -436,13 +436,20 @@ class Match_pre_model extends CI_Model
             $insert_fields['match_date'] = $linie['match_date'];
             $insert_fields['score'] = $linie['score'];
             $insert_fields['link'] = $linie['link'];
+            if ($insert_fields['link'][strlen($insert_fields['link']) - 1] != '/') {
+                $insert_fields['link'] .= '/';
+            }
             $insert_fields['link_complete'] = $linie['link_complete'];
             $insert_fields['parse_date'] = $linie['parse_date'];
             $insert_fields['parsed'] = 0;
             
-            // copy match
-            $this->match_model->new_match($insert_fields);
-            $i++;
+            // copy match if not exist            
+            if (!$this->match_model->match_exists(array('link' => str_replace('soccer/', '', $insert_fields['link'])))) {                
+                $this->match_model->new_match($insert_fields);
+                $i++;
+            }
+            
+            
             
             //print '<pre>';
             //print_r($linie);

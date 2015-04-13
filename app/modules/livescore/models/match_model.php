@@ -445,7 +445,7 @@ class Match_model extends CI_Model {
     }
 
     function match_exists($match) {
-        $this->db->where('link', $match['link']);
+        $this->db->where('link', $match['link']);       
         $result = $this->db->get('z_matches');
 
         foreach ($result->result_array() as $row) {
