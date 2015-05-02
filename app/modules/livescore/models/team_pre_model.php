@@ -401,4 +401,15 @@ class Team_pre_model extends CI_Model
         
         return $i;
     }
+    
+    /**
+     * Truncates the table
+     * 
+     * @return boolean
+     */
+    public function clear_table()
+    {
+        $this->db->truncate('z_teams_pre');
+        return true;
+    }
 }

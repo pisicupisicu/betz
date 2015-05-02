@@ -13,42 +13,38 @@ if (!defined('BASEPATH'))
  * @package BJ Tool
  *
  */
-class Admincp5 extends Admincp_Controller 
-{
+class Admincp5 extends Admincp_Controller {
 
-    function __construct() {
-
+    function __construct()
+    {
         parent::__construct();
-
         $this->admin_navigation->parent_active('livescore');
-
         //error_reporting(E_ALL^E_NOTICE);
         //error_reporting(E_WARNING);
     }
 
-    function index() {
+    public function index()
+    {
         redirect('admincp/livescore/list_matches');
     }
 
-    function parse_matches() {
+    function parse_matches()
+    {
         $this->load->model('match_model');
         $match = $this->match_model->get_next_match();
 
-        if (empty($match)) {
+        if (empty($match))
+        {
             die('All matches are already parsed');
         }
-
         $this->parse_match($match['id']);
 
-        //if($match['id'] > 3) die;   
-
-        echo '<META http-equiv="refresh" content="2;URL=/admincp5/livescore/parse_matches/">';
+        echo '<META http-equiv="refresh" content="1;URL=/admincp5/livescore/parse_matches/">';
     }
 
-    function parse_match($id) {
-        $this->load->model('match_model');
-        $this->load->model('goal_model');
-        $this->load->model('card_model');
+    function parse_match($id)
+    {
+        $this->load->model(array('match_model', 'goal_model', 'card_model'));
         //62,49
         if (!$id)
             $id = 1;
@@ -56,323 +52,679 @@ class Admincp5 extends Admincp_Controller
         $page = $this->getUrl($match['link_match_complete']);
         // echo $match['link_c'].'<br/>';
         // echo $page.'<br/>';    
-        print '<pre>MATCH';
+        print '<pre>MATCH<br /><br />';
         print_r($match);
+        
+        // CARDS PARSING START
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div> <span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
 
-        //<td class="min"> 68' </td> <td class="ply"> <div> <span class="inc yellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Ugur Demirok</span> <div class="clear"></div> </div> </td> <td class="sco"> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc yellowcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>@U';
-        preg_match_all($pattern, $page, $yellowcard_left);
-        print '<pre>YELLOWCARD LEFT';
-        print_r($yellowcard_left);
-
-        foreach ($yellowcard_left[1] as $key => $val) {
-            $data = array(
-                'match_id' => $id,
-                'card_type' => 'yellow',
-                'min' => trim($yellowcard_left[1][$key]),
-                'player' => trim($yellowcard_left[2][$key]),
-                'team' => 'home',
-            );
-            if (!$this->card_model->card_exists($data)) {
-                $this->card_model->new_card($data);
-            }
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
         }
-
-        //<td class="min"> 45' </td> <td class="ply"> <div> <span class=" right"></span> <span class="right ml4"> </span> <span class="right name"></span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc yellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Onur Recep Kivrak</span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class=" right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name"></span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc yellowcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span>\s*<div class="clear"></div>\s*</div>@U';
-        preg_match_all($pattern, $page, $yellowcard_right);
-        print '<pre>YELLOWCARD RIGHT';
-        print_r($yellowcard_right);
-
-        foreach ($yellowcard_right[1] as $key => $val) {
-            $data = array(
-                'match_id' => $id,
-                'card_type' => 'yellow',
-                'min' => trim($yellowcard_right[1][$key]),
-                'player' => trim($yellowcard_right[2][$key]),
-                'team' => 'away',
-            );
-            if (!$this->card_model->card_exists($data)) {
-                $this->card_model->new_card($data);
-            }
-        }
-
-
-        //<td class="min"> 47' </td> <td class="ply"> <div> <span class="inc yellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Fredy</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc yellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Fernando Marcal</span> <div class="clear"></div> </div> </td>
-        //<td class="min"> 90' </td> <td class="ply"> <div> <span class="inc yellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Flori</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc yellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Marcel Sabitzer</span> <div class="clear"></div> </div> </td>
-        //<td class="min"> 90' </td> <td class="ply"> <div> <span class="inc yellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Anders Kristiansen</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc yellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Timmi Johansen</span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc yellowcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">([\ß\ü\w\-\#\&\;\.\s\*]+)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s?</td>\s*<td class="ply">\s*<div>\s*<span class="inc yellowcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">([A-Z]+.*)</span>@U';
-        preg_match_all($pattern, $page, $yellowcard_right_same_line);
-        print '<pre>YELLOWCARD RIGHT SAME LINE';
-        print_r($yellowcard_right_same_line);
-
-        if (!empty($yellowcard_right_same_line[2][0])) {
-            foreach ($yellowcard_right_same_line[2] as $key => $val) {
-                if (!strstr($yellowcard_right_same_line[2][$key], 'span')) {
-                    $data = array(
-                        'match_id' => $id,
-                        'card_type' => 'yellow',
-                        'min' => trim($yellowcard_right_same_line[1][$key]),
-                        'player' => trim($yellowcard_right_same_line[3][$key]),
-                        'team' => 'away',
-                    );
-
-                    //print_r($data);
-                    if (!$this->card_model->card_exists($data)) {
-                        $this->card_model->new_card($data);
-                    }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>YELLOW CARD LEFT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
                 }
             }
         }
-
-
-        //<td class="min"> 90' </td> <td class="ply"> <div> <span class="inc redcard right"></span> <span class="right ml4"> </span> <span class="right name">Maurizio Ciaramitaro</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class=" left"></span> <span class="left mr4"> </span> <span class="left name"></span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
-        preg_match_all($pattern, $page, $redcard_left);
-        print '<pre>REDCARD LEFT';
-        print_r($redcard_left);
-
-        foreach ($redcard_left[1] as $key => $val) {
-            $data = array(
-                'match_id' => $id,
-                'card_type' => 'red',
-                'min' => trim($redcard_left[1][$key]),
-                'player' => trim($redcard_left[2][$key]),
-                'team' => 'home',
-            );
-            if (!$this->card_model->card_exists($data)) {
-                $this->card_model->new_card($data);
-            }
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
         }
-
-        //<td class="min"> 54' </td> <td class="ply"> <div> <span class="inc redcard right"></span> <span class="right ml4"> </span> <span class="right name">Kristian Bråtebæk</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc yellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Abdurahim Laajab</span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc yellowcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
-        preg_match_all($pattern, $page, $red_left_yellowcard_right_same_line);
-        print '<pre>RED LEFT YELLOWCARD RIGHT SAME LINE';
-        print_r($red_left_yellowcard_right_same_line);
-
-        if (!empty($red_left_yellowcard_right_same_line[2][0])) {
-            foreach ($red_left_yellowcard_right_same_line[2] as $key => $val) {
-                if (!strstr($red_left_yellowcard_right_same_line[2][$key], 'span')) {
-                    $data = array(
-                        'match_id' => $id,
-                        'card_type' => 'yellow',
-                        'min' => trim($red_left_yellowcard_right_same_line[1][$key]),
-                        'player' => trim($red_left_yellowcard_right_same_line[3][$key]),
-                        'team' => 'away',
-                    );
-
-                    //print_r($data);
-                    if (!$this->card_model->card_exists($data)) {
-                        $this->card_model->new_card($data);
-                    }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>YELLOW CARD RIGHT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
                 }
             }
         }
-
-        //<td class="min"> 24' </td> <td class="ply"> <div> <span class=" right"></span> <span class="right ml4"> </span> <span class="right name"></span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redcard left"></span> <span class="left mr4"> </span> <span class="left name">Luis Pedro</span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class=" right">\s*</span>\s*<span class="right ml4">\s*</span>\s*<span class="right name"></span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
-        preg_match_all($pattern, $page, $redcard_right);
-        print '<pre>REDCARD RIGHT';
-        print_r($redcard_right);
-
-        foreach ($redcard_right[1] as $key => $val) {
-            $data = array(
-                'match_id' => $id,
-                'card_type' => 'red',
-                'min' => trim($redcard_right[1][$key]),
-                'player' => trim($redcard_right[2][$key]),
-                'team' => 'away',
-            );
-            if (!$this->card_model->card_exists($data)) {
-                $this->card_model->new_card($data);
-            }
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
         }
-
-        //<td class="min"> 80' </td> <td class="ply"> <div> <span class="inc redcard right"></span> <span class="right ml4"> </span> <span class="right name">Hector Acuna</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redcard left"></span> <span class="left mr4"> </span> <span class="left name">Cristian Gonzalez</span> <div class="clear"></div> </div> </td>        
-        //<td class="min"> 70' </td> <td class="ply"> <div> <span class="inc redcard right"></span> <span class="right ml4"> </span> <span class="right name">Teino       </span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class=" left"></span> <span class="left mr4"> </span> <span class="left name"></span> <div class="clear"></div> </div> </td>
-        //<td class="min"> 90' </td> <td class="ply"> <div> <span class="inc redcard right"></span> <span class="right ml4"> </span> <span class="right name">Nakhor      </span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redcard left"></span> <span class="left mr4"> </span> <span class="left name">A Smetanin       </span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">([\ß\ü\w\-\#\&\;\.\s\*]+)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">([\ß\ü\w\-\#\&\;\.\s\*]+)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
-        preg_match_all($pattern, $page, $red_left_redcard_right_same_line);
-        print '<pre>RED LEFT REDCARD RIGHT SAME LINE';
-        print_r($red_left_redcard_right_same_line);
-
-        if (!empty($red_left_redcard_right_same_line[2][0])) {
-            foreach ($red_left_redcard_right_same_line[2] as $key => $val) {
-                if (!strstr($red_left_redcard_right_same_line[2][$key], 'span')) {
-                    $data = array(
-                        'match_id' => $id,
-                        'card_type' => 'red',
-                        'min' => trim($red_left_redcard_right_same_line[1][$key]),
-                        'player' => trim($red_left_redcard_right_same_line[3][$key]),
-                        'team' => 'away',
-                    );
-
-                    //print_r($data);
-                    if (!$this->card_model->card_exists($data)) {
-                        $this->card_model->new_card($data);
-                    }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>YELLOW CARDS BOTH SIDES</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
                 }
             }
         }
-
-        //<td class="min"> 71' </td> <td class="ply"> <div> <span class="inc redyellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Jonathan Lopera</span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redyellowcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
-        preg_match_all($pattern, $page, $yellowredcard_left);
-        print '<pre>YELLOW-RED CARD LEFT';
-        print_r($yellowredcard_left);
-
-        foreach ($yellowredcard_left[1] as $key => $val) {
-            $data = array(
-                'match_id' => $id,
-                'card_type' => 'yellow_red',
-                'min' => trim($yellowredcard_left[1][$key]),
-                'player' => trim($yellowredcard_left[2][$key]),
-                'team' => 'home',
-            );
-            if (!$this->card_model->card_exists($data)) {
-                $this->card_model->new_card($data);
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>YELLOW CARD LEFT RED CARD RIGHT</pre>';
+            for($i = 0; $i < count($data); $i++) 
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
             }
         }
-
-        //<tr class=""> <td class="min"> 90' </td> <td class="ply"> <div> <span class="inc redyellowcard right"></span> <span class="right ml4"> </span> <span class="right name">Diego Coria</span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redcard left"></span> <span class="left mr4"> </span> <span class="left name">Cristian Tavio</span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redyellowcard right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span> <div class="clear"></div>\s*</div>\s*</td>@U';
-        preg_match_all($pattern, $page, $yellowredcard_left_redcard_right_same_line);
-        print '<pre>YELLOW-RED CARD LEFT RED CARD RIGHT SAME LINE';
-        print_r($yellowredcard_left_redcard_right_same_line);
-
-        foreach ($yellowredcard_left_redcard_right_same_line[1] as $key => $val) {
-            $data = array(
-                'match_id' => $id,
-                'card_type' => 'red',
-                'min' => trim($yellowredcard_left_redcard_right_same_line[1][$key]),
-                'player' => trim($yellowredcard_left_redcard_right_same_line[3][$key]),
-                'team' => 'away',
-            );
-            if (!$this->card_model->card_exists($data)) {
-                $this->card_model->new_card($data);
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>YELLOW CARD LEFT RED YELLOW CARD RIGHT</pre>';
+            for($i = 0; $i < count($data); $i++) 
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow_red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
             }
         }
-
-
-        //<td class="min"> 45' </td> <td class="ply"> <div> <span class=" right"></span> <span class="right ml4"> </span> <span class="right name"></span> <div class="clear"></div> </div> </td> <td class="sco"> </td> <td class="ply"> <div> <span class="inc redyellowcard left"></span> <span class="left mr4"> </span> <span class="left name">Johan Persson</span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class=" right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name"></span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc redyellowcard left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>@U';
-        preg_match_all($pattern, $page, $yellowredcard_right);
-        print '<pre>YELLOW-RED CARD RIGHT';
-        print_r($yellowredcard_right);
-
-        foreach ($yellowredcard_right[1] as $key => $val) {
-            $data = array(
-                'match_id' => $id,
-                'card_type' => 'yellow_red',
-                'min' => trim($yellowredcard_right[1][$key]),
-                'player' => trim($yellowredcard_right[2][$key]),
-                'team' => 'away',
-            );
-            if (!$this->card_model->card_exists($data)) {
-                $this->card_model->new_card($data);
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED CARD LEFT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
             }
         }
-
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc goal right"></span>\s*<span class="right ml4">(.*)</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*(.*)\s*</td>@U';
-        preg_match_all($pattern, $page, $goal_left);
-        print '<pre>SCORE LEFT';
-        print_r($goal_left);
-
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc goal right"></span>\s*<span class="right ml4">(.*)</span>\s*<span class="right name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*<div class="hidden" data-type="details">\s*<span class=" right"></span>\s*<span class="assist right ml4">\s*(.*)\s*</span> <span class="assist right name">(.*)</span>@U';
-        preg_match_all($pattern, $page, $goal_left_assist);
-        print '<pre>SCORE LEFT ASSIST';
-        print_r($goal_left_assist);
-
-        foreach ($goal_left[1] as $key => $val) {
-            if (isset($goal_left_assist[5][$key])) {
-                $assist = trim(strip_tags($goal_left_assist[5][$key]));
-            } else {
-                $assist = '';
-            }
-            $player = strip_tags($goal_left[3][$key]);
-            $pos = strpos($player, '(assist)');
-            if ($pos) {
-                $player = substr($player, 0, $pos);
-            }
-
-            $data = array(
-                'match_id' => $id,
-                'score' => str_replace(" ", "", $goal_left[4][$key]),
-                'min' => str_replace("'", "", $goal_left[1][$key]),
-                'assist' => trim($assist),
-                'type' => trim(strip_tags($goal_left[2][$key])),
-                'player' => trim($player),
-                'team' => 'home',
-            );
-            //print_r($data);
-            if (!$this->goal_model->goal_exists($data)) {
-                $this->goal_model->new_goal($data);
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED CARD RIGHT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
             }
         }
-
-        //<td class="min"> 58' </td> <td class="ply"> <div> <span class=" right"></span> <span class="right ml4"> </span> <span class="right name"></span> <div class="clear"></div> </div> </td> <td class="sco"> 1 - 1 </td> <td class="ply"> <div> <span class="inc goal left"></span> <span class="left mr4"> </span> <span class="left name">Michael Wessel</span> <div class="clear"></div> </div> </td>
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class=" right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name"></span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*(.*){5}\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc goal left"></span>\s*<span class="left mr4">(.*)</span>\s*<span class="left name">(.*)</span>\s*<div class="clear"></div>\s*</div>@U';
-        preg_match_all($pattern, $page, $goal_right);
-        print '<pre>SCORE RIGHT';
-        print_r($goal_right);
-
-        foreach ($goal_right[0] as $key => $val) {
-            if (@substr_count($goal_right[0][$key], '<td class="sco">') > 1) {
-                $pos = strrpos($goal_right[0][$key], '<td class="min">');
-                $substring = substr($goal_right[0][$key], $pos);
-                preg_match_all($pattern, $substring, $goal_right2);
-                print '<pre>SCORE RIGHT2';
-                print_r($goal_right2);
-                $goal_right[2][$key] = $goal_right2[2][0];
-                $goal_right[1][$key] = $goal_right2[1][0];
-                $goal_right[3][$key] = $goal_right2[3][0];
-                $goal_right[4][$key] = $goal_right2[4][0];
-
-                //echo "substring = $substring<br/>";
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$o], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$o], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED CARDS BOTH SIDES</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
             }
         }
-
-
-        $pattern = '@<td class="min">\s*(\d*' . "'" . ')\s*</td>\s*<td class="ply">\s*<div>\s*<span class=" right"></span>\s*<span class="right ml4">\s*</span>\s*<span class="right name"></span>\s*<div class="clear"></div>\s*</div>\s*</td>\s*<td class="sco">\s*\d*\s-\s\d*\s*</td>\s*<td class="ply">\s*<div>\s*<span class="inc goal left"></span>\s*<span class="left mr4">\s*</span>\s*<span class="left name">(.*)</span>\s*<div class="clear"></div>\s*</div>\s*<div class="hidden" data-type="details">\s*<span class=" right"></span>\s*<span class="assist left mr4">(.*)</span>\s*<span class="assist left name">(.*)</span>\s*<div class="clear"></div>\s*</div>@U';
-        preg_match_all($pattern, $page, $goal_right_assist);
-        print '<pre>SCORE RIGHT ASSIST';
-        print_r($goal_right_assist);
-
-        foreach ($goal_right[1] as $key => $val) {
-            if (isset($goal_right_assist[4][$key])) {
-                $assist = trim(strip_tags($goal_right_assist[4][$key]));
-            } else {
-                $assist = '';
-            }
-            $data = array(
-                'match_id' => $id,
-                'score' => str_replace(" ", "", $goal_right[2][$key]),
-                'min' => str_replace("'", "", $goal_right[1][$key]),
-                'assist' => trim($assist),
-                'type' => trim(strip_tags($goal_right[3][$key])),
-                'player' => trim(strip_tags($goal_right[4][$key])),
-                'team' => 'away',
-            );
-            if (!$this->goal_model->goal_exists($data)) {
-                $this->goal_model->new_goal($data);
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED CARD LEFT YELLOW CARD RIGHT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
             }
         }
-
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED CARD LEFT RED YELLOW CARD RIGHT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow_red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+            }
+        }
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED YELLOW CARD LEFT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow_red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+            }
+        }
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED YELLOW CARD RIGHT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow_red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+            }
+        }
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$o], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$o], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED YELLOW CARDS BOTH SIDES</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow_red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow_red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+            }
+        }
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$o], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$o], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED YELLOW CARD LEFT YELLOW RIGHT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow_red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+            }
+        }
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$o], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$o], $nam);
+            $data[] = array_merge($min, $nam);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RED YELLOW CARD LEFT RED RIGHT</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'yellow_red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+                $info = array(
+                    'match_id' => $id,
+                    'card_type' => 'red',
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->card_model->card_exists($info))
+                {
+                    $this->card_model->new_card($info);
+                }
+            }
+        }
+        unset($data);
+        
+        // GOALS PARSING START
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s*([a-z\.\(\)]*)\s*</span>\s<span class="inc goal"></span>\s</div>\s(<div class="hidden" data-type="details">\s<span class="assist name">(.*)</span>\s<span class=""></span>\s</div>\s)*</div>\s<div class="sco">\s[0-9\s\-]*\s</div>\s<div class="ply">\s<div>\s<span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $types = '@<span class="ml4">\s*([a-z\.\(\)]*)\s*</span>@';
+            preg_match_all($types, $parsed[0][$i], $typ);
+            $scores = '@<div class="sco">\s[0-9\s\-]*\s</div>@';
+            preg_match_all($scores, $parsed[0][$i], $sco);
+            $assists = '@<span class="assist name">[A-Za-z\ß\ü\w\sæøå\s]*@';
+            preg_match_all($assists, $parsed[0][$i], $ass);
+            $data[] = array_merge($min, $nam, $typ, $sco, $ass);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>LEFT GOAL</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $assist = (isset($data[$i][5][0])) ? trim(strip_tags($data[$i][5][0])) : '';
+                $info = array(
+                    'match_id' => $id,
+                    'score' => strip_tags(str_replace(" ", "", $data[$i][4][0])),
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'type' => trim(strip_tags($data[$i][2][0])),
+                    'assist' => $assist,
+                    'player' => trim(strip_tags($data[$i][1][0])),
+                    'team' => 'home',
+                );
+                print_r($info);
+                if (!$this->goal_model->goal_exists($info))
+                {
+                    $this->goal_model->new_goal($info);
+                }
+            }
+        }
+        unset($data);
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco">\s[0-9\s\-]*\s</div>\s<div class="ply">\s<div>\s<span class="inc goal"></span>\s<span class="mr4">\s*([a-z\.\(\)]*)\s*</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s(<div class="hidden" data-type="details">\s<span class="assist name">(.*)</span>\s</div>\s)*</div>\s</div>@U';
+        preg_match_all($pattern, $page, $parsed);
+        
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
+            preg_match_all($minutes, $parsed[0][$i], $min);
+            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            preg_match_all($names, $parsed[0][$i], $nam);
+            $types = '@<span class="mr4">\s*([a-z\.\(\)]*)\s*</span>@';
+            preg_match_all($types, $parsed[0][$i], $typ);
+            $scores = '@<div class="sco">\s[0-9\s\-]*\s</div>@';
+            preg_match_all($scores, $parsed[0][$i], $sco);
+            $assists = '@<span class="assist name">(.*)</span>@';
+            preg_match_all($assists, $parsed[0][$i], $ass);
+            $data[] = array_merge($min, $nam, $typ, $sco, $ass);
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>RIGHT GOAL</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $assist = (isset($data[$i][5][0])) ? trim(strip_tags(str_replace("(assist) ", "", $data[$i][5][0]))) : '';
+                $info = array(
+                    'match_id' => $id,
+                    'score' => strip_tags(str_replace(" ", "", $data[$i][4][0])),
+                    'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
+                    'type' => trim(strip_tags($data[$i][2][0])),
+                    'assist' => $assist,
+                    'player' => trim(strip_tags($data[$i][1][1])),
+                    'team' => 'away',
+                );
+                print_r($info);
+                if (!$this->goal_model->goal_exists($info))
+                {
+                    $this->goal_model->new_goal($info);
+                }
+            }
+        }
+        unset($data);
+                        
         $update_fields = array(
             'parsed' => 1,
         );
         $this->match_model->update_match($update_fields, $id);
     }
 
-    function view_match($id) {
-        $this->load->model('match_model');
-        $this->load->model('team_model');
-        $this->load->model('goal_model');
-        $this->load->model('card_model');
+    function view_match($id)
+    {
+        $this->load->model(array('match_model', 'team_model', 'goal_model', 'card_model'));
 
         $match = $this->match_model->get_match($id);
-        if (!isset($match) || empty($match)) {
+        if (!isset($match) || empty($match))
+        {
             $this->notices->SetError('No match found');
             redirect('admincp/livescore/list_matches');
         }
@@ -394,8 +746,29 @@ class Admincp5 extends Admincp_Controller
 
         $this->load->view('view_match', $data);
     }
+    
+    function view_match_pre($id)
+    {
+        $this->load->model(array('match_pre_model', 'team_pre_model'));
 
-    private function getUrl($url) {
+        $match = $this->match_pre_model->get_match_pre($id);
+        if (!isset($match) || empty($match))
+        {
+            $this->notices->SetError('No match found');
+            redirect('admincp/livescore/list_matches');
+        }
+        $home = $this->team_pre_model->get_team($match['team1_pre']);
+        $away = $this->team_pre_model->get_team($match['team2_pre']);
+        $data = array(
+            'match' => $match,
+            'home' => $home,
+            'away' => $away
+        );
+        $this->load->view('view_match_pre', $data);
+    }
+
+    private function getUrl($url)
+    {
         $cUrl = curl_init();
         $headers[] = 'Connection: Keep-Alive';
         $headers[] = 'Content-type: application/x-www-form-urlencoded;charset=UTF-8';
@@ -413,16 +786,17 @@ class Admincp5 extends Admincp_Controller
         return $pageContent;
     }
 
-    public function fix_star_teams() {
-        $this->load->model('team_model');
-        $this->load->model('match_model');
+    public function fix_star_teams()
+    {
+        $this->load->model(array('team_model', 'match_model'));
         $filters = array();
         $filters['name'] = '\*';
         $teams = $this->team_model->get_teams($filters);
         print '<pre>';
         //print_r($teams);
 
-        foreach ($teams as $t) {
+        foreach ($teams as $t)
+        {
             print_r($t);
             $team_star_id = $t['team_id'];
             $team = str_replace(' *', '', $t['name']);
@@ -443,43 +817,50 @@ class Admincp5 extends Admincp_Controller
             //     print_r($matches);
             // }                        
         }
-
         echo "$i teams deleted<br/>";
     }
 
-    public function delete_duplicate_teams() {
-        $this->load->model('team_model');
-        $this->load->model('match_model');
+    public function delete_duplicate_teams()
+    {
+        $this->load->model(array('team_model', 'match_model'));
         $teams = $this->team_model->get_duplicates();
         print '<pre>';
         //print_r($teams);
 
-        if ($teams) {
-            foreach ($teams as $t) {
+        if ($teams)
+        {
+            foreach ($teams as $t)
+            {
                 $filters['country_id'] = $t['country_id'];
                 $filters['name'] = $t['name'];
                 $teamz = $this->team_model->get_team_by_country_and_name($filters);
                 print_r($teamz);
-                foreach ($teamz as $tz) {
+                foreach ($teamz as $tz)
+                {
                     $matches = $this->match_model->get_matches_by_team_id(array('team_id' => $tz['team_id']));
                     $count = count($matches);
-                    if ($count) {
+                    if ($count)
+                    {
                         echo "COUNT = " . count($matches) . '<br/>';
                         print_r($matches);
                     }
                 }
 
-                if (!$count) {
+                if (!$count)
+                {
                     //delete duplicate team with higher team_id
                     //$this->team_model->delete_team($teamz[1]['team_id']);
                 }
             }
-        } else {
+        }
+        else
+        {
             echo 'No duplicate teams found!';
         }
     }
 
-    function list_duplicate_teams() {
+    function list_duplicate_teams()
+    {
         $this->load->library('dataset');
         $this->load->model('team_model');
 
@@ -532,8 +913,10 @@ class Admincp5 extends Admincp_Controller
         if (isset($_GET['filters']))
             $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
 
-        if (isset($filters_decode) && is_array($filters_decode)) {
-            foreach ($filters_decode as $key => $val) {
+        if (isset($filters_decode) && is_array($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
                 $filters[$key] = $val;
             }
         }
@@ -557,7 +940,8 @@ class Admincp5 extends Admincp_Controller
         $this->load->view('list_teams_duplicate');
     }
 
-    function list_similar_teams_by_team_id($id) {
+    function list_similar_teams_by_team_id($id)
+    {
         $this->load->library('dataset');
         $this->load->model('team_model');
 
@@ -603,8 +987,10 @@ class Admincp5 extends Admincp_Controller
         if (isset($_GET['filters']))
             $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
 
-        if (isset($filters_decode) && is_array($filters_decode)) {
-            foreach ($filters_decode as $key => $val) {
+        if (isset($filters_decode) && is_array($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
                 $filters[$key] = $val;
             }
         }
@@ -629,51 +1015,42 @@ class Admincp5 extends Admincp_Controller
         $this->load->view('list_teams');
     }
 
-    public function merge_teams() {
+    public function merge_teams()
+    {
         $this->load->library('admin_form');
 
         $form = new Admin_Form;
-
         $form->fieldset('Team to keep');
         $form->text('Team to keep', 'team_to_keep', '', 'Team id', true, false, false);
-
         $form->fieldset('Team to remove');
         $form->text('Team to remove', 'team_to_remove', '', 'Team id', true, false, false);
-
         // Compile View data
         $data = array(
             'form' => $form->display(),
             'form_action' => site_url('admincp5/livescore/merge_teams_list')
         );
-
         $this->load->view('merge_teams', $data);
     }
 
-    public function merge_teams_list() 
+    public function merge_teams_list()
     {
+        $this->load->model('match_model');
+        $this->load->library('dataset');
+
         $team_to_keep = $this->input->post('team_to_keep');
         $team_to_remove = $this->input->post('team_to_remove');
-
         //echo $team_to_keep . '-' . $team_to_remove . PHP_EOL;
-
-
-        $this->load->model('match_model');
-
-        $this->load->library('dataset');
         $this->admin_navigation->module_link('Merge teams', site_url('admincp5/livescore/merge_teams_validate/' . $team_to_keep . '/' . $team_to_remove));
-
         $data = array(
             'team_to_keep' => $team_to_keep,
             'team_to_remove' => $team_to_remove
         );
-
         $this->load->view('merge_teams_list', $data);
     }
-    
+
     public function merge_teams_validate($team_to_keep, $team_to_remove)
     {
-        $this->load->model('match_model');
-        $this->load->model('team_model');
+        $this->load->model(array('match_model', 'team_model'));
         $this->load->library('dataset');
         $columns = array(
             array(
@@ -683,8 +1060,8 @@ class Admincp5 extends Admincp_Controller
             ),
             array(
                 'name' => 'DATE',
-                'width' => '15%',                
-                'type' => 'text',                
+                'width' => '15%',
+                'type' => 'text',
             ),
             array(
                 'name' => 'HOME TEAM',
@@ -714,27 +1091,31 @@ class Admincp5 extends Admincp_Controller
 
         // initialize the dataset
         $this->dataset->initialize();
-        
+
         $team = $this->team_model->get_team($team_to_keep);
         $team_to_keep_name = $team['name'];
         $team = $this->team_model->get_team($team_to_remove);
         $team_to_remove_name = $team['name'];
-        
+
         $filters['team_to_keep'] = $team_to_keep;
         $filters['team_to_remove'] = $team_to_remove;
         $filters['which_team'] = 2;
         $old = $new = 0;
-        
-        $matches_second_team = $this->match_model->get_matches_by_team_id_partial($filters);        
-        
-        foreach ($matches_second_team as $key => $value) {
-            if ($matches_second_team[$key]['status'] == 'old') {
+
+        $matches_second_team = $this->match_model->get_matches_by_team_id_partial($filters);
+
+        foreach ($matches_second_team as $key => $value)
+        {
+            if ($matches_second_team[$key]['status'] == 'old')
+            {
                 $old++;
-            } elseif ($matches_second_team[$key]['status'] == 'new') {
+            }
+            elseif ($matches_second_team[$key]['status'] == 'new')
+            {
                 $new++;
             }
-        }                
-        
+        }
+
         $data = array(
             'team_to_keep' => $team_to_keep,
             'team_to_keep_name' => $team_to_keep_name,
@@ -744,51 +1125,68 @@ class Admincp5 extends Admincp_Controller
             'new' => $new,
             'matches_second_team' => $matches_second_team
         );
-        
+
         $this->load->view('merge_teams_validate', $data);
     }
-    
+
     public function merge_teams_ok($team_to_keep, $team_to_remove)
     {
-        $this->load->model('match_model');
-        $this->load->model('team_model');
-        
+        $this->load->model(array('match_model', 'team_model'));
         $team = $this->team_model->get_team($team_to_keep);
         $team_to_keep_name = $team['name'];
         $team = $this->team_model->get_team($team_to_remove);
         $team_to_remove_name = $team['name'];
-        
         $this->team_model->merge_teams($team_to_keep, $team_to_remove);
-                        
         $data = array(
             'team_to_keep_name' => $team_to_keep_name,
             'team_to_remove_name' => $team_to_remove_name
         );
-        
         $this->load->view('merge_teams_ok', $data);
     }
-    
+
     // fk_country_name (country_id, name)
     public function trim_teams()
     {
         $this->load->model('team_model');
         $teams = $this->team_model->get_teams();
-        foreach ($teams as $team) {
+        foreach ($teams as $team)
+        {
             $team = $this->team_model->get_team($team['team_id']);
             $update_fields = array('name' => trim($team['name']));
             $this->team_model->update_team($update_fields, $team['team_id']);
         }
-        
         echo '<div align="center">';
         echo count($teams) . ' team names successfully trimmed<br/>';
         echo '<a href="' . site_url('admincp/livescore/list_teams') . '">Back</a>';
         echo '</div>';
-        
     }
-    
+
     public function multiple_teams()
     {
         $this->load->model('team_model');
         $this->team_model->get_multiple_teams();
-    }        
+    }
+    
+    public function merge_competitions()
+    {
+        $this->load->model('competition_model');
+        $this->load->library(array('dataset', 'admin_form'));
+        
+        $query = $this->competition_model->get_competitions();
+        foreach ($query as $key => $val)
+        {
+            $options[] = $val['name'];
+        }
+        
+        $options_final = array();
+        
+        $data = array(
+            'user' => array(),
+            'form_title' => 'Add new mark',
+            'form_action' => site_url('admincp/students/add_marks')
+        );
+
+        $this->load->view('merge_competitions', $data);
+    }
+
 }

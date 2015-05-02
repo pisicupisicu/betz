@@ -16,55 +16,62 @@ if (!defined('BASEPATH'))
 class Admincp extends Admincp_Controller 
 {
 
-    function __construct() {
-
+    function __construct()
+    {
         parent::__construct();
-
         $this->admin_navigation->parent_active('livescore');
-
         //error_reporting(E_ALL^E_NOTICE);
         //error_reporting(E_WARNING);
     }
 
-    function index() {
+    function index()
+    {
         redirect('admincp/livescore/list_competitions');
     }
 
-    function update_filters() {
+    function update_filters()
+    {
         $this->load->library('asciihex');
-        $filters = array();
 
-        foreach ($_POST as $key => $val) {
-            if (in_array($val, array('filter results', 'start date', 'end date'))) {
+        $filters = array();
+        foreach ($_POST as $key => $val)
+        {
+            if (in_array($val, array('filter results', 'start date', 'end date')))
+            {
                 unset($_POST[$key]);
             }
         }
 
-        if (!empty($_POST['match_date_start'])) {
+        if (!empty($_POST['match_date_start']))
+        {
             $filters['match_date_start'] = $_POST['match_date_start'];
         }
-        if (!empty($_POST['match_date_end'])) {
+        if (!empty($_POST['match_date_end']))
+        {
             $filters['match_date_end'] = $_POST['match_date_end'];
         }
-        if (!empty($_POST['country_name'])) {
+        if (!empty($_POST['country_name']))
+        {
             $filters['country_name'] = $_POST['country_name'];
         }
-        if (!empty($_POST['team1'])) {
+        if (!empty($_POST['team1']))
+        {
             $filters['team1'] = $_POST['team1'];
         }
-        if (!empty($_POST['team2'])) {
+        if (!empty($_POST['team2']))
+        {
             $filters['team2'] = $_POST['team2'];
         }
-        if (!empty($_POST['score'])) {
+        if (!empty($_POST['score']))
+        {
             $filters['score'] = $_POST['score'];
         }
-
         $filters = $this->CI->asciihex->AsciiToHex(base64_encode(serialize($filters)));
 
         echo $filters;
     }
 
-    function list_matches() 
+    function list_matches()
     {
         $this->load->model('match_model');
         $this->load->library('dataset');
@@ -141,7 +148,8 @@ class Admincp extends Admincp_Controller
         $filters = array();
         $filters['limit'] = 20;
 
-        if (isset($_GET['filters'])) {
+        if (isset($_GET['filters']))
+        {
             $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
         }
 
@@ -162,14 +170,18 @@ class Admincp extends Admincp_Controller
         if (isset($_GET['match_date_end']))
             $filters['match_date_end'] = $_GET['match_date_end'];
 
-        if (isset($filters_decode) && !empty($filters_decode)) {
-            foreach ($filters_decode as $key => $val) {
+        if (isset($filters_decode) && !empty($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
                 $filters[$key] = $val;
             }
         }
 
-        foreach ($filters as $key => $val) {
-            if (in_array($val, array('filter results', 'start date', 'end date'))) {
+        foreach ($filters as $key => $val)
+        {
+            if (in_array($val, array('filter results', 'start date', 'end date')))
+            {
                 unset($filters[$key]);
             }
         }
@@ -189,13 +201,10 @@ class Admincp extends Admincp_Controller
         //echo "aux = $aux";
         //print '</pre>';
 
-
         $this->dataset->columns($columns);
         $this->dataset->datasource('match_model', 'get_matches', $filters);
         $this->dataset->base_url(site_url('admincp/livescore/list_matches'));
         $this->dataset->rows_per_page($filters['limit']);
-
-
 
         // total rows
         unset($filters['limit']);
@@ -204,12 +213,14 @@ class Admincp extends Admincp_Controller
 
         // initialize the dataset
         $this->dataset->initialize();
+
         // add actions
         $this->dataset->action('Delete', 'admincp/livescore/delete_match');
         $this->load->view('list_matches');
     }
 
-    function list_matches_by_team_id($id) {
+    function list_matches_by_team_id($id)
+    {
         $this->load->model('match_model');
         $this->load->library('dataset');
 
@@ -280,7 +291,8 @@ class Admincp extends Admincp_Controller
         $filters = array();
         $filters['limit'] = 20;
 
-        if (isset($_GET['filters'])) {
+        if (isset($_GET['filters']))
+        {
             $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
         }
 
@@ -301,14 +313,18 @@ class Admincp extends Admincp_Controller
         if (isset($_GET['match_date_end']))
             $filters['match_date_end'] = $_GET['match_date_end'];
 
-        if (isset($filters_decode) && !empty($filters_decode)) {
-            foreach ($filters_decode as $key => $val) {
+        if (isset($filters_decode) && !empty($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
                 $filters[$key] = $val;
             }
         }
 
-        foreach ($filters as $key => $val) {
-            if (in_array($val, array('filter results', 'start date', 'end date'))) {
+        foreach ($filters as $key => $val)
+        {
+            if (in_array($val, array('filter results', 'start date', 'end date')))
+            {
                 unset($filters[$key]);
             }
         }
@@ -320,8 +336,6 @@ class Admincp extends Admincp_Controller
         $this->dataset->base_url(site_url('admincp/livescore/list_matches_by_team_id/' . $id . '/'));
         $this->dataset->rows_per_page($filters['limit']);
 
-
-
         // total rows
         unset($filters['limit']);
         $total_rows = $this->match_model->get_matches_by_team_id(array('team_id' => $id, 'count' => true));
@@ -329,12 +343,14 @@ class Admincp extends Admincp_Controller
 
         // initialize the dataset
         $this->dataset->initialize();
+
         // add actions
         $this->dataset->action('Delete', 'admincp/livescore/delete_match');
         $this->load->view('list_matches');
     }
 
-    function list_matches_by_team_id_partial($team_to_keep, $team_to_remove, $which_team = 1) {
+    function list_matches_by_team_id_partial($team_to_keep, $team_to_remove, $which_team = 1)
+    {
         $this->load->model('match_model');
         $this->load->library('dataset');
 
@@ -376,7 +392,8 @@ class Admincp extends Admincp_Controller
         $filters = array();
         $filters['limit'] = 20;
 
-        if (isset($_GET['filters'])) {
+        if (isset($_GET['filters']))
+        {
             $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
         }
 
@@ -397,14 +414,18 @@ class Admincp extends Admincp_Controller
         if (isset($_GET['match_date_end']))
             $filters['match_date_end'] = $_GET['match_date_end'];
 
-        if (isset($filters_decode) && !empty($filters_decode)) {
-            foreach ($filters_decode as $key => $val) {
+        if (isset($filters_decode) && !empty($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
                 $filters[$key] = $val;
             }
         }
 
-        foreach ($filters as $key => $val) {
-            if (in_array($val, array('filter results', 'start date', 'end date'))) {
+        foreach ($filters as $key => $val)
+        {
+            if (in_array($val, array('filter results', 'start date', 'end date')))
+            {
                 unset($filters[$key]);
             }
         }
@@ -430,30 +451,31 @@ class Admincp extends Admincp_Controller
         $this->load->view('list_matches_partial');
     }
 
-    function delete_match($contents, $return_url) {
-
+    function delete_match($contents, $return_url)
+    {
         $this->load->library('asciihex');
         $this->load->model('match_model');
 
         $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
         $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
 
-        foreach ($contents as $content) {
+        foreach ($contents as $content)
+        {
             $this->match_model->delete_match($content);
         }
-
         $this->notices->SetNotice('Match deleted successfully.');
-
         redirect($return_url);
-
-        return TRUE;
+        return true;
     }
 
-    function list_competitions() {
+    function list_competitions()
+    {
         $this->load->model('competition_model');
+        $this->load->library('dataset');
+        
+        $this->admin_navigation->module_link('Merge competitions', site_url('admincp5/livescore/merge_competitions'));
         $this->admin_navigation->module_link('Fix competitions', site_url('admincp/livescore/fix_competitions'));
         $this->admin_navigation->module_link('Add competition', site_url('admincp/livescore/add_competition'));
-        $this->load->library('dataset');
 
         $columns = array(
             array(
@@ -493,7 +515,8 @@ class Admincp extends Admincp_Controller
         $filters = array();
         $filters['limit'] = 20;
 
-        if (isset($_GET['filters'])) {
+        if (isset($_GET['filters']))
+        {
             $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
         }
 
@@ -501,9 +524,10 @@ class Admincp extends Admincp_Controller
             $filters['offset'] = $_GET['offset'];
         if (isset($_GET['country_name']))
             $filters['country_name'] = $_GET['country_name'];
-
-        if (isset($filters_decode) && !empty($filters_decode)) {
-            foreach ($filters_decode as $key => $val) {
+        if (isset($filters_decode) && !empty($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
                 $filters[$key] = $val;
             }
         }
@@ -520,16 +544,18 @@ class Admincp extends Admincp_Controller
 
         // initialize the dataset
         $this->dataset->initialize();
+
         // add actions
         $this->dataset->action('Delete', 'admincp/livescore/delete_competition');
         $this->load->view('list_competitions');
     }
 
-    function add_competition() {
-
+    function add_competition()
+    {
         $this->load->library('admin_form');
-        $form = new Admin_form;
         $this->load->model('country_model');
+
+        $form = new Admin_form;
         $countries = $params = array();
         $params['dropdown'] = 1;
         $countries = $this->country_model->get_countries($params);
@@ -539,69 +565,76 @@ class Admincp extends Admincp_Controller
         $form->text('Link', 'link', '', 'Link', TRUE, 'e.g., russia/premier-league', TRUE);
         $form->text('Link complete', 'link_complete', '', 'Link complete', TRUE, 'e.g., http://www.livescore.com/soccer/russia/premier-league/', TRUE);
         $form->dropdown('Country', 'country_id', $countries);
-
         $data = array(
             'form' => $form->display(),
             'form_title' => 'Add competition',
             'form_action' => site_url('admincp/livescore/add_competition_validate'),
             'action' => 'new',
         );
-
         $this->load->view('add_competition', $data);
     }
 
-    function add_competition_validate($action = 'new', $id = false) {
+    function add_competition_validate($action = 'new', $id = false)
+    {
         $this->load->library('form_validation');
+        $this->load->model('competition_model');
+
         $this->form_validation->set_rules('name', 'Nume', 'required|trim');
         $this->form_validation->set_rules('link', 'Link', 'required|trim');
         $this->form_validation->set_rules('country_id', 'Country', 'required|trim');
 
-        if ($this->form_validation->run() === FALSE) {
+        if ($this->form_validation->run() === FALSE)
+        {
             $this->notices->SetError('Required fields.');
             $error = TRUE;
         }
 
-        if (isset($error)) {
-            if ($action == 'new') {
+        if (isset($error))
+        {
+            if ($action == 'new')
+            {
                 redirect('admincp/livescore/list_competitions');
                 return FALSE;
-            } else {
+            }
+            else
+            {
                 redirect('admincp/livescore/edit_competition/' . $id);
                 return FALSE;
             }
         }
-
-        $this->load->model('competition_model');
 
         $fields['name'] = $this->input->post('name');
         $fields['link'] = $this->input->post('link');
         $fields['link_complete'] = $this->input->post('link_complete');
         $fields['country_id'] = $this->input->post('country_id');
 
-        if ($action == 'new') {
+        if ($action == 'new')
+        {
             $type_id = $this->competition_model->new_competition($fields);
             $this->notices->SetNotice('Competition added successfully.');
             redirect('admincp/livescore/list_competitions/');
-        } else {
+        }
+        else
+        {
             $this->competition_model->update_competition($fields, $id);
             $this->notices->SetNotice('Competition updated successfully.');
             redirect('admincp/livescore/list_competitions/');
         }
-
-        return TRUE;
+        return true;
     }
 
-    function edit_competition($id) {
+    function edit_competition($id)
+    {
+        $this->load->model(array('competition_model', 'country_model'));
+        $this->load->library('admin_form');
 
-        $this->load->model('competition_model');
         $competition = $this->competition_model->get_competition($id);
-        if (empty($competition)) {
+        if (empty($competition))
+        {
             die(show_error('No competition with this ID.'));
         }
 
-        $this->load->library('admin_form');
         $form = new Admin_form;
-        $this->load->model('country_model');
         $countries = $params = array();
         $params['dropdown'] = 1;
         $countries = $this->country_model->get_countries($params);
@@ -611,50 +644,49 @@ class Admincp extends Admincp_Controller
         $form->text('Link', 'link', $competition['link'], 'Competition link', TRUE, 'e.g., russia/premier-league', TRUE);
         $form->text('Link complete', 'link_complete', $competition['link_complete'], 'Competition link complete', TRUE, 'e.g., http://www.livescore.com/soccer/russia/premier-league/', TRUE);
         $form->dropdown('Country', 'country_id', $countries, $competition['country_id']);
-
         $data = array(
             'form' => $form->display(),
             'form_title' => 'Edit Competition',
             'form_action' => site_url('admincp/livescore/add_competition_validate/edit/' . $competition['competition_id']),
             'action' => 'edit',
         );
-
         $this->load->view('add_competition', $data);
     }
 
-    function delete_competition($contents, $return_url) {
-
+    function delete_competition($contents, $return_url)
+    {
         $this->load->library('asciihex');
         $this->load->model('competition_model');
 
         $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
         $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
 
-        foreach ($contents as $content) {
+        foreach ($contents as $content)
+        {
             $this->load->model('competition_model');
             $this->competition_model->delete_competition($content);
         }
-
         $this->notices->SetNotice('Competition deleted successfully.');
-
         redirect($return_url);
 
         return TRUE;
     }
 
-    function list_teams($duplicate = 0) 
+    function list_teams($duplicate = 0)
     {
         $this->load->library('dataset');
         $this->load->model('team_model');
 
         $this->admin_navigation->module_link('Multiple teams', site_url('admincp5/livescore/multiple_teams'));
-        $this->admin_navigation->module_link('Trim teams', site_url('admincp5/livescore/trim_teams'));    
+        $this->admin_navigation->module_link('Trim teams', site_url('admincp5/livescore/trim_teams'));
         $this->admin_navigation->module_link('Merge teams', site_url('admincp5/livescore/merge_teams'));
         $this->admin_navigation->module_link('Similar teams detection', site_url('admincp5/livescore/list_duplicate_teams'));
         $this->admin_navigation->module_link('Add team', site_url('admincp/livescore/add_team'));
         $duplicates_count = $this->team_model->get_duplicate_teams_helper_num_rows();
         $this->admin_navigation->module_link('Duplicate teams : ' . $duplicates_count, site_url('admincp/livescore/list_teams/1'));
-        if ($duplicates_count) {
+
+        if ($duplicates_count)
+        {
             $this->admin_navigation->module_link('Delete duplicates', site_url('admincp/livescore/fix_duplicate_teams'));
         }
 
@@ -701,12 +733,13 @@ class Admincp extends Admincp_Controller
             $filters['offset'] = $_GET['offset'];
         if (isset($_GET['country_name']))
             $filters['country_name'] = $_GET['country_name'];
-
         if (isset($_GET['filters']))
             $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
 
-        if (isset($filters_decode) && is_array($filters_decode)) {
-            foreach ($filters_decode as $key => $val) {
+        if (isset($filters_decode) && is_array($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
                 $filters[$key] = $val;
             }
         }
@@ -718,55 +751,70 @@ class Admincp extends Admincp_Controller
         $this->admin_navigation->module_link('# of matches update', site_url('admincp/livescore/team_matches'));
 
         $this->dataset->columns($columns);
-        if (!$duplicate) {
+        if (!$duplicate)
+        {
             $this->dataset->datasource('team_model', 'get_teams', $filters);
-        } elseif ($duplicate == 1) {
+        }
+        elseif ($duplicate == 1)
+        {
             $this->dataset->datasource('team_model', 'get_duplicate_teams', $filters);
-        } elseif ($duplicate == 2) {
+        }
+        elseif ($duplicate == 2)
+        {
             $this->dataset->datasource('team_model', 'get_similar_teams', $filters);
-        } elseif ($duplicate == 3) {
+        }
+        elseif ($duplicate == 3)
+        {
             $this->dataset->datasource('team_model', 'get_star_teams', $filters);
         }
-
 
         $this->dataset->base_url(site_url('admincp/livescore/list_teams/' . $duplicate));
         $this->dataset->rows_per_page($filters['limit']);
 
         // total rows
         unset($filters['limit']);
-        if (!$duplicate) {
+        if (!$duplicate)
+        {
             $total_rows = $this->team_model->get_num_rowz($filters);
-        } elseif ($duplicate == 1) {
+        }
+        elseif ($duplicate == 1)
+        {
             $total_rows = $this->team_model->get_num_rowz_duplicate($filters);
-        } elseif ($duplicate == 2) {
+        }
+        elseif ($duplicate == 2)
+        {
             $total_rows = $similar_count;
-        } elseif ($duplicate == 3) {
+        }
+        elseif ($duplicate == 3)
+        {
             $total_rows = $this->team_model->get_num_rowz_star($filters);
-            ;
         }
 
         $this->dataset->total_rows($total_rows);
 
         // initialize the dataset
         $this->dataset->initialize();
+
         // add actions
         $this->dataset->action('Delete', 'admincp/livescore/delete_team');
         $this->load->view('list_teams');
     }
 
-    function team_matches() {
+    function team_matches()
+    {
         $this->load->model('team_model');
         $nr = $this->team_model->update_all_teams_matches();
-
         $this->notices->SetNotice($nr . ' teams updated!');
         redirect('admincp/livescore/list_teams/');
     }
 
     //remove beginning and trailing spaces from team names
-    function fix_teams() {
+    function fix_teams()
+    {
         $this->load->model('team_model');
         $teams = $this->team_model->get_teams();
-        foreach ($teams as $team) {
+        foreach ($teams as $team)
+        {
             echo $team['team_id'] . '=>' . $team['name'] . '<br/>';
             $name = trim($team['name']);
             $update_fields = array(
@@ -776,93 +824,97 @@ class Admincp extends Admincp_Controller
         }
     }
 
-    function fix_duplicate_teams($filters = array()) 
+    function fix_duplicate_teams($filters = array())
     {
         $deleted = 0;
         $this->load->model('team_model');
         $deleted = $this->team_model->fix_duplicate_teams($filters);
-
         $this->notices->SetNotice($deleted . ' duplicate teams deleted!');
         redirect('admincp/livescore/list_teams/');
     }
-    
+
     function merge_duplicate_teams()
     {
         $this->load->model('team_model');
         $duplicateTeams = $this->team_model->get_duplicate_teams();
         $i = 0;
         $team1 = $team2 = array();
-        
-        foreach($duplicateTeams as $team) {
-            if (!($i % 2)) {
+        foreach ($duplicateTeams as $team)
+        {
+            if (!($i % 2))
+            {
                 $team1['id'] = $team['team_id'];
                 $team1['name'] = $team['name'];
                 $team1['matches'] = $team['matches'];
-            } else {
+            }
+            else
+            {
                 $team2['id'] = $team['team_id'];
                 $team2['name'] = $team['name'];
                 $team2['matches'] = $team['matches'];
-                
-                if ($team1['name'] == $team2['name']) {
-                    if ($team1['matches'] > $team2['matches']) {
+                if ($team1['name'] == $team2['name'])
+                {
+                    if ($team1['matches'] > $team2['matches'])
+                    {
                         $this->team_model->merge_teams($team1['id'], $team2['id']);
-                    } else {                        
+                    }
+                    else
+                    {
                         $this->team_model->merge_teams($team2['id'], $team1['id']);
                     }
                 }
             }
-            $i++;            
+            $i++;
         }
-        
         //        print '<pre>';
         //        print_r($duplicateTeams);
         //        print '</pre>';
-        
-        $this->notices->SetNotice($i/2 . ' teams merged!');
+        $this->notices->SetNotice($i / 2 . ' teams merged!');
         redirect('admincp/livescore/list_teams/');
     }
-    
+
     function merge_star_teams($filters = array())
     {
         $this->load->model('team_model');
         $starTeams = $this->team_model->get_star_teams_simple($filters);
         $i = 0;
-        
-        foreach ($starTeams as $team) {
+
+        foreach ($starTeams as $team)
+        {
             $name = trim(str_replace('*', '', $team['name']));
             $duplicateTeams = $this->team_model->get_team_by_country_and_name(array('country_id' => $team['country_id'], 'name' => $name));
-            
-            foreach ($duplicateTeams as $duplicateTeam) {
-                if ($team['country_id'] == $duplicateTeam['country_id']) {
+            foreach ($duplicateTeams as $duplicateTeam)
+            {
+                if ($team['country_id'] == $duplicateTeam['country_id'])
+                {
                     $this->team_model->merge_teams($duplicateTeam['team_id'], $team['team_id']);
                     $i++;
                 }
             }
-            
             //print '<pre>ITERATION';
             //print_r($team);
             //print_r($duplicateTeams);
             //print '</pre>';                        
-        }                
-        
+        }
         $this->notices->SetNotice($i . ' teams merged!');
         redirect('admincp/livescore/list_teams/');
     }
-    
+
     function merge_teams_country_null($filters = array())
     {
         $this->load->model('team_model');
         $nullTeams = $this->team_model->get_null_teams($filters);
         $i = 0;
-        
+
         $forbidden = array(
             'Europe' => 242,
             'World' => 243,
             'America' => 244,
             'ASIA' => 245
         );
-        
-        foreach ($nullTeams as $team) {
+
+        foreach ($nullTeams as $team)
+        {
             $similarTeams = $this->team_model->get_teams(array('equal' => true, 'name' => $team['name']));
             //if ($team['name'] != 'Albania U21') continue;
             //print '<pre>SIMILAR';
@@ -870,32 +922,35 @@ class Admincp extends Admincp_Controller
             //print '</pre>';
             //echo PHP_EOL . 'Sim Count = ' . count($similarTeams) . PHP_EOL;
             // the team without country and the other one
-            if (count($similarTeams) == 3) {
+            if (count($similarTeams) == 3)
+            {
                 /*
-                $world = $diff = 0;
-                
-                foreach ($similarTeams as $similarTeam) {
-                    if ($similarTeam['country_id'] != $team['country_id']) {
-                        if ($similarTeam['country_id'] == 243) {
-                            $world = $similarTeam['team_id'];
-                        } else {
-                            $diff = $similarTeam['team_id'];
-                        }                                               
-                    }                    
-                }
-                 if ($world && $diff) {
-                    // diff with null
-                    echo 'MERGE ' . $diff . ' with ' . $team['team_id'] . PHP_EOL;
-                    $this->team_model->merge_teams($diff, $team['team_id']);
-                    // diff with world
-                    echo 'MERGE ' . $diff . ' with ' . $world . PHP_EOL;
-                    $this->team_model->merge_teams($diff, $world);
-                }               
-                 *                  */
-                                
-                foreach ($similarTeams as $similarTeam) {
+                  $world = $diff = 0;
+
+                  foreach ($similarTeams as $similarTeam) {
+                  if ($similarTeam['country_id'] != $team['country_id']) {
+                  if ($similarTeam['country_id'] == 243) {
+                  $world = $similarTeam['team_id'];
+                  } else {
+                  $diff = $similarTeam['team_id'];
+                  }
+                  }
+                  }
+                  if ($world && $diff) {
+                  // diff with null
+                  echo 'MERGE ' . $diff . ' with ' . $team['team_id'] . PHP_EOL;
+                  $this->team_model->merge_teams($diff, $team['team_id']);
+                  // diff with world
+                  echo 'MERGE ' . $diff . ' with ' . $world . PHP_EOL;
+                  $this->team_model->merge_teams($diff, $world);
+                  }
+                 */
+
+                foreach ($similarTeams as $similarTeam)
+                {
                     //if (!in_array($similarTeam['country_id'], array_merge($forbidden, array($team['country_id'])))) {
-                    if ($similarTeam['country_id'] != $team['country_id']) {
+                    if ($similarTeam['country_id'] != $team['country_id'])
+                    {
                         //$this->team_model->merge_teams($similarTeam['team_id'], $team['team_id']);
                         //$this->team_model->update_team(array('country_id' => 243), $similarTeam['team_id']);
                         print '<pre>MERGE';
@@ -905,21 +960,17 @@ class Admincp extends Admincp_Controller
                     }
                 }
                 $i++;
-                                     
             }
-            
-            
         }
-        
         echo $i . ' merged teams';
-
-         
     }
 
-    function add_team() {
+    function add_team()
+    {
         $this->load->library('admin_form');
-        $form = new Admin_form;
         $this->load->model('country_model');
+
+        $form = new Admin_form;
         $countries = $params = array();
         $params['dropdown'] = 1;
         $countries = $this->country_model->get_countries($params);
@@ -927,47 +978,54 @@ class Admincp extends Admincp_Controller
         $form->fieldset('Add Team');
         $form->text('Team name', 'name', '', 'Team name to be introduced', TRUE, 'e.g., AC Milan', TRUE);
         $form->dropdown('Country', 'country_id', $countries);
-
         $data = array(
             'form' => $form->display(),
             'form_title' => 'Add team',
             'form_action' => site_url('admincp/livescore/add_team_validate'),
             'action' => 'new',
         );
-
         $this->load->view('add_team', $data);
     }
 
-    function add_team_validate($action = 'new', $id = false) {
+    function add_team_validate($action = 'new', $id = false)
+    {
         $this->load->library('form_validation');
+        $this->load->model('team_model');
+
         $this->form_validation->set_rules('name', 'Name', 'required|trim');
         $this->form_validation->set_rules('country_id', 'Country', 'required|trim');
 
-        if ($this->form_validation->run() === FALSE) {
+        if ($this->form_validation->run() === FALSE)
+        {
             $this->notices->SetError('Required fields.');
             $error = TRUE;
         }
 
-        if (isset($error)) {
-            if ($action == 'new') {
+        if (isset($error))
+        {
+            if ($action == 'new')
+            {
                 redirect('admincp/livescore/list_teams');
                 return FALSE;
-            } else {
+            }
+            else
+            {
                 redirect('admincp/livescore/edit_team/' . $id);
                 return FALSE;
             }
         }
 
-        $this->load->model('team_model');
-
         $fields['name'] = $this->input->post('name');
         $fields['country_id'] = $this->input->post('country_id');
 
-        if ($action == 'new') {
+        if ($action == 'new')
+        {
             $team_id = $this->team_model->new_team($fields);
             $this->notices->SetNotice('Team added successfully.');
             redirect('admincp/livescore/list_teams/');
-        } else {
+        }
+        else
+        {
             $this->team_model->update_team($fields, $id);
             $this->notices->SetNotice('Team updated successfully.');
             redirect('admincp/livescore/list_teams/');
@@ -976,17 +1034,18 @@ class Admincp extends Admincp_Controller
         return TRUE;
     }
 
-    function edit_team($id) {
-        $this->load->model('country_model');
-        $this->load->model('team_model');
+    function edit_team($id)
+    {
+        $this->load->model(array('country_model', 'team_model'));
+        $this->load->library('admin_form');
+
         $team = $this->team_model->get_team($id);
-        if (empty($team)) {
+        if (empty($team))
+        {
             die(show_error('No team with this ID.'));
         }
 
-        $this->load->library('admin_form');
         $form = new Admin_form;
-        $this->load->model('team_model');
         $countries = $params = array();
         $params['dropdown'] = 1;
         $countries = $this->country_model->get_countries($params);
@@ -994,38 +1053,36 @@ class Admincp extends Admincp_Controller
         $form->fieldset('Team');
         $form->text('Name', 'name', $team['name'], 'Team name to be introduced', TRUE, 'e.g., AC Milan', TRUE);
         $form->dropdown('Country', 'country_id', $countries, $team['country_id']);
-
         $data = array(
             'form' => $form->display(),
             'form_title' => 'Edit Team',
             'form_action' => site_url('admincp/livescore/add_team_validate/edit/' . $team['team_id']),
             'action' => 'edit',
         );
-
         $this->load->view('add_team', $data);
     }
 
-    function delete_team($contents, $return_url) {
+    function delete_team($contents, $return_url)
+    {
 
         $this->load->library('asciihex');
-        $this->load->model('competition_model');
+        $this->load->model(array('competition_model', 'team_model'));
 
         $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
         $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
 
-        foreach ($contents as $content) {
-            $this->load->model('team_model');
+        foreach ($contents as $content)
+        {
             $this->team_model->delete_team($content);
         }
 
         $this->notices->SetNotice('Team deleted successfully.');
-
         redirect($return_url);
-
         return TRUE;
     }
 
-    function fix_competitions() {
+    function fix_competitions()
+    {
         $this->load->model('competition_model');
         $this->competition_model->fix_competitions();
         $return_url = 'admincp/livescore/list_competitions';
@@ -1034,7 +1091,8 @@ class Admincp extends Admincp_Controller
         return TRUE;
     }
 
-    function fix_competitions_name() {
+    function fix_competitions_name()
+    {
         $this->load->model('competition_model');
         $this->competition_model->fix_competitions_name();
         $return_url = 'admincp/livescore/list_competitions';
@@ -1043,7 +1101,8 @@ class Admincp extends Admincp_Controller
         return TRUE;
     }
 
-    private function getUrl($url) {
+    private function getUrl($url)
+    {
         $cUrl = curl_init();
         $headers[] = 'Connection: Keep-Alive';
         $headers[] = 'Content-type: application/x-www-form-urlencoded;charset=UTF-8';
@@ -1061,10 +1120,10 @@ class Admincp extends Admincp_Controller
         return $pageContent;
     }
 
-    function fix_score() {
+    function fix_score()
+    {
         $this->load->model('match_model');
         $this->match_model->fix_score();
-
         $this->notices->SetNotice('Score fixed successfully.');
         redirect('admincp/livescore/list_matches/');
     }

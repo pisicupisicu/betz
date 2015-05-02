@@ -29,10 +29,7 @@ class Match_pre_model extends CI_Model
      */
     function get_matches($filters = array()) 
     {
-        $this->load->model('team_pre_model');
-        $this->load->model('competition_pre_model');
-        $this->load->model('competition_model');
-        $this->load->model('country_model');
+        $this->load->model(array('team_pre_model','competition_pre_model','competition_model','country_model'));
         $row = array();
 
         $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';
@@ -51,17 +48,17 @@ class Match_pre_model extends CI_Model
         foreach ($result->result_array() as $linie) {
             $competition_pre = $this->competition_pre_model->get_competition($linie['competition_id_pre']);
             $competition = $this->competition_model->get_competition($competition_pre['competition_id']);
-            if (!$competition_pre['country_id']) {
+            if (!isset($competition_pre['country_id'])) {
                 $linie['country_name'] = $competition['country_name'];
                 $linie['competition_name'] = $competition['name'];
             } else {
                 $linie['country_name'] = $competition_pre['country_name'];
-                $linie['competition_name'] = $competition_pre['name'];
+                $linie['competition_name'] = $competition['name'];                                
             }
             
             if (!$competition_pre['competition_id']) {
                 $linie['ok_competition'] = 0;
-            } else {
+            } else {               
                 $linie['ok_competition'] = 1;
             }
             
@@ -143,16 +140,31 @@ class Match_pre_model extends CI_Model
     function get_match($id)
     {
         $row = array();
-
         //$this->db->join('z_competitions_pre', 'z_matches_pre.competition_id_pre = z_competitions_pre.index', 'inner'); // not ok because of competition_id_pre = 0       
         $this->db->where('z_matches_pre.index', $id);
         $this->db->select('*,z_matches_pre.link AS link_match,z_matches_pre.link_complete AS link_match_complete');
         $result = $this->db->get('z_matches_pre');
-
         foreach ($result->result_array() as $row) {
             return $row;
         }
-
+        
+        return $row;
+    }
+    
+    public function get_match_pre($id)
+    {
+        $row = array();
+        $query = $this->db->select('*,zm_pre.link AS link_match,zm_pre.link_complete AS link_match_complete')
+                        ->from('z_matches_pre AS zm_pre')
+                        ->join('z_competitions_pre AS zc_pre', 'zm_pre.competition_id_pre = zc_pre.index', 'left')
+                        ->join('z_competitions AS zc', 'zc_pre.competition_id = zc.competition_id', 'left')
+                        ->where('zm_pre.index', $id)
+                        ->get();
+        
+        foreach ($query->result_array() as $row) {
+            return $row;
+        }
+        
         return $row;
     }
 
@@ -339,6 +351,10 @@ class Match_pre_model extends CI_Model
             $this->db->where('link', $match['link']);
         }
         
+        if (isset($match['link_complete'])) {
+            $this->db->where('link_complete', $match['link_complete']);
+        }
+        
         if (isset($match['match_date'])) {
             $this->db->where('match_date', $match['match_date']);
         }
@@ -371,9 +387,8 @@ class Match_pre_model extends CI_Model
      */
     function delete_match($id) 
     {
-
-        $this->db->delete('z_matches_pre', array('id' => $id));
-        return TRUE;
+        $this->db->delete('z_matches_pre', array('index' => $id));
+        return true;
     }
 
     function get_no_of_matches_by_team_id($team_id) 
@@ -448,9 +463,7 @@ class Match_pre_model extends CI_Model
                 $this->match_model->new_match($insert_fields);
                 $i++;
             }
-            
-            
-            
+
             //print '<pre>';
             //print_r($linie);
             //print_r($insert_fields);
@@ -464,5 +477,16 @@ class Match_pre_model extends CI_Model
         $this->db->query('truncate table z_matches_pre');
         
         return $i;
+    }
+    
+    /**
+     * Truncates the table
+     * 
+     * @return boolean
+     */
+    function clear_table()
+    {
+        $this->db->truncate('z_matches_pre');
+        return true;
     }
 }

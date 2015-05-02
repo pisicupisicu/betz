@@ -62,6 +62,7 @@ class Competition_pre_model extends CI_Model
                 $linie['link'] = $competition['link'];
                 $linie['link_complete'] = $competition['link_complete'];
                 $linie['country_name'] = $competition['country_name'];
+                $linie['country_id'] = $competition['country_id'];
                 $linie['ok_competition'] = 1;
             }
             
@@ -112,7 +113,7 @@ class Competition_pre_model extends CI_Model
         
         return $row;
     }
-    
+       
     /**
      * Get Competition by competition id
      *
@@ -356,5 +357,15 @@ class Competition_pre_model extends CI_Model
         }
         
         return $rows;
+    }
+    
+    /**
+     * Truncates the table
+     * 
+     * @return void
+     */
+    public function clear_table()
+    {
+        $this->db->truncate('z_competitions_pre');        
     }
 }
