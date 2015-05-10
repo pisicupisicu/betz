@@ -28,6 +28,171 @@ class Admincp9 extends Admincp_Controller {
         echo 'index admincp9';
         //redirect('admincp/livescore/list_competitions');
     }
+    
+    public function algorithm($date = '2013-12-30', $atLeastMatches = 2)
+    {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+        $filters['limit'] = 100;
+        
+        $this->load->model('match_model');
+        $this->load->library('dataset');
+        
+         $columns = array(
+            array(
+                'name' => 'CRITERIA',
+                'width' => '25%',
+                'type' => 'text'
+            ),
+            array(
+                'name' => 'OK',
+                'width' => '25%',
+                'type' => 'text'
+            ),
+            array(
+               'name' => 'Total',
+                'width' => '25%',
+                'type' => 'text'
+            ),
+            array(
+                'name' => 'Percentage',
+                'width' => '25%',
+                'type' => 'text'
+            )
+        );
+        
+        //$data = $this->match_model->algorithm_success_all($date, $atLeastMatches);
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('match_model', 'algorithm_success_all', array('date' => $date, 'atLeastMatches' => $atLeastMatches));
+        $this->dataset->base_url(site_url('admincp9/livescore/algorithm'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+        //$total_rows = $this->competition_model->get_num_rows($filters);
+        $total_rows = 100;
+        $this->dataset->total_rows($total_rows);
+
+        // initialize the dataset
+        $this->dataset->initialize();
+        
+        $this->load->view('algorithm');
+        
+//        print '<pre>';
+//        print_r($data);
+//        print '</pre>';
+    }
+    
+    public function h2h($team1, $team2, $match_date)
+    {
+        $this->load->model('match_model');
+        $this->load->library('dataset');
+
+        $filters = array();
+
+        $columns = array(
+            array(
+                'name' => 'COUNTRY',
+                'width' => '10%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => 'COMPETITION',
+                'width' => '10%',
+                'filter' => 'competition_name',
+                'type' => 'name',
+                'sort_column' => 'competition_name',
+            ),
+            array(
+                'name' => 'DATE',
+                'width' => '15%',
+                'filter' => 'match_date',
+                'type' => 'date',
+                'field_start_date' => '2013-01-01',
+                'field_end_date' => '2013-12-31',
+                'sort_column' => 'match_date',
+            ),
+            array(
+                'name' => 'HOME',
+                'width' => '15%',
+                'filter' => 'team1',
+                'type' => 'text',
+                'sort_column' => 'team1',
+            ),
+            array(
+                'name' => 'AWAY',
+                'width' => '15%',
+                'filter' => 'team2',
+                'type' => 'text',
+                'sort_column' => 'team2',
+            ),
+            array(
+                'name' => 'SCORE',
+                'width' => '5%',
+                'filter' => 'score',
+                'type' => 'text',
+                'sort_column' => 'score',
+            ),
+            array(
+                'name' => 'LINK COMPLETE',
+                'width' => '20%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'View',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'Edit',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+        );
+
+        $filters = array('team1' => $team1, 'team2' => $team2, 'match_date' => $match_date, 'include_competitions' => 1);
+        $filters['limit'] = 100;
+
+        if (isset($_GET['filters']))
+        {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+        }
+
+        
+        if (isset($filters_decode) && !empty($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
+                $filters[$key] = $val;
+            }
+        }
+
+        foreach ($filters as $key => $val)
+        {
+            if (in_array($val, array('filter results', 'start date', 'end date')))
+            {
+                unset($filters[$key]);
+            }
+        }
+
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('match_model', 'get_h2h', $filters);
+        $this->dataset->base_url(site_url('admincp8/livescore/h2h'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+        //$total_rows = $this->competition_model->get_num_rows($filters);
+        $total_rows = 100;
+        $this->dataset->total_rows($total_rows);
+
+        // initialize the dataset
+        $this->dataset->initialize();
+        // add actions        
+        $this->load->view('h2h');
+    }
 
     private function getUrl($url)
     {
