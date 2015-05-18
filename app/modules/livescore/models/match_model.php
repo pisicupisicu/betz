@@ -83,7 +83,7 @@ class Match_model extends CI_Model {
 
         return $row;
     }
-
+    
     /**
      * Get Matches for the range selector
      *
@@ -1129,6 +1129,151 @@ class Match_model extends CI_Model {
         }
 
         return $success;
+    }
+    
+    public function check_batch($id)
+    {
+        $this->load->model(array('goal_model'));
+        $limit = 1000;
+        
+        $this->db->limit($limit, $id);
+        $result = $this->db->get('z_matches');
+       
+        foreach ($result->result_array() as $linie) {
+            $check_goals = $this->goal_model->get_goals_by_match($linie['id']);
+            $goals = explode('-', $linie['score']);
+            $total_goals = $goals[0] + $goals[1];
+
+ //            print_r($check_goals);
+ //            echo $check_goals . '/' . $total_goals;die;
+
+            if(count($check_goals) != $total_goals) {
+                // update match
+                $this->update_match(array('parsed' => 0), $linie['id']);
+            }
+        }
+        
+        if (($id + $limit) > $this->get_num_rows()) {
+            return 0;
+        }
+        
+        return ($id + $limit);
+    }        
+    
+    function get_unparsed_matches($filters = array())
+    {
+        
+        $this->load->model(array('team_model', 'goal_model'));
+        $row = array();
+
+        $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';
+        if (isset($filters['sort']))
+            $this->db->order_by($filters['sort'], $order_dir);
+
+        if (isset($filters['country_name']) && $filters['country_name'])
+            $this->db->like('country_name', $filters['country_name']);
+        if (isset($filters['competition_name']) && $filters['competition_name'])
+            $this->db->like('z_competitions.name', $filters['competition_name']);
+        if (isset($filters['team1']) && $filters['team1'])
+            $this->db->like('zt1.name', $filters['team1']);
+        if (isset($filters['team2']) && $filters['team2'])
+            $this->db->like('zt2.name', $filters['team2']);
+        if (isset($filters['score']) && $filters['score'])
+            $this->db->like('score', $filters['score']);
+        if (isset($filters['parsed']))
+            $this->db->where('parsed', $filters['parsed']);
+        if (isset($filters['match_date_start']) && !empty($filters['match_date_start']))
+            $this->db->where('match_date >=', $filters['match_date_start']);
+        if (isset($filters['match_date_end']) && !empty($filters['match_date_end']))
+            $this->db->where('match_date <=', $filters['match_date_end']);
+
+        if (isset($filters['limit'])) {
+            $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
+            $this->db->limit($filters['limit'], $offset);
+        }
+
+        if (isset($filters['team1']) && $filters['team1']) {
+            $this->db->join('z_teams AS zt1', 'z_matches.team1 = zt1.team_id', 'inner');
+        }
+
+        if (isset($filters['team2']) && $filters['team2']) {
+            $this->db->join('z_teams AS zt2', 'z_matches.team2 = zt2.team_id', 'inner');
+        }
+
+        $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
+        $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');
+        $this->db->select('*,z_matches.link_complete AS link_match');
+        
+        $this->db->where('parsed', 0);
+
+        $result = $this->db->get('z_matches');
+        
+        foreach ($result->result_array() as $linie) {
+            $temp = $this->team_model->get_team($linie['team1']);
+            $linie['team1'] = $temp['name'];
+            $temp = $this->team_model->get_team($linie['team2']);
+            $linie['team2'] = $temp['name'];
+            $linie['competition_name'] = $linie['name'];
+            $check_goals = $this->goal_model->get_goals_by_match($linie['id']);
+            $goals = explode('-', $linie['score']);
+            $total_goals = $goals[0] + $goals[1];
+            if(count($check_goals) != $total_goals) {
+                $row[] = $linie;
+            }
+        }
+
+        return $row;
+    }
+    
+    function get_unparsed_num_rows($filters = array()) 
+    {
+        $this->load->model('goal_model');
+        
+        if (isset($filters['country_name']) && $filters['country_name'])
+            $this->db->like('country_name', $filters['country_name']);
+        if (isset($filters['competition_name']) && $filters['competition_name'])
+            $this->db->like('z_competitions.name', $filters['competition_name']);
+        if (isset($filters['team1']) && $filters['team1'])
+            $this->db->like('zt1.name', $filters['team1']);
+        if (isset($filters['team2']) && $filters['team2'])
+            $this->db->like('zt2.name', $filters['team2']);
+        if (isset($filters['score']) && $filters['score'])
+            $this->db->like('score', $filters['score']);
+        if (isset($filters['parsed']))
+            $this->db->where('parsed', $filters['parsed']);
+        if (isset($filters['match_date_start']))
+            $this->db->where('match_date >=', $filters['match_date_start']);
+        if (isset($filters['match_date_end']))
+            $this->db->where('match_date <=', $filters['match_date_end']);
+
+        if (isset($filters['team1']) && $filters['team1']) {
+            $this->db->join('z_teams AS zt1', 'z_matches.team1 = zt1.team_id', 'inner');
+        }
+
+        if (isset($filters['team2']) && $filters['team2']) {
+            $this->db->join('z_teams AS zt2', 'z_matches.team2 = zt2.team_id', 'inner');
+        }
+
+        if (isset($filters['min'])) {
+            $this->db->where('min <=', $filters['min']);
+            $this->db->join('z_goals', 'z_matches.id = z_goals.match_id', 'inner');
+        }
+
+        $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
+        $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');
+        
+        $this->db->where('parsed', 0);
+
+        $result = $this->db->get('z_matches');
+
+        return $result->num_rows();
+    }
+    
+    public function getSpecialCharacters()
+    {
+        $string = "\À\Á\Â\Ã\Ä\Å\Æ\Ç\È\É\Ê\Ë\Ì\Í\Î\Ï\Ð\Ñ\Ò\Ó\Ô\Õ\Ö\×\Ø\Ù\Ú\Û\Ü\Ý\Þ\ß\à\á\â\ã\ä\å\æ\ç\è\é\ê\ë\ì\í\î\ï\ð\ñ\ò\ó\ô\õ\ö\÷\ø\ù\ú\û\ü\ý\þ\ÿ\Â\â\Ă\ă\Î\î\ş\Ş\ţ\Ţ\ș\Ș\ț\Ț\-\'\&#x27;\.";
+        
+        return $string;
     }
 
 }

@@ -35,7 +35,8 @@ class Admincp5 extends Admincp_Controller {
 
         if (empty($match))
         {
-            die('All matches are already parsed');
+            $this->notices->SetNotice('All matches successfully parsed.');
+            redirect('admincp3/livescore/list_matches_pre');
         }
         $this->parse_match($match['id']);
 
@@ -54,16 +55,17 @@ class Admincp5 extends Admincp_Controller {
         // echo $page.'<br/>';    
         print '<pre>MATCH<br /><br />';
         print_r($match);
+        // Special characters
+        $specialchars = $this->match_model->getSpecialCharacters();
         
         // CARDS PARSING START
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div> <span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div> <span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
-
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -87,14 +89,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -118,14 +120,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -161,14 +163,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -204,14 +206,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc yellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -247,14 +249,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -278,14 +280,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -309,14 +311,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$o], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$o], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -352,14 +354,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -395,14 +397,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -438,14 +440,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -469,14 +471,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div> <span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -500,14 +502,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redyellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$o], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$o], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -543,14 +545,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc yellowcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$o], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$o], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -586,14 +588,14 @@ class Admincp5 extends Admincp_Controller {
             }
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s</span>\s<span class="inc redyellowcard"></span>\s</div>\s</div>\s<div class="sco"> &nbsp; </div>\s<div class="ply">\s<div>\s<span class="inc redcard"></span>\s<span class="mr4">\s</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
         
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$o], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$o], $nam);
             $data[] = array_merge($min, $nam);
         }
@@ -631,20 +633,19 @@ class Admincp5 extends Admincp_Controller {
         unset($data);
         
         // GOALS PARSING START
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z\s]*</span>\s<span class="ml4">\s*([a-z\.\(\)]*)\s*</span>\s<span class="inc goal"></span>\s</div>\s(<div class="hidden" data-type="details">\s<span class="assist name">(.*)</span>\s<span class=""></span>\s</div>\s)*</div>\s<div class="sco">\s[0-9\s\-]*\s</div>\s<div class="ply">\s<div>\s<span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s<span class="ml4">\s*([a-z\.\(\)]*)\s*</span>\s<span class="inc goal"></span>\s</div>\s(<div class="hidden" data-type="details">\s<span class="assist name">[A-Za-z'.$specialchars.'\(\)\s]*</span>\s<span class=""></span>\s</div>\s)*</div>\s<div class="sco">\s[0-9\s\-]*\s</div>\s<div class="ply">\s<div>\s<span class=""></span>\s<span class="mr4">\s</span>\s<span class="name"></span>\s</div>\s</div>\s</div>@';
         preg_match_all($pattern, $page, $parsed);
-        
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $types = '@<span class="ml4">\s*([a-z\.\(\)]*)\s*</span>@';
             preg_match_all($types, $parsed[0][$i], $typ);
             $scores = '@<div class="sco">\s[0-9\s\-]*\s</div>@';
             preg_match_all($scores, $parsed[0][$i], $sco);
-            $assists = '@<span class="assist name">[A-Za-z\ß\ü\w\sæøå\s]*@';
+            $assists = '@<span class="assist name">[A-Za-z'.$specialchars.'\(\)\s]*@';
             preg_match_all($assists, $parsed[0][$i], $ass);
             $data[] = array_merge($min, $nam, $typ, $sco, $ass);
         }
@@ -653,13 +654,13 @@ class Admincp5 extends Admincp_Controller {
             print '<pre>LEFT GOAL</pre>';
             for($i = 0; $i < count($data); $i++)
             {
-                $assist = (isset($data[$i][5][0])) ? trim(strip_tags($data[$i][5][0])) : '';
+                $assist = (isset($data[$i][5][0])) ? trim(strip_tags(str_replace(" (assist)", "", $data[$i][5][0]))) : '';
                 $info = array(
                     'match_id' => $id,
                     'score' => strip_tags(str_replace(" ", "", $data[$i][4][0])),
                     'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
                     'type' => trim(strip_tags($data[$i][2][0])),
-                    'assist' => $assist,
+                    'assist' => str_replace(" (assist)", "", $assist),
                     'player' => trim(strip_tags($data[$i][1][0])),
                     'team' => 'home',
                 );
@@ -669,22 +670,22 @@ class Admincp5 extends Admincp_Controller {
                     $this->goal_model->new_goal($info);
                 }
             }
+            $left_goals = count($data);
         }
         unset($data);
-        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco">\s[0-9\s\-]*\s</div>\s<div class="ply">\s<div>\s<span class="inc goal"></span>\s<span class="mr4">\s*([a-z\.\(\)]*)\s*</span>\s<span class="name">[A-Za-z\s]*</span>\s</div>\s(<div class="hidden" data-type="details">\s<span class="assist name">(.*)</span>\s</div>\s)*</div>\s</div>@U';
+        $pattern = '@<div class="(even)* row-gray" data-id="details" data-type="tab">\s<div class="min">\s[0-9]*\'\s</div>\s<div class="ply tright">\s<div>\s<span class="name"></span>\s<span class="ml4">\s</span>\s<span class=""></span>\s</div>\s</div>\s<div class="sco">\s[0-9\s\-]*\s</div>\s<div class="ply">\s<div>\s<span class="inc goal"></span>\s<span class="mr4">\s*([a-z\.\(\)]*)\s*</span>\s<span class="name">[A-Za-z'.$specialchars.'\s]*</span>\s</div>\s(<div class="hidden" data-type="details">\s<span class="assist name">[A-Za-z'.$specialchars.'\(\)\s]*</span>\s</div>\s)*</div>\s</div>@U';
         preg_match_all($pattern, $page, $parsed);
-        
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
             preg_match_all($minutes, $parsed[0][$i], $min);
-            $names = '@<span class="name">[A-Za-z\ß\ü\w\sæøå\s]*</span>@';
+            $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
             preg_match_all($names, $parsed[0][$i], $nam);
             $types = '@<span class="mr4">\s*([a-z\.\(\)]*)\s*</span>@';
             preg_match_all($types, $parsed[0][$i], $typ);
             $scores = '@<div class="sco">\s[0-9\s\-]*\s</div>@';
             preg_match_all($scores, $parsed[0][$i], $sco);
-            $assists = '@<span class="assist name">(.*)</span>@';
+            $assists = '@<span class="assist name">[A-Za-z'.$specialchars.'\(\)\s]*</span>@';
             preg_match_all($assists, $parsed[0][$i], $ass);
             $data[] = array_merge($min, $nam, $typ, $sco, $ass);
         }
@@ -699,7 +700,7 @@ class Admincp5 extends Admincp_Controller {
                     'score' => strip_tags(str_replace(" ", "", $data[$i][4][0])),
                     'min' => strip_tags(str_replace("'", "", $data[$i][0][0])),
                     'type' => trim(strip_tags($data[$i][2][0])),
-                    'assist' => $assist,
+                    'assist' => str_replace("(assist) ", "", $assist),
                     'player' => trim(strip_tags($data[$i][1][1])),
                     'team' => 'away',
                 );
@@ -709,10 +710,16 @@ class Admincp5 extends Admincp_Controller {
                     $this->goal_model->new_goal($info);
                 }
             }
+            $right_goals = count($data);
         }
         unset($data);
-                        
+        
+        $left = (isset($left_goals)) ? $left_goals : 0;
+        $right = (isset($right_goals)) ? $right_goals : 0;
+        $total_goals = $left.'-'.$right;
+        
         $update_fields = array(
+            'score' => $total_goals,
             'parsed' => 1,
         );
         $this->match_model->update_match($update_fields, $id);
@@ -778,6 +785,7 @@ class Admincp5 extends Admincp_Controller {
         //curl_setopt($cUrl, CURLOPT_USERAGENT,'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.2; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0)');  
         //curl_setopt($cUrl, CURLOPT_USERAGENT,$_SERVER['HTTP_USER_AGENT']);    
         curl_setopt($cUrl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($cUrl, CURLOPT_FOLLOWLOCATION, 1);
         //curl_setopt($cUrl, CURLOPT_TIMEOUT, '3');
         //$pageContent = trim(curl_exec($cUrl));
         $pageContent = curl_exec($cUrl);

@@ -186,15 +186,15 @@ class Admincp3 extends Admincp_Controller {
 
             if (strstr($val, 'href'))
             {
-                $match->team_home = trim($scoresPrecise[1][0]);
-                $match->team_away = trim($scoresPrecise[4][0]);
+                $match->team_home = trim(str_replace(" *", "", $scoresPrecise[1][0]));
+                $match->team_away = trim(str_replace(" *", "", $scoresPrecise[4][0]));
                 $match->score_link = trim(str_replace('/soccer/', '', $scoresPrecise[2][0]));
                 $match->score = trim($scoresPrecise[3][0]);
             }
             else
             {
-                $match->team_home = trim($scoresPrecise[1][0]);
-                $match->team_away = trim($scoresPrecise[3][0]);
+                $match->team_home = trim(str_replace(" *", "", $scoresPrecise[1][0]));
+                $match->team_away = trim(str_replace(" *", "", $scoresPrecise[3][0]));
                 $match->score_link = '';
                 $match->score = trim($scoresPrecise[2][0]);
             }
