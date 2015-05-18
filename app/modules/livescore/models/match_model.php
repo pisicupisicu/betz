@@ -14,7 +14,8 @@ class Match_model extends CI_Model {
     private $CI;
     private $overs = array('0.5' => 1, '1.5' => 2, '2.5' => 3, '3.5' => 4, '4.5' => 5, '5.5' => 6);
 
-    function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->CI = & get_instance();
     }
@@ -25,7 +26,8 @@ class Match_model extends CI_Model {
      *
      * @return array
      */
-    function get_matches($filters = array()) {
+    function get_matches($filters = array()) 
+    {
         $this->load->model('team_model');
         $row = array();
 
@@ -70,10 +72,12 @@ class Match_model extends CI_Model {
         $result = $this->db->get('z_matches');
 
         foreach ($result->result_array() as $linie) {
-            $temp = $this->team_model->get_team($linie['team1']);
+            $temp = $this->team_model->get_team($linie['team1']);            
             $linie['team1'] = $temp['name'];
+            $linie['team1_id'] = $temp['team_id'];
             $temp = $this->team_model->get_team($linie['team2']);
             $linie['team2'] = $temp['name'];
+            $linie['team2_id'] = $temp['team_id'];
             $linie['competition_name'] = $linie['name'];
             $row[] = $linie;
             // print '<pre>';
@@ -919,39 +923,115 @@ class Match_model extends CI_Model {
         return $row;
     }
 
-    public function get_h2h($filters = array()) {
+    public function get_h2h($filters = array())
+    {
+        $this->load->model('team_model');
         $row = array();
+        
+        if (isset($filters['include_competitions'])) {
+            $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
+            $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');            
+        }
 
-        $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
-        $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');
+       
         $this->db->where('team1', $filters['team1']);
         $this->db->where('team2', $filters['team2']);
-        $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
+        $this->db->where('match_date <', $filters['match_date']);
+        
+        if (isset($filters['include_competitions'])) {
+            $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
+        }
+        
         $result_home = $this->db->get('z_matches');
 
         foreach ($result_home->result_array() as $line) {
+            if (isset($filters['include_competitions'])) {
+                $temp = $this->team_model->get_team($line['team1']);
+                $line['team1_name'] = $temp['name'];
+                $temp = $this->team_model->get_team($line['team2']);
+                $line['team2_name'] = $temp['name'];
+            }
             $row[] = $line;
         }
 
-        $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
-        $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');
+        if (isset($filters['include_competitions'])) {
+            $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
+            $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');
+        }
+        
         $this->db->where('team1', $filters['team2']);
         $this->db->where('team2', $filters['team1']);
-        $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
+        $this->db->where('match_date <', $filters['match_date']);
+        
+        if (isset($filters['include_competitions'])) {
+           $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
+        }
+        
         $result_away = $this->db->get('z_matches');
 
         foreach ($result_away->result_array() as $line) {
+            if (isset($filters['include_competitions'])) {
+                $temp = $this->team_model->get_team($line['team1']);
+                $line['team1_name'] = $temp['name'];
+                $temp = $this->team_model->get_team($line['team2']);
+                $line['team2_name'] = $temp['name'];
+            }
             $row[] = $line;
         }
 
         if (isset($filters['count'])) {
             return count($row);
         }
+        
+        //print '<pre>xx ' . $filters['team1'] . ' ' . $filters['team2'];
+        //print_r($row);
+        //die;
 
         return $row;
     }
+    
+    protected function isHome($match, $team1, $team2)
+    {
+        if ($match['team1'] == $team1) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 
+     * @param array $match
+     * @param int   $team1
+     * @param int   $team2
+     * 
+     * @return mixed 1 for 1 0 for X 2 for 2
+     */
+    protected function is1X2($match, $team1, $team2)
+    {
+        $this->load->model('goal_model');
+        
+        if ($this->goal_model->isX($match['score'])) {
+            return 0;
+        }
+        
+        if ($this->isHome($match, $team1, $team2)) {
+            if ($this->goal_model->isOne($match['score'])) {
+                return 1;
+            } elseif ($this->goal_model->isTwo($match['score'])) {
+                return 2;
+            }
+        } else {
+            if ($this->goal_model->isOne($match['score'])) {
+                return 2;
+            } elseif ($this->goal_model->isTwo($match['score'])) {
+                return 1;
+            }
+        }
+    }
 
-    public function get_h2h_stats($filters = array()) {
+    public function get_h2h_stats($filters = array()) 
+    {
         $this->load->model('goal_model');
 
         $matches = $this->get_h2h($filters);
@@ -964,11 +1044,13 @@ class Match_model extends CI_Model {
         }
 
         foreach ($matches as $match) {
-            if ($this->goal_model->isOne($match['score'])) {
-                $stats['1'] ++;
-            } elseif ($this->goal_model->isX($match['score'])) {
+            $temp = $this->is1X2($match, $filters['team1'], $filters['team2']);
+            
+            if (!$temp) {
                 $stats['x'] ++;
-            } elseif ($this->goal_model->isTwo($match['score'])) {
+            } elseif ($temp == 1) {
+                $stats['1'] ++;
+            } elseif ($temp == 2) {
                 $stats['2'] ++;
             }
 
@@ -984,151 +1066,175 @@ class Match_model extends CI_Model {
         return $stats;
     }
 
-    public function get_h2h_stats_percentage($filters = array()) {
+    public function get_h2h_stats_percentage($filters = array())
+    {
         $stats = $this->get_h2h_stats($filters);
-
-        $stats['1'] = round($stats['1'] * 100 / $stats['total'], 2);
-        $stats['x'] = round($stats['x'] * 100 / $stats['total'], 2);
-        $stats['2'] = round($stats['2'] * 100 / $stats['total'], 2);
-
+        
+        // stats in p = percentages
+        $stats['1p'] = $stats['xp'] = $stats['2p'] = 0;
         foreach ($this->overs as $key => $value) {
-            $stats['over_' . $key] = round($stats['over_' . $key] * 100 / $stats['total'], 2);
-            $stats['under_' . $key] = round($stats['under_' . $key] * 100 / $stats['total'], 2);
+            $stats['over_' . $key . 'p'] = $stats['under_' . $key . 'p'] = 0;
         }
-
-        unset($stats['total']);
+        
+        if (!$stats['total']) {
+            return $stats;
+        }
+        
+        $stats['1p'] = round($stats['1'] * 100 / $stats['total'], 2);
+        $stats['xp'] = round($stats['x'] * 100 / $stats['total'], 2);
+        $stats['2p'] = round($stats['2'] * 100 / $stats['total'], 2);
+        
+        foreach ($this->overs as $key => $value) {
+            $stats['over_' . $key . 'p'] = round($stats['over_' . $key] * 100 / $stats['total'], 2);
+            $stats['under_' . $key . 'p'] = round($stats['under_' . $key] * 100 / $stats['total'], 2);
+            
+        }        
 
         return $stats;
     }
 
-    public function algorithm($date) {
+    public function algorithm($date, $atLeastMatches)
+    {
         $stats = array();
         $filters = array();
         $filters['match_date_start'] = $filters['match_date_end'] = $date;
         $matches = $this->get_matches($filters);
-
+                
         unset($filters['match_date_start']);
         unset($filters['match_date_end']);
 
         foreach ($matches as $match) {
-            $filters['team1'] = $match['team1'];
-            $filters['team2'] = $match['team2'];
-            $stats[$match['id']] = $this->get_h2h_stats_percentage($filters);
+            $filters['team1'] = $match['team1_id'];
+            $filters['team2'] = $match['team2_id'];
+            $filters['match_date'] = $date;
+            $statsTemp = $this->get_h2h_stats_percentage($filters);
+            // do not take into consideration matches without at least a certain number of previous encounters
+            if ($statsTemp['total'] < $atLeastMatches) {
+                continue;
+            }
+            
+            $stats[$match['id']] = $statsTemp;
+            $stats[$match['id']]['match'] = $match;
         }
 
         $new_stats = array();
 
         foreach ($stats as $match_id => $value) {
-            $new_stats['1'][$match_id] = $stats[$match_id]['1'];
-            $new_stats['x'][$match_id] = $stats[$match_id]['x'];
-            $new_stats['2'][$match_id] = $stats[$match_id]['2'];
+            $new_stats['1'][$match_id] = $stats[$match_id]['1p'];
+            $new_stats['x'][$match_id] = $stats[$match_id]['xp'];
+            $new_stats['2'][$match_id] = $stats[$match_id]['2p'];
             foreach ($this->overs as $key => $val) {
-                $new_stats['over_' . $key][$match_id] = $stats[$match_id]['over_' . $key];
-                $new_stats['under_' . $key][$match_id] = $stats[$match_id]['under_' . $key];
+                $new_stats['over_' . $key][$match_id] = $stats[$match_id]['over_' . $key . 'p'];
+                $new_stats['under_' . $key][$match_id] = $stats[$match_id]['under_' . $key . 'p'];
             }
         }
-
-        $new_stats['1'] = asort($new_stats['1']);
-        $new_stats['x'] = asort($new_stats['x']);
-        $new_stats['2'] = asort($new_stats['2']);
+                
+        arsort($new_stats['1']);
+        arsort($new_stats['x']);
+        arsort($new_stats['2']);
         foreach ($this->overs as $key => $val) {
-            $new_stats['over_' . $key] = asort($new_stats['over_' . $key]);
-            $new_stats['under_' . $key] = asort($new_stats['under_' . $key]);
+            arsort($new_stats['over_' . $key]);
+            arsort($new_stats['under_' . $key]);
         }
+        
+        $new_stats['stats'] = $stats;
+        
+        //print '<pre>';
+        //print_r($matches);
+        //print_r($stats);
+        //print '--------------------------------';
+        //print_r($new_stats);
+        //print '</pre>';
 
         return $new_stats;
     }
 
-    public function algorithm_success_all($date) {
+    public function algorithm_success_all($filters) 
+    {
         $this->load->model('goal_model');
-        $stats = $this->algorithm($date);
-        $total_matches = count($stats['1']);
+        $stats = $this->algorithm($filters['date'], $filters['atLeastMatches']);
 
-        $success = array('1' => 0, 'x' => 0, '2' => 0);
+        $success = array('1' => array('ok' => 0, 'total' => 0), 'x' => array('ok' => 0, 'total' => 0), '2' => array('ok' => 0, 'total' => 0));
 
         foreach ($this->overs as $key => $value) {
-            $success['over_' . $key] = 0;
-            $success['under_' . $key] = 0;
+            $success['over_' . $key] = array('ok' => 0, 'total' => 0);
+            $success['under_' . $key] = array('ok' => 0, 'total' => 0);
         }
 
         foreach ($stats['1'] as $match_id => $value) {
-            $match = $this->get_match($match_id);
+            $score = $stats['stats'][$match_id]['match']['score'];
             if ($value > 50) {
-                if ($this->goal_model->isOne($match['score'])) {
-                    $success['1'] ++;
+                if ($this->goal_model->isOne($score)) {
+                    $success['1']['ok'] ++;
                 }
-            } else {
-                if (!$this->goal_model->isOne($match['score'])) {
-                    $success['1'] ++;
-                }
+                
+                $success['1']['total']++;
             }
         }
 
         foreach ($stats['x'] as $match_id => $value) {
-            $match = $this->get_match($match_id);
+            $score = $stats['stats'][$match_id]['match']['score'];
             if ($value > 50) {
-                if ($this->goal_model->isX($match['score'])) {
-                    $success['x'] ++;
+                if ($this->goal_model->isX($score)) {
+                    $success['x']['ok'] ++;
                 }
-            } else {
-                if (!$this->goal_model->isX($match['score'])) {
-                    $success['x'] ++;
-                }
+                
+                $success['x']['total']++;
             }
         }
 
         foreach ($stats['2'] as $match_id => $value) {
-            $match = $this->get_match($match_id);
+            $score = $stats['stats'][$match_id]['match']['score'];
             if ($value > 50) {
-                if ($this->goal_model->isTwo($match['score'])) {
-                    $success['2'] ++;
+                if ($this->goal_model->isTwo($score)) {
+                    $success['2']['ok'] ++;
                 }
-            } else {
-                if (!$this->goal_model->isTwo($match['score'])) {
-                    $success['2'] ++;
-                }
+                
+                $success['2']['total']++;
             }
         }
 
         foreach ($this->overs as $key => $value) {
             foreach ($stats['over_' . $key] as $match_id => $value) {
-                $match = $this->get_match($match_id);
+                $score = $stats['stats'][$match_id]['match']['score'];
                 if ($value > 50) {
-                    if ($this->goal_model->isOver($match['score'], $key)) {
-                        $success['over_' . $key] ++;
+                    if ($this->goal_model->isOver($score, $key)) {
+                        $success['over_' . $key]['ok'] ++;
                     }
-                } else {
-                    if (!$this->goal_model->isOver($match['score'])) {
-                        $success['over_' . $key] ++;
-                    }
+                    
+                    $success['over_' . $key]['total']++;
                 }
             }
 
             foreach ($stats['under_' . $key] as $match_id => $value) {
-                $match = $this->get_match($match_id);
+                $score = $stats['stats'][$match_id]['match']['score'];
                 if ($value > 50) {
-                    if ($this->goal_model->isUnder($match['score'], $key)) {
-                        $success['under_' . $key] ++;
+                    if ($this->goal_model->isUnder($score, $key)) {
+                        $success['under_' . $key]['ok'] ++;
                     }
-                } else {
-                    if (!$this->goal_model->isUnder($match['score'])) {
-                        $success['under_' . $key] ++;
-                    }
+                    
+                    $success['under_' . $key]['total'] ++;
                 }
             }
         }
 
 
-        $success['1'] = round($success['1'] * 100 / $total_matches, 2);
-        $success['x'] = round($success['x'] * 100 / $total_matches, 2);
-        $success['2'] = round($success['2'] * 100 / $total_matches, 2);
+        $success['1']['p'] = $success['1']['total'] == 0 ? 0 : round($success['1']['ok'] * 100 / $success['1']['total'], 2);
+        $success['x']['p'] = $success['x']['total'] == 0 ? 0 : round($success['x']['ok'] * 100 / $success['x']['total'], 2);
+        $success['2']['p'] = $success['2']['total'] == 0 ? 0 : round($success['2']['ok'] * 100 / $success['2']['total'], 2);
 
         foreach ($this->overs as $key => $value) {
-            $success['over_' . $key] = round($success['over_' . $key] * 100 / $total_matches, 2);
-            $success['under_' . $key] = round($success['under_' . $key] * 100 / $total_matches, 2);
+            $success['over_' . $key]['p'] = $success['over_' . $key]['total'] == 0 ? 0 :round($success['over_' . $key]['ok'] * 100 / $success['over_' . $key]['total'], 2);
+            $success['under_' . $key]['p'] = $success['under_' . $key]['total'] == 0 ? 0 : round($success['under_' . $key]['ok'] * 100 / $success['under_' . $key]['total'], 2);
         }
+        
+        $stats['success'] = $success;
+        
+        print '<pre>';
+        print_r($stats);
+        print '</pre>';
 
-        return $success;
+        return $stats;
     }
     
     public function check_batch($id)
@@ -1275,5 +1381,5 @@ class Match_model extends CI_Model {
         
         return $string;
     }
-
 }
+
