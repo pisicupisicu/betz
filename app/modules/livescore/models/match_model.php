@@ -12,13 +12,13 @@
 class Match_model extends CI_Model {
 
     private $CI;
-    private $overs = array('0.5' => 1, '1.5' => 2, '2.5' => 3, '3.5' => 4, '4.5' => 5, '5.5' => 6);
+    private $overs = array('0.5' => 1, '1.5' => 2, '2.5' => 3, '3.5' => 4, '4.5' => 5, '5.5' => 6);    
 
     public function __construct()
     {
         parent::__construct();
         $this->CI = & get_instance();
-    }
+    }        
 
     /**
      * Get Matches
@@ -1153,7 +1153,10 @@ class Match_model extends CI_Model {
     {
         $this->load->model('goal_model');
         $stats = $this->algorithm($filters['date'], $filters['atLeastMatches']);
-
+//        print '<pre>SSTATS';
+//        print_r($stats);
+//        print '</pre>SSTATS';
+        
         $success = array('1' => array('ok' => 0, 'total' => 0), 'x' => array('ok' => 0, 'total' => 0), '2' => array('ok' => 0, 'total' => 0));
 
         foreach ($this->overs as $key => $value) {
@@ -1163,9 +1166,9 @@ class Match_model extends CI_Model {
 
         foreach ($stats['1'] as $match_id => $value) {
             $score = $stats['stats'][$match_id]['match']['score'];
-            if ($value > 50) {
+            if ($value > $filters['accuracy']) {
                 if ($this->goal_model->isOne($score)) {
-                    $success['1']['ok'] ++;
+                    $success['1']['ok']++;
                 }
                 
                 $success['1']['total']++;
@@ -1174,9 +1177,9 @@ class Match_model extends CI_Model {
 
         foreach ($stats['x'] as $match_id => $value) {
             $score = $stats['stats'][$match_id]['match']['score'];
-            if ($value > 50) {
+            if ($value > $filters['accuracy']) {
                 if ($this->goal_model->isX($score)) {
-                    $success['x']['ok'] ++;
+                    $success['x']['ok']++;
                 }
                 
                 $success['x']['total']++;
@@ -1185,9 +1188,9 @@ class Match_model extends CI_Model {
 
         foreach ($stats['2'] as $match_id => $value) {
             $score = $stats['stats'][$match_id]['match']['score'];
-            if ($value > 50) {
+            if ($value > $filters['accuracy']) {
                 if ($this->goal_model->isTwo($score)) {
-                    $success['2']['ok'] ++;
+                    $success['2']['ok']++;
                 }
                 
                 $success['2']['total']++;
@@ -1197,9 +1200,9 @@ class Match_model extends CI_Model {
         foreach ($this->overs as $key => $value) {
             foreach ($stats['over_' . $key] as $match_id => $value) {
                 $score = $stats['stats'][$match_id]['match']['score'];
-                if ($value > 50) {
+                if ($value > $filters['accuracy']) {
                     if ($this->goal_model->isOver($score, $key)) {
-                        $success['over_' . $key]['ok'] ++;
+                        $success['over_' . $key]['ok']++;
                     }
                     
                     $success['over_' . $key]['total']++;
@@ -1208,12 +1211,12 @@ class Match_model extends CI_Model {
 
             foreach ($stats['under_' . $key] as $match_id => $value) {
                 $score = $stats['stats'][$match_id]['match']['score'];
-                if ($value > 50) {
+                if ($value > $filters['accuracy']) {
                     if ($this->goal_model->isUnder($score, $key)) {
-                        $success['under_' . $key]['ok'] ++;
+                        $success['under_' . $key]['ok']++;
                     }
                     
-                    $success['under_' . $key]['total'] ++;
+                    $success['under_' . $key]['total']++;
                 }
             }
         }

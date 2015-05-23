@@ -488,14 +488,10 @@ class Goal_model extends CI_Model {
 
         $total_goals = $goals_home + $goals_away;
 
-        return $total_goals > $this->overs[$over] ? true : false;
+        return $total_goals >= $this->overs[$over] ? true : false;
     }
 
-    public function isUnder($score, $under = '2.5') {
-        $explode_score = explode('-', $score);
-        $goals_home = $explode_score[0];
-        $goals_away = $explode_score[1];
-
+    public function isUnder($score, $under = '2.5') {        
         return !$this->isOver($score, $under);
     }
 

@@ -317,9 +317,9 @@ class Admincp5 extends Admincp_Controller {
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
-            preg_match_all($minutes, $parsed[0][$o], $min);
+            preg_match_all($minutes, $parsed[0][$i], $min);
             $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
-            preg_match_all($names, $parsed[0][$o], $nam);
+            preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
         //print_r($data);
@@ -594,9 +594,9 @@ class Admincp5 extends Admincp_Controller {
         for($i = 0; $i < count($parsed[0]); $i++)
         {
             $minutes = '@<div class="min">\s[0-9]*\'\s</div>@';
-            preg_match_all($minutes, $parsed[0][$o], $min);
+            preg_match_all($minutes, $parsed[0][$i], $min);
             $names = '@<span class="name">[A-Za-z'.$specialchars.'\s]*</span>@';
-            preg_match_all($names, $parsed[0][$o], $nam);
+            preg_match_all($names, $parsed[0][$i], $nam);
             $data[] = array_merge($min, $nam);
         }
         //print_r($data);
@@ -713,13 +713,43 @@ class Admincp5 extends Admincp_Controller {
             $right_goals = count($data);
         }
         unset($data);
-        
-        $left = (isset($left_goals)) ? $left_goals : 0;
-        $right = (isset($right_goals)) ? $right_goals : 0;
-        $total_goals = $left.'-'.$right;
+        // GOALS REPARSING (IN CASE OF WRONG PARSING)
+        $pattern = '@<div class="row row-tall">(.*)</div> <div class="star hidden"@';
+        preg_match_all($pattern, $page, $parsed);
+        for($i = 0; $i < count($parsed[0]); $i++)
+        {
+            $score = '@<div class="sco">\s[0-9\-\s]*\s</div>@';
+            preg_match_all($score, $parsed[0][$i], $sco);
+            $data[] = $sco;
+        }
+        //print_r($data);
+        if(isset($data)) {
+            print '<pre>CORRECT SCORE JUST IN CASE</pre>';
+            for($i = 0; $i < count($data); $i++)
+            {
+                $info = array(
+                    'score' => strip_tags(str_replace(" ", "", $data[$i][0][0])),
+                );
+                print_r($info);
+                if($match['score'] != $info['score'])
+                {
+                    $this->match_model->update_match($info, $id);
+                }
+                if($match['score'] == '?-?')
+                {
+                    $left = (isset($left_goals)) ? $left_goals : 0;
+                    $right = (isset($right_goals)) ? $right_goals : 0;
+                    $total_goals = $left.'-'.$right;
+                    $update_fields = array(
+                      'score' => $total_goals,  
+                    );
+                    $this->match_model->update_match($update_fields, $id);
+                }
+            }
+        }
+        unset($data);
         
         $update_fields = array(
-            'score' => $total_goals,
             'parsed' => 1,
         );
         $this->match_model->update_match($update_fields, $id);
@@ -1180,21 +1210,45 @@ class Admincp5 extends Admincp_Controller {
         $this->load->model('competition_model');
         $this->load->library(array('dataset', 'admin_form'));
         
+        $this->admin_navigation->module_link('Add custom competition', site_url('admincp5/livescore/add_custom_competition'));
+        $this->admin_navigation->module_link('View custom competitions', site_url('admincp5/livescore/view_custom_competitions'));
+        
         $query = $this->competition_model->get_competitions();
         foreach ($query as $key => $val)
         {
             $options[] = $val['name'];
         }
         
-        $options_final = array();
-        
         $data = array(
             'user' => array(),
+            'options' => $options,
             'form_title' => 'Add new mark',
             'form_action' => site_url('admincp/students/add_marks')
         );
 
         $this->load->view('merge_competitions', $data);
+    }
+    
+    public function add_custom_competition()
+    {
+        $this->load->library(array('admin_form', 'form_validation'));
+        $this->load->model('country_model');
+
+        $form = new Admin_form;
+        $countries = $params = array();
+        $params['dropdown'] = 1;
+        $countries = $this->country_model->get_countries($params);
+
+        $form->fieldset('Add custom competitions');
+        $form->text('Competition name', 'name', '', 'Competition name to be introduced', TRUE, 'e.g., Champions League', TRUE);
+        $form->dropdown('Country', 'country_id', $countries);
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Add custom competition',
+            'form_action' => site_url('admincp5/livescore/add_custom_competition_validate'),
+            'action' => 'new',
+        );
+        $this->load->view('add_custom_competition', $data);
     }
 
 }

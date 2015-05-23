@@ -42,4 +42,6 @@
 		<script type="text/javascript" src="<?=branded_include('js/ckeditor/ckeditor.js');?>"></script> 
 		<script type="text/javascript" src="<?=branded_include('js/ckeditor/adapters/jquery.js');?>"></script>
 	<? } ?>
+        
+        <script type="text/javascript" src="<?=branded_include('js/multiselect.min.js');?>"></script>
 </head>

@@ -29,11 +29,9 @@ class Admincp9 extends Admincp_Controller {
         //redirect('admincp/livescore/list_competitions');
     }
     
-    public function algorithm($date = '2013-12-30', $atLeastMatches = 2)
-    {
-        error_reporting(E_ALL);
-        ini_set('display_errors', 1);
-        $filters['limit'] = 100;
+    public function algorithm($date = '2013-12-30', $atLeastMatches = 2, $accuracy = 50)
+    {        
+        $filters['limit'] = 1000;
         
         $this->load->model('match_model');
         $this->load->library('dataset');
@@ -63,7 +61,7 @@ class Admincp9 extends Admincp_Controller {
         
         //$data = $this->match_model->algorithm_success_all($date, $atLeastMatches);
         $this->dataset->columns($columns);
-        $this->dataset->datasource('match_model', 'algorithm_success_all', array('date' => $date, 'atLeastMatches' => $atLeastMatches));
+        $this->dataset->datasource('match_model', 'algorithm_success_all', array('date' => $date, 'atLeastMatches' => $atLeastMatches, 'accuracy' => $accuracy));
         $this->dataset->base_url(site_url('admincp9/livescore/algorithm'));
         $this->dataset->rows_per_page($filters['limit']);
 
@@ -76,7 +74,11 @@ class Admincp9 extends Admincp_Controller {
         // initialize the dataset
         $this->dataset->initialize();
         
-        $this->load->view('algorithm');
+        $data = array(
+          'accuracy' =>  $accuracy 
+        );
+        
+        $this->load->view('algorithm', $data);
         
 //        print '<pre>';
 //        print_r($data);

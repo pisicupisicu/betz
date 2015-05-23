@@ -175,7 +175,7 @@ $('#search').on('click', function(event){
            
         <?php    
             foreach ($this->dataset->data['1'] as $key => $row) {
-                if ($row <= 50) {
+                if ($row <= $accuracy) {
                     continue;
                 }
                 
@@ -196,7 +196,7 @@ $('#search').on('click', function(event){
         <?php }
         
             foreach ($this->dataset->data['x'] as $key => $row) {
-                if ($row <= 50) {
+                if ($row <= $accuracy) {
                     continue;
                 }
                 
@@ -216,7 +216,7 @@ $('#search').on('click', function(event){
         <?php }
         
             foreach ($this->dataset->data['2'] as $key => $row) {
-                if ($row <= 50) {
+                if ($row <= $accuracy) {
                     continue;
                 }
                 
@@ -240,7 +240,7 @@ $('#search').on('click', function(event){
             foreach ($overs as $cheie => $valoare) {
                 $i++;
                 foreach ($this->dataset->data[$cheie] as $key => $row) {
-                    if ($row <= 50) {
+                    if ($row <= $accuracy) {
                         continue;
                     }
                     
