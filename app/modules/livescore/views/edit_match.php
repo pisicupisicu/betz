@@ -19,7 +19,7 @@ jQuery(document).ready(function(){
         $.get(awayString, function(data) {
         $("#awaySelect").html(data);
         });
-   }                               
+   }
  });   
     
 
@@ -316,7 +316,7 @@ $(document).on("change","#link_user", function()
                                      </div><!-- /.modal-dialog -->
                                    </div><!-- /.modal -->                            
                                     
-<?
+<?php
                                 }
 
 
@@ -388,7 +388,7 @@ $(document).on("change","#link_user", function()
                                        </div><!-- /.modal-content -->
                                      </div><!-- /.modal-dialog -->
                                    </div><!-- /.modal -->
-							<?
+							<?php
                                 }
 
                             ?>
@@ -424,4 +424,4 @@ $(document).on("change","#link_user", function()
       });
     </script>
 
-<?=$this->load->view(branded_view('cp/footer'));?>
+<?php echo $this->load->view(branded_view('cp/footer'));?>

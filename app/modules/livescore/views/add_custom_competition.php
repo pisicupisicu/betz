@@ -7,6 +7,15 @@
             <?=$form;?>
         </ul>
     </fieldset>
+    
+    <br /><label class="" for="from" style="width:100%;text-align:left">Existing competitions with countries</label><br />
+    <select name="from" id="multiselect" class="form-control" size="12" multiple="multiple" style="width:100%">
+        <?php foreach($options as $opt)
+        {
+            echo '<option value="'.$opt.'">'.$opt.'</option>';
+        }
+        ?>
+    </select>
 
 <div class="submit">
 	<? if ($action == 'new') { ?>

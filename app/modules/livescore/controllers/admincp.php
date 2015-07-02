@@ -1277,5 +1277,17 @@ class Admincp extends Admincp_Controller
         $this->dataset->action('Delete', 'admincp/livescore/delete_match');
         $this->load->view('list_incomplete_parsed_matches');
     }
+    
+    public function make_links()
+    {
+        $this->load->model('match_model');
+        $this->match_model->make_links();
+    }
+    
+    public function delete_null_teams()
+    {
+        $this->load->model('team_model');
+        $this->team_model->delete_null_teams();
+    }        
 
 }

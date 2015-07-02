@@ -370,8 +370,28 @@ class Team_model extends CI_Model {
         $this->db->join('z_countries', 'z_teams.country_id = z_countries.ID', 'left');
         $this->db->where('team_id', $id);
         $result = $this->db->get('z_teams');
+        
+        foreach ($result->result_array() as $row) {            
+            return $row;
+        }
 
-        foreach ($result->result_array() as $row) {
+        return $row;
+    }
+    
+    /**
+     * Get Team
+     *
+     * @param array $filters
+     *
+     * @return array
+     */
+    function get_team_by_link($filters) {        
+        $row = array();
+        $this->db->join('z_countries', 'z_teams.country_id = z_countries.ID', 'left');
+        $this->db->where('link', $filters['link']);
+        $result = $this->db->get('z_teams');
+        
+        foreach ($result->result_array() as $row) {            
             return $row;
         }
 
@@ -431,14 +451,25 @@ class Team_model extends CI_Model {
 
     function team_exists($team) 
     {
-        $this->db->where('name', $team['name']);
-        $this->db->where('country_id', $team['country_id']);
+
+        if (isset($team['country_id'])) {
+            $this->db->where('country_id', $team['country_id']);
+        }
+        
+        if (isset($team['name'])) {
+            $this->db->where('name', addslashes($team['name']));
+        }
+        
+        if (isset($team['link'])) {
+            $this->db->where('link', $team['link']);
+        }
+        
         $result = $this->db->get('z_teams');
 
-        foreach ($result->result_array() as $row) {
+        foreach ($result->result_array() as $row) {            
             return $row['team_id'];
         }
-
+        
         return $result->num_rows();
     }
 
@@ -557,5 +588,26 @@ class Team_model extends CI_Model {
         print_r($row);
         print '</pre>';
     }
+    
+    public function delete_null_teams()
+    {
+        $this->load->model('match_model');
+        $this->db->limit(100, 0);
+        $this->db->where('link', null);
+        
+        $result = $this->db->get('z_teams');
+
+        print '<pre>';
+        foreach ($result->result_array() as $linie) {
+            print_r($linie);
+            $matches = $this->match_model->get_matches_by_team_id(array('team_id' => $linie['team_id'], 'count' => true));
+            if (!$matches) {
+                $this->delete_team($linie['team_id']);
+            }
+            echo "Matches = $matches" . PHP_EOL;
+        }
+        
+        
+    }        
 
 }

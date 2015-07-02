@@ -1207,48 +1207,161 @@ class Admincp5 extends Admincp_Controller {
     
     public function merge_competitions()
     {
-        $this->load->model('competition_model');
-        $this->load->library(array('dataset', 'admin_form'));
-        
+        $CI = & get_instance();
+        $CI->load->library('admin_form');
+        $this->load->model(array('country_model', 'competition_model', 'competition_custom_model', 'competition_merged_model'));
+
         $this->admin_navigation->module_link('Add custom competition', site_url('admincp5/livescore/add_custom_competition'));
         $this->admin_navigation->module_link('View custom competitions', site_url('admincp5/livescore/view_custom_competitions'));
         
-        $query = $this->competition_model->get_competitions();
-        foreach ($query as $key => $val)
+        if($this->input->post('submit'))
         {
-            $options[] = $val['name'];
+            $teams = $this->input->post('to');
+            foreach($teams as $team)
+            {
+                $insert_fields = array(
+                    'name' => $team,
+                    'competition_id' => $this->input->post('country_name'),
+                    'parent_id' => $this->input->post('custom_competition')
+                );
+                print_r($insert_fields);
+                $this->competition_merged_model->new_competition($insert_fields);
+            }
+            $this->notices->SetNotice('Competitions merged successfully.');
+            redirect('admincp5/livescore/merge_competitions');
+        }
+        else
+        {
+            $form = new Admin_form();
+            $params = array();
+            $params['dropdown'] = 1;
+            $countries = $this->country_model->get_countries_merge_competitions($params);
+
+            $form->fieldset('Add competition type');
+            $form->dropdown('Test', 'test', $countries, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+            $query = $this->competition_model->get_competitions();
+
+            foreach ($query as $key => $val)
+            {
+                $options[] = $val['country_name'].' - '.$val['name'];
+            }
+
+            $data = array(
+                'user' => array(),
+                'options' => $options,
+                'countries' => $countries,
+                'form_title' => 'Merge competitions',
+                'form_action' => site_url('admincp5/livescore/merge_competitions')
+            );
+            $this->load->view('merge_competitions', $data);
         }
         
-        $data = array(
-            'user' => array(),
-            'options' => $options,
-            'form_title' => 'Add new mark',
-            'form_action' => site_url('admincp/students/add_marks')
-        );
-
-        $this->load->view('merge_competitions', $data);
     }
     
     public function add_custom_competition()
     {
-        $this->load->library(array('admin_form', 'form_validation'));
-        $this->load->model('country_model');
+        $CI = & get_instance();
+        $CI->load->library(array('form_validation', 'admin_form'));
+        $this->load->model(array('country_model', 'competition_model', 'competition_type_model', 'competition_custom_model'));
 
-        $form = new Admin_form;
-        $countries = $params = array();
-        $params['dropdown'] = 1;
-        $countries = $this->country_model->get_countries($params);
+        // Form validation rules set
+        $CI->form_validation->set_rules('name', 'Name', 'required|min_length[3]|xss_clean');
 
-        $form->fieldset('Add custom competitions');
-        $form->text('Competition name', 'name', '', 'Competition name to be introduced', TRUE, 'e.g., Champions League', TRUE);
-        $form->dropdown('Country', 'country_id', $countries);
-        $data = array(
-            'form' => $form->display(),
-            'form_title' => 'Add custom competition',
-            'form_action' => site_url('admincp5/livescore/add_custom_competition_validate'),
-            'action' => 'new',
-        );
-        $this->load->view('add_custom_competition', $data);
+        $this->admin_navigation->module_link('Merge competitions', site_url('admincp5/livescore/merge_competitions'));
+        $this->admin_navigation->module_link('Add competition type', site_url('admincp5/livescore/add_competition_type'));
+
+        // Let's check if the form is submited and check for errors
+        if ($CI->form_validation->run() === FALSE)
+        {
+            $form = new Admin_form;
+            $countries = $types = $params = array();
+            $params['dropdown'] = 1;
+            $countries = $this->country_model->get_countries($params);
+            $types = $this->competition_type_model->get_type($params);
+
+            $form->fieldset('Add custom competitions');
+            $form->text('Competition name', 'name', '', 'Competition name to be introduced', TRUE, 'e.g., Champions League', TRUE);
+            $form->dropdown('Country', 'country_id', $countries);
+            $form->dropdown('Type', 'type_id', $types);
+            
+            $query = $this->competition_model->get_competitions();
+            foreach ($query as $key => $val)
+            {
+                $options[] = $val['country_name'].' - '.$val['name'];
+            }
+            $data = array(
+                'options' => $options,
+                'form' => $form->display(),
+                'form_title' => 'Add custom competition',
+                'form_action' => site_url('admincp5/livescore/add_custom_competition'),
+                'action' => 'new',
+            );
+            $this->load->view('add_custom_competition', $data);
+        }
+        else
+        {
+            $insert_fields = array(
+                'name' => $this->input->post('name'),
+                'country' => $this->input->post('country_id'),
+                'type' => $this->input->post('type_id')
+            );
+            $this->competition_custom_model->new_competition($insert_fields);
+            $this->notices->SetNotice('Custom competition added successfully.');
+            redirect('admincp5/livescore/add_custom_competition');
+        }
+
+    }
+    
+    public function add_competition_type()
+    {
+        $CI = & get_instance();
+        $CI->load->library(array('form_validation', 'admin_form'));
+        $this->load->model('competition_type_model');
+
+        // Form validation rules set
+        $CI->form_validation->set_rules('name', 'Name', 'required|min_length[3]|xss_clean');
+
+        // Let's check if the form is submited and check for errors
+        if ($CI->form_validation->run() === FALSE)
+        {
+            $form = new Admin_form;
+            $form->fieldset('Add competition type');
+            $form->text('Competition type', 'name', '', 'Competition type to be introduced', TRUE, 'e.g., Championship', TRUE);
+            $data = array(
+                'form' => $form->display(),
+                'form_title' => 'Add competition type',
+                'form_action' => site_url('admincp5/livescore/add_competition_type'),
+                'action' => 'new',
+            );
+            $this->load->view('add_custom_competition', $data);
+        }
+        else
+        {
+            $insert_fields = array(
+                'name' => $this->input->post('name')
+            );
+            $this->competition_type_model->new_type($insert_fields);
+            $this->notices->SetNotice('Competition type added successfully.');
+            redirect('admincp5/livescore/add_competition_type');
+        }
+    }
+    
+    function view_custom_competitions_selects($id)
+    {
+        $this->load->model('competition_custom_model');
+
+        $filters['country'] = $id;
+        $competition_name = '<option value="0">Select competition</option>';
+        
+        $competition = $this->competition_custom_model->get_competitions($filters);
+        
+        for($i = 0; $i < count($competition); $i++)
+        {
+            $competition_name .= '<option value="'.$competition[$i]['id'].'">'.$competition[$i]['name'].'</option>';
+        }
+
+        echo $competition_name;
     }
 
 }

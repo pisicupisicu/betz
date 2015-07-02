@@ -14,11 +14,11 @@ class Match_pre_model extends CI_Model
 
     private $CI;
     private $overs = array('0.5' => 1, '1.5' => 2, '2.5' => 3, '3.5' => 4, '4.5' => 5, '5.5' => 6);
-
+        
     function __construct() 
     {
         parent::__construct();
-        $this->CI = & get_instance();
+        $this->CI = & get_instance();                
     }
 
     /**
@@ -68,6 +68,10 @@ class Match_pre_model extends CI_Model
             $temp = $this->team_pre_model->get_team($linie['team2_pre']);
             $linie['team2'] = $temp['name'];
             $linie['ok_team2'] = $temp['ok'];
+            
+            if ($linie['team1'] == $linie['team2']) {
+                $linie['ok_team1'] = $linie['ok_team2'] = 0;
+            }
             
             if (isset($filters['country_name'])
                 && $filters['country_name']
@@ -387,6 +391,12 @@ class Match_pre_model extends CI_Model
      */
     function delete_match($id) 
     {
+        $this->load->model('team_pre_model');
+        $match_pre = $this->get_match_pre($id);
+        // delete teams pre
+        $this->team_pre_model->delete_team($match_pre['team1_pre']);
+        $this->team_pre_model->delete_team($match_pre['team2_pre']);
+        // delete match pre
         $this->db->delete('z_matches_pre', array('index' => $id));
         return true;
     }
@@ -458,8 +468,17 @@ class Match_pre_model extends CI_Model
             $insert_fields['parse_date'] = $linie['parse_date'];
             $insert_fields['parsed'] = 0;
             
-            // copy match if not exist            
-            if (!$this->match_model->match_exists(array('link' => str_replace('soccer/', '', $insert_fields['link'])))) {                
+            // copy match if not exist, there maybe matches with same link for instance matches with 0-0 and no link
+            if (!$this->match_model->match_exists(
+                array(
+                    'link' => str_replace('soccer/', '', $insert_fields['link']),
+                    'competition_id' => $insert_fields['competition_id'],
+                    'team1' => $insert_fields['team1'],
+                    'team2' => $insert_fields['team2'],
+                    'score' => $insert_fields['score']
+                )
+            )) 
+            {
                 $this->match_model->new_match($insert_fields);
                 $i++;
             }
@@ -488,5 +507,102 @@ class Match_pre_model extends CI_Model
     {
         $this->db->truncate('z_matches_pre');
         return true;
+    }
+    
+    public function make_links()
+    {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+        $this->load->model(array('team_model', 'team_pre_model'));
+        
+        $matches = $this->get_matches();
+        $link = null;
+        foreach ($matches as $match) {
+            //print '<pre>';
+            //print_r($match);
+            $start = $match['link'];
+            //echo $start . '<br/>';            
+            $pozVs = strpos($start, '-vs-');
+            //echo $pozVs . '<br/>';
+            $link = substr($start, 0, $pozVs);
+            //echo $link. '<br/>';
+            $pozFirst = strrpos($link, '/');
+            //echo $pozFirst. '<br/>';
+            $link = substr($start, $pozVs);
+            $link = substr($link, 0, strpos($link, '/'));
+            //echo $link. '<br/>';
+            $pozSecond = strpos($start, $link) + strlen($link);
+            //echo $pozSecond. '<br/>';
+            $link = substr($start, $pozFirst + 1);
+            $link = substr($link, 0, strpos($link, '/'));
+            $team1 = substr($link, 0, strpos($link, '-vs-'));
+            $team2 = str_replace($team1 . '-vs-', '', $link);
+                      
+            $firstTeam = $this->team_pre_model->get_team($match['team1_pre']);
+            $secondTeam = $this->team_pre_model->get_team($match['team2_pre']);
+            
+            if (isset($firstTeam['link']) && isset($secondTeam['link'])) {
+                continue;
+            }                        
+            
+            echo $match['index'] . '=>' . $start . '=>' . $link . '=>' . $team1 . '=>' . $team2 .'<br/>';
+
+            if ($match['ok_team1'] && $match['ok_team2']) {
+                echo 'OK<br/>';
+                continue;
+            } else {
+                echo '<div style="color:red;">NOK</div>';
+            }
+            
+            
+            /**
+             * 
+             * SELECT * , COUNT( * ) AS c
+FROM `z_teams`
+GROUP BY link
+HAVING c >1
+LIMIT 0 , 30
+             
+             SELECT *
+FROM `z_teams`
+WHERE link IS NULL
+LIMIT 0 , 30 
+             */
+            
+//            print '<pre>';
+//            print_r($match);
+//            print '<pre>FIRST';
+//            print_r($firstTeam);
+//            print '<pre>SECOND';
+//            print_r($secondTeam);
+            
+            if (isset($firstTeam['team_id'])) {
+                $this->team_pre_model->update_team(array('link' => $team1), $match['team1_pre']);
+            } else {
+                if (!isset($firstTeam['link'])) {
+                    $foundFirstTeam = $this->team_model->get_team_by_link(array('link' => $team1));
+
+                    if (!empty($foundFirstTeam)) {
+                        $this->team_pre_model->update_team(array('link' => $team1, 'team_id' => $foundFirstTeam['team_id'], 'country_id' => null, 'name' => null), $match['team1_pre']);
+                    } else {
+                        $this->team_pre_model->update_team(array('link' => $team1), $match['team1_pre']);
+                    }
+                }
+            }                        
+            
+            if (isset($secondTeam['team_id'])) {
+                $this->team_pre_model->update_team(array('link' => $team2), $match['team2_pre']);
+            } else {
+                if (!isset($secondTeam['link'])) {
+                    $foundSecondTeam = $this->team_model->get_team_by_link(array('link' => $team2));                    
+
+                    if (!empty($foundSecondTeam)) {
+                        $this->team_pre_model->update_team(array('link' => $team2, 'team_id' => $foundSecondTeam['team_id'], 'country_id' => null, 'name' => null), $match['team2_pre']);
+                    } else {
+                        $this->team_pre_model->update_team(array('link' => $team2), $match['team2_pre']);
+                    }                               
+                }
+            }                                    
+        }               
     }
 }

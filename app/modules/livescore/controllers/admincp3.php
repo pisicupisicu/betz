@@ -78,7 +78,7 @@ class Admincp3 extends Admincp_Controller {
 
     private function parse_info_per_date($link)
     {
-        $this->load->model(array('competition_pre_model', 'country_model', 'team_pre_model', 'match_pre_model'));
+        $this->load->model(array('competition_pre_model', 'country_model', 'team_pre_model', 'match_pre_model', 'match_model'));
         
         // Truncate the tables to avoid any errors
         $this->competition_pre_model->clear_table();
@@ -146,7 +146,8 @@ class Admincp3 extends Admincp_Controller {
         foreach ($countries[2] as $key => $country)
         {
             $competition->country = trim($country);
-            $competition->country_link = trim(substr($countries[1][$key], 1, -1));
+            $country_link = str_replace(array('soccer', '/'), '', $countries[1][$key]);
+            $competition->country_link = $country_link;
             $competition->competition_name = trim($countries[4][$key]);
             $competition->competition_link = trim(substr(str_replace('soccer/', '', $countries[3][$key]), 1, -1));
             $competition->matches = array();
@@ -190,6 +191,9 @@ class Admincp3 extends Admincp_Controller {
                 $match->team_away = trim(str_replace(" *", "", $scoresPrecise[4][0]));
                 $match->score_link = trim(str_replace('/soccer/', '', $scoresPrecise[2][0]));
                 $match->score = trim($scoresPrecise[3][0]);
+                $team_links = $this->match_model->get_team_links($match->score_link);
+                $match->team_home_link = $team_links[0];
+                $match->team_away_link = $team_links[1];
             }
             else
             {
@@ -197,6 +201,8 @@ class Admincp3 extends Admincp_Controller {
                 $match->team_away = trim(str_replace(" *", "", $scoresPrecise[3][0]));
                 $match->score_link = '';
                 $match->score = trim($scoresPrecise[2][0]);
+                $match->team_home_link = '';
+                $match->team_away_link = '';
             }
             $matches[] = clone $match;
         }
@@ -230,7 +236,9 @@ class Admincp3 extends Admincp_Controller {
             $param = array();
             $c->competition_link = trim(str_replace('soccer/', '', $c->competition_link));
             $param['link'] = $c->competition_link;
-            $country_id = $this->country_model->get_country_by_name($c->country);
+            
+            $country_id = $this->country_model->get_country_by_link($c->country_link);
+                        
             // if competition international it results country INTERNATIONAL which we don't have
             if (!$country_id)
             {
@@ -238,34 +246,18 @@ class Admincp3 extends Admincp_Controller {
                 {
                     $country_id = $this->country_model->get_country_by_name('AFRICA');
                 }
-                elseif (strstr($c->competition_link, 'concacaf'))
+                elseif (strstr($c->competition_link, 'concacaf') || strstr($c->competition_link, 'america'))
                 {
                     $country_id = $this->country_model->get_country_by_name('AMERICA');
-                }
-                elseif (strstr($c->competition_link, 'america'))
-                {
-                    $country_id = $this->country_model->get_country_by_name('AMERICA');
-                }
-                elseif (strstr($c->competition_link, 'asia'))
+                }               
+                elseif (strstr($c->competition_link, 'asia') || strstr($c->competition_link, 'oceania'))
                 {
                     $country_id = $this->country_model->get_country_by_name('ASIA');
-                }
-                elseif (strstr($c->competition_link, 'oceania'))
-                {
-                    $country_id = $this->country_model->get_country_by_name('ASIA');
-                }
-                elseif (strstr($c->competition_link, 'euro'))
+                }               
+                elseif (strstr($c->competition_link, 'euro') || strstr($c->competition_link, 'nextgen') || strstr($c->competition_link, 'toulon'))
                 {
                     $country_id = $this->country_model->get_country_by_name('EUROPE');
-                }
-                elseif (strstr($c->competition_link, 'nextgen'))
-                {
-                    $country_id = $this->country_model->get_country_by_name('EUROPE');
-                }
-                elseif (strstr($c->competition_link, 'toulon'))
-                {
-                    $country_id = $this->country_model->get_country_by_name('EUROPE');
-                }
+                }               
                 else
                 {
                     // default WORLD
@@ -311,17 +303,25 @@ class Admincp3 extends Admincp_Controller {
             $param = array();
             foreach ($c->matches as $m)
             {
-                $teams[0] = $m->team_home;
-                $teams[1] = $m->team_away;
-                foreach ($teams as $t)
+                $teams[0] = $m->team_home_link;
+                $teams[1] = $m->team_away_link;
+                
+                $teams_name[0] = $m->team_home;
+                $teams_name[1] = $m->team_away;
+                
+                foreach ($teams as $key => $t)
                 {
-                    $param['name'] = $t;
+                    if (strlen($t)) {
+                        $param['link'] = $t;
+                    }                    
                     $param['country_id'] = $country_id;
+                    $param['name'] = $teams_name[$key];
                     $param['matches'] = 0;
-
+                                       
                     if (!$this->team_pre_model->team_exists_id($param))
-                    {
-                        $team_id = $this->team_pre_model->team_exists($param);
+                    {                        
+                        $team_id = $this->team_pre_model->team_exists($param);                                                
+                        
                         // does not exist as old team id
                         if (!$team_id)
                         {
@@ -333,7 +333,7 @@ class Admincp3 extends Admincp_Controller {
                                 'team_id' => $team_id
                             );
                             $this->team_pre_model->new_team($insert_fields);
-                        }
+                        }                                               
                     }
                 }
             }
@@ -342,8 +342,26 @@ class Admincp3 extends Admincp_Controller {
             // matches
             foreach ($c->matches as $m)
             {
-                $team1_id = $this->team_pre_model->team_exists_id(array('name' => $m->team_home, 'country_id' => $country_id));
-                $team2_id = $this->team_pre_model->team_exists_id(array('name' => $m->team_away, 'country_id' => $country_id));
+                $search_team1 = array('country_id' => $country_id);
+                if (strlen($m->team_home_link)) {
+                    $search_team1['link'] = $m->team_home_link;
+                }
+                
+                if (strlen($m->team_home)) {
+                    $search_team1['name'] = $m->team_home;
+                }
+                
+                $search_team2 = array('country_id' => $country_id);
+                if (strlen($m->team_away_link)) {
+                    $search_team2['link'] = $m->team_away_link;
+                }
+                
+                if (strlen($m->team_away)) {
+                    $search_team2['name'] = $m->team_away;
+                }
+                
+                $team1_id = $this->team_pre_model->team_exists_id($search_team1);
+                $team2_id = $this->team_pre_model->team_exists_id($search_team2);
                 $link_complete = 'http://www.livescore.com/soccer/' . $m->score_link;
 
                 $match_data = array(
@@ -785,11 +803,17 @@ class Admincp3 extends Admincp_Controller {
         $nr_new_teams = $this->team_pre_model->get_num_rows(array('team_id' => true));
         $this->admin_navigation->module_link('Move new teams:' . $nr_new_teams, site_url('admincp3/livescore/move_teams_pre/'));
         $this->admin_navigation->module_link('Add team pre', site_url('admincp3/livescore/add_team_pre/'));
+        $this->admin_navigation->module_link('Make links', site_url('admincp3/livescore/make_links/'));
 
         $columns = array(
             array(
                 'name' => 'NAME',
                 'type' => 'name',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'LINK',
+                'type' => 'link',
                 'width' => '15%',
             ),
             array(
@@ -812,16 +836,16 @@ class Admincp3 extends Admincp_Controller {
             array(
                 'name' => '# OF MATCHES',
                 'type' => 'text',
-                'width' => '15%',
+                'width' => '10%',
             ),
             array(
                 'name' => 'MATCHES',
                 'type' => 'text',
-                'width' => '15%',
+                'width' => '10%',
             ),
             array(
                 'name' => 'EDIT',
-                'width' => '15%',
+                'width' => '10%',
                 'type' => 'text',
             ),
         );
@@ -1808,4 +1832,14 @@ class Admincp3 extends Admincp_Controller {
         redirect($return_url);
         return true;
     }
+    
+    public function make_links()
+    {
+        $this->load->library('asciihex');
+        $this->load->model('match_pre_model');
+        
+        $this->match_pre_model->make_links();
+        
+        //redirect('admincp3/livescore/list_matches_pre'); 
+    }        
 }

@@ -72,6 +72,33 @@ class Country_model extends CI_Model {
 
         return $row;
     }
+    
+    public function get_countries_merge_competitions($params = array())
+    {
+        $row = array();
+
+        if (isset($params['country_id'])) {
+            $this->db->where('ID', $params['country_id']);
+        }
+            
+        if (isset($params['limit'])) {
+            $offset = (isset($params['offset'])) ? $params['offset'] : 0;
+            $this->db->limit($params['limit'], $offset);
+        }
+
+        if (isset($params['dropdown'])) {
+            $row[0] = 'Select Country';
+        }
+        
+        $this->db->join('z_competitions_custom', 'z_countries.ID = z_competitions_custom.country' ,'inner');
+        $result = $this->db->get('z_countries');
+        
+        foreach ($result->result_array() as $linie) {
+            $row[$linie['ID']] = $linie['country_name'];
+        }
+
+        return $row;
+    }        
 
     /**
      * Get Countries
@@ -127,6 +154,16 @@ class Country_model extends CI_Model {
 
         $this->db->where('country_name', $name);
 
+        $result = $this->db->get('z_countries');
+
+        foreach ($result->result_array() as $row) {
+            return $row['ID'];
+        }
+    }
+    
+    public function get_country_by_link($link) 
+    {
+        $this->db->where('link', $link);
         $result = $this->db->get('z_countries');
 
         foreach ($result->result_array() as $row) {

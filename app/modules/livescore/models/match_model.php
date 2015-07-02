@@ -67,7 +67,7 @@ class Match_model extends CI_Model {
 
         $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
         $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');
-        $this->db->select('*,z_matches.link_complete AS link_match');
+        $this->db->select('*,z_matches.link_complete AS link_match, z_matches.link AS link_match_simple');
 
         $result = $this->db->get('z_matches');
 
@@ -448,8 +448,28 @@ class Match_model extends CI_Model {
         return TRUE;
     }
 
-    function match_exists($match) {
-        $this->db->where('link', $match['link']);       
+    function match_exists($match) 
+    {
+        if (isset($match['link'])) {
+            $this->db->where('link', $match['link']);
+        }
+        
+        if (isset($match['team1'])) {
+            $this->db->where('team1', $match['team1']);
+        }
+        
+        if (isset($match['team2'])) {
+            $this->db->where('team2', $match['team2']);
+        }
+        
+        if (isset($match['competition_id'])) {
+            $this->db->where('competition_id', $match['competition_id']);
+        }
+        
+        if (isset($match['score'])) {
+            $this->db->where('score', $match['score']);
+        }
+               
         $result = $this->db->get('z_matches');
 
         foreach ($result->result_array() as $row) {
@@ -1384,5 +1404,79 @@ class Match_model extends CI_Model {
         
         return $string;
     }
+    
+    public function get_team_links($link)
+    {
+        $start = $link;
+        //echo $start . '<br/>';
+        $pozVs = strpos($start, '-vs-');
+        //echo $pozVs . '<br/>';
+        $link = substr($start, 0, $pozVs);
+        //echo $link. '<br/>';
+        $pozFirst = strrpos($link, '/');
+        //echo $pozFirst. '<br/>';
+        $link = substr($start, $pozVs);
+        $link = substr($link, 0, strpos($link, '/'));
+        //echo $link. '<br/>';
+        $pozSecond = strpos($start, $link) + strlen($link);
+        //echo $pozSecond. '<br/>';
+        $link = substr($start, $pozFirst + 1);
+        $link = substr($link, 0, strpos($link, '/'));
+        $team1 = substr($link, 0, strpos($link, '-vs-'));
+        $team2 = str_replace($team1 . '-vs-', '', $link);
+        
+        return array($team1, $team2);
+    }
+    
+    public function make_links()
+    {
+        $this->load->model('team_model');
+        
+        $matches = $this->get_matches(array('limit'=>500, 'parsed' => 0));
+        $link = null;
+        foreach ($matches as $match) {
+            $start = $match['link_match_simple'];
+            //echo $start . '<br/>';
+            $pozVs = strpos($start, '-vs-');
+            //echo $pozVs . '<br/>';
+            $link = substr($start, 0, $pozVs);
+            //echo $link. '<br/>';
+            $pozFirst = strrpos($link, '/');
+            //echo $pozFirst. '<br/>';
+            $link = substr($start, $pozVs);
+            $link = substr($link, 0, strpos($link, '/'));
+            //echo $link. '<br/>';
+            $pozSecond = strpos($start, $link) + strlen($link);
+            //echo $pozSecond. '<br/>';
+            $link = substr($start, $pozFirst + 1);
+            $link = substr($link, 0, strpos($link, '/'));
+            $team1 = substr($link, 0, strpos($link, '-vs-'));
+            $team2 = str_replace($team1 . '-vs-', '', $link);
+            echo $match['id'] . '=>' . $start . '=>' . $link . '=>' . $team1 . '=>' . $team2 .'<br/>';
+                       
+            $firstTeam = $this->team_model->get_team($match['team1_id']);
+            
+            if (!$firstTeam['link']) {
+                $this->team_model->update_team(array('link' => $team1), $match['team1_id']);
+            } else {
+                if ($firstTeam['link'] != $team1) {
+                    echo '<div style="color:red;">' . $match['id'] . '=>' . $match['link_match_simple'] . '=>TEAM1:' . $team1 . '=>' . $firstTeam['link'] . '</div><br/>';
+                }
+            }
+            
+            $secondTeam = $this->team_model->get_team($match['team2_id']);
+            
+            if (!$secondTeam['link']) {
+                $this->team_model->update_team(array('link' => $team2), $match['team2_id']);
+            } else {
+                if ($secondTeam['link'] != $team2) {
+                    echo '<div style="color:red;">' . $match['id'] . '=>' . $match['link_match_simple'] . '=>TEAM2:' . $team2 . '=>' . $secondTeam['link'] . '</div><br/>';
+                }
+            }
+                                 
+            $this->update_match(array('parsed' => 1), $match['id']);
+        }               
+    }
+    
 }
 
