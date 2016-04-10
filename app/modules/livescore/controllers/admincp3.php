@@ -61,18 +61,25 @@ class Admincp3 extends Admincp_Controller {
         }
 
         $link = $this->input->post('link');
+        
+        $isYear = false;
+        $years = array('2013', '2014', '2015', '2016', '2017', '2018');
+        
+        foreach ($years as $year) {
+            $isYear = strstr($link, $year);
+            if ($isYear) {
+                break;
+            }
+        }
 
-        if (strstr($link, '2013') || strstr($link, '2014') || strstr($link, '2015'))
+        if ($isYear) {            
+            $this->parse_info_per_date(utf8_encode($link));
+        } else
         {
-            $link = utf8_encode($link);
-            $this->parse_info_per_date($link);
+            $this->parse_info_per_competition(utf8_encode($link));
         }
-        else
-        {
-            $link = utf8_encode($link);
-            $this->parse_info_per_competition($link);
-        }
-        echo '<br/><div align="center"><a href="http://betz.dev/admincp3/livescore/parse_matches">Back</a></div>';
+        
+        echo '<br/><div align="center"><a href="/admincp3/livescore/parse_matches">Back</a></div>';
         return true;
     }
 
@@ -162,8 +169,8 @@ class Admincp3 extends Admincp_Controller {
         $competition->matches = array();
         $competitions[] = clone $competition;
 
-        //print '<pre>COMPETITIONS';
-        //print_r($competitions);
+        print '<pre>COMPETITIONS';
+        print_r($competitions);
 
         foreach ($scores[0] as $key => $val)
         {
@@ -174,10 +181,11 @@ class Admincp3 extends Admincp_Controller {
             //$matches[] = clone $match;
             if (strstr($val, 'href'))
             {
-                $pattern = '@<div class="ply tright name">\s*(.*)\s*</div>\s*<div class="sco">\s*<a href="(.*)" class="scorelink" onclick="return false;">(.*)</a>\s*</div>\s*<div class="ply name">\s*(.*)\s*</div>@U';
+                // <div class="ply tright name"> FK Slutsk </div> <div class="sco"> <a href="/soccer/belarus/premier/fk-slutsk-vs-slavia-mozyr/1-1922647/" class="scorelink">3 - 1</a> </div> <div class="ply name"> Slavia Mozyr </div>
+                $pattern = '@<div class="ply tright name">\s*(.*)\s*</div>\s*<div class="sco">\s*<a href="(.*)" class="scorelink">(.*)</a>\s*</div>\s*<div class="ply name">\s*(.*)\s*</div>@U';
             }
             else
-            {
+            {  // <div class="ply tright name"> FK Vitebsk </div> <div class="sco"> 0 - 0 </div> <div class="ply name"> Neman Grodno </div>
                 $pattern = '@<div class="ply tright name">\s*(.*)\s*</div>\s*<div class="sco">\s*(.*)\s*</div>\s*<div class="ply name">\s*(.*)\s*</div>@U';
             }
 
@@ -1138,7 +1146,8 @@ class Admincp3 extends Admincp_Controller {
         $data = array(
             'form' => $form->display(),
             'form_title' => 'Edit Team',
-            'form_action' => site_url('admincp3/livescore/similar_team_validate_pre/' . $id)
+            'form_action' => site_url('admincp3/livescore/similar_team_validate_pre/' . $id),
+            'referer' => $this->input->server('HTTP_REFERER')
         );
         $this->load->view('edit_team_pre_similar', $data);
     }
@@ -1167,7 +1176,12 @@ class Admincp3 extends Admincp_Controller {
         );
         $this->team_pre_model->update_team($fields, $id);
         $this->notices->SetNotice('Team pre with similar teams updated successfully.');
-        redirect('admincp3/livescore/list_teams_pre/');
+        
+        if ( strstr($this->input->post('referer'), 'filters')) {
+            redirect($this->input->post('referer'));
+        } else {
+            redirect('admincp3/livescore/list_teams_pre/');
+        }
         
         return true;
     }
