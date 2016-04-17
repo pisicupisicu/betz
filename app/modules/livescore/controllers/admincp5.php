@@ -47,10 +47,20 @@ class Admincp5 extends Admincp_Controller {
     {
         $this->load->model(array('match_model', 'goal_model', 'card_model'));
         //62,49
-        if (!$id)
+        if (!$id) {
             $id = 1;
+        }
+            
         $match = $this->match_model->get_match($id);
         $page = $this->getUrl($match['link_match_complete']);
+        
+        if ($match['link_match_complete'] == 'http://www.livescore.com/soccer/world') {
+            print '<pre>MATCH empty nothing to do<br /><br />';
+            print_r($match);
+            $this->match_model->update_match(array('parsed' => 1), $id);
+            return;
+        }
+        
         // echo $match['link_c'].'<br/>';
         // echo $page.'<br/>';    
         print '<pre>MATCH<br /><br />';

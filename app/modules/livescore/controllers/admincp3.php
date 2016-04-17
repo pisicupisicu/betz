@@ -581,11 +581,11 @@ class Admincp3 extends Admincp_Controller {
         $this->load->library('dataset');
 
         $count_matches_pre = $this->match_pre_model->get_num_rows();
+        $nr_new_teams = $this->team_pre_model->get_num_rows(array('team_id' => true));
+        $nr_new_competitions = $this->competition_pre_model->get_num_rows(array('competition_id' => true));
 
-        $filters = array();
-
-        $this->admin_navigation->module_link('List teams pre', site_url('admincp3/livescore/list_teams_pre'));
-        $this->admin_navigation->module_link('List competitions pre', site_url('admincp3/livescore/list_competitions_pre'));
+        $this->admin_navigation->module_link('List teams pre new: ' . $nr_new_teams, site_url('admincp3/livescore/list_teams_pre'));
+        $this->admin_navigation->module_link('List competitions pre new: ' . $nr_new_competitions, site_url('admincp3/livescore/list_competitions_pre'));
         $this->admin_navigation->module_link('Move matches pre: ' . $count_matches_pre, site_url('admincp3/livescore/move_matches_pre'));
         $this->admin_navigation->module_link('Add match pre', site_url('admincp3/livescore/add_match_pre'));
         $this->admin_navigation->module_link('Add competition pre', site_url('admincp3/livescore/add_competition_pre'));

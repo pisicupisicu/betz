@@ -29,7 +29,7 @@
 
 </script>
 
-<h1>MATCHES PRE</h1>
+<h1>MATCH PRE</h1>
 
 <div style="width:auto;text-align:center;" align="center">
 

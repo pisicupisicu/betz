@@ -53,7 +53,7 @@ class Match_pre_model extends CI_Model
                 $linie['competition_name'] = $competition['name'];
             } else {
                 $linie['country_name'] = $competition_pre['country_name'];
-                $linie['competition_name'] = $competition['name'];                                
+                $linie['competition_name'] = isset($competition['name']) ? $competition['name'] : 'World';                                
             }
             
             if (!$competition_pre['competition_id']) {
