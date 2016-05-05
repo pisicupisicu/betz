@@ -43,6 +43,21 @@ class Admincp3 extends Admincp_Controller {
         $this->load->view('parse_matches', $data);
     }
 
+    function parse_matches_today()
+    {
+        $this->load->library('admin_form');
+        $form = new Admin_form;
+        $form->fieldset('Add Livescore link');
+        $form->text('Link', 'link', '', 'link to be introduced', TRUE, 'e.g., http://www.livescore.com/soccer/2013-09-01/ OR http://www.livescore.com/soccer/brazil/serie-a-brasileiro/', TRUE);
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Add Livescore link',
+            'form_action' => site_url('admincp3/livescore/parse_matches_validate_today'),
+            'action' => 'new',
+        );
+        $this->load->view('parse_matches', $data);
+    }
+
     function parse_matches_validate()
     {
         $this->load->library('form_validation');
@@ -81,6 +96,378 @@ class Admincp3 extends Admincp_Controller {
         
         echo '<br/><div align="center"><a href="/admincp3/livescore/parse_matches">Back</a></div>';
         return true;
+    }
+    
+    function parse_matches_validate_today()
+    {
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('link', 'Link', 'required|trim');
+
+        if ($this->form_validation->run() === false)
+        {
+            $this->notices->SetError('Required fields.');
+            $error = true;
+        }
+
+        if (isset($error))
+        {
+            redirect('admincp3/livescore/parse_matches_today');
+            return false;
+        }
+
+        $link = $this->input->post('link');
+        
+        $isYear = false;
+        $years = array('2013', '2014', '2015', '2016', '2017', '2018');
+        
+        foreach ($years as $year) {
+            $isYear = strstr($link, $year);
+            if ($isYear) {
+                break;
+            }
+        }
+
+        if ($isYear) {            
+            $this->parse_info_per_date_today(utf8_encode($link));
+        } else
+        {
+            $this->parse_info_per_competition(utf8_encode($link));
+        }
+        
+        echo '<br/><div align="center"><a href="/admincp3/livescore/parse_matches_today">Back</a></div>';
+        return true;
+    }
+    
+    private function parse_info_per_date_today($link)
+    {
+        $this->load->model(array('competition_today_model', 'country_model', 'team_today_model', 'match_today_model', 'match_model'));
+        
+        // Truncate the tables to avoid any errors
+        $this->competition_today_model->clear_table();
+        $this->team_today_model->clear_table();
+        $this->match_today_model->clear_table();
+        
+        $content = array();
+        $competition = new stdClass();        
+        $match = new stdClass();
+        
+        // echo "link = $link<br/>";
+        $temp = explode('/', $link);
+        // print_r($temp);
+        $match_date = $temp[4];
+        
+        $link = utf8_decode($link);
+        $page = $this->getUrl($link);
+        print '<pre>';
+        //print_r($page);
+        //die;
+        $rows =  $countries = $teams = $score = $competitions = array();
+        
+        // echo "link = $link<br/>";        
+        echo '<div align="center" style="background-color:grey;">';
+                
+        $pattern = '@<div class="content">(.*)<\/div>@';
+        preg_match_all($pattern, $page, $content);
+        //print '<pre>CONTENT';
+        //print_r($content);
+        
+        //<div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="/soccer/champions-league/"><strong>Champions League</strong></a> - <a href="/soccer/champions-league/semi-finals/">Semi-finals</a> </div> <div class="right fs11"> April 26 </div> </div> </div>
+        // div class="row-gray " data-pid="1" data-eid="1991209" data-type="evt" data-esd="20160426214500"> <div class="min"> 21:45 </div> <div class="ply tright name"> Livingston </div> <div class="sco"> ? - ? </div> <div class="ply name"> Rangers </div> <div class="star hidden" data-type="star"><i class="ico ico-star"></i></div> </div> 
+        //$pattern = '@<div class="row[a-zA-Z\-\s]*"[a-zA-Z\-\s0-9\"]*>(.*)</div>@';
+        //$pattern = '@<div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="(.*)"><strong>(.*)</strong></a> - <a href="(.*)">(.*)</a> </div> <div class="right fs11"> April 26 </div> </div> </div></div>@';
+        //
+        // <div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z\/\-]*">[a-zA-Z\/\-\s]*<\/a> <\/div> <div class="right fs11"> April 26 <\/div> <\/div> <\/div>
+        //$pattern = '@<div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z0-9\/\-]*">[a-zA-Z0-9ó\/\-\s\:]*<\/a> <\/div> <div class="right fs11"> [a-zA-z0-9\s]* <\/div> <\/div> <\/div>@';
+        
+        // <div class="row-gray even" data-pid="1" data-eid="2217815" data-type="evt" data-esd="20160426214500"> <div class="min"> 21:45 </div> <div class="ply tright name"> Manchester City </div> <div class="sco"> <a href="/soccer/champions-league/semi-finals/manchester-city-vs-real-madrid/1-2217815/" class="scorelink">? - ?</a> </div> <div class="ply name"> Real Madrid </div> <div class="star hidden" data-type="star"><i class="ico ico-star"></i></div> </div>        
+        //$pattern = '@<div class="row-gray (even)*" data-pid="[0-9]*" data-eid="[0-9]*" data-type="evt" data-esd="[0-9]*"> <div class="min">[\sa-zA-Z0-9\:]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div> <\/div>@';
+        //$pattern = '@<div class="row\s*\-*(row-tall mt4)*(gray)*\s*(even)*"\s*(data-pid="[0-9]*" data-eid="[0-9]*" data-type="evt" data-esd="[0-9]*")*>\s*(<div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z0-9\/\-]*">[a-zA-Z0-9ó\/\-\s\:]*<\/a> <\/div> <div class="right fs11"> [a-zA-z0-9\s]* <\/div> <\/div>)*(<div class="min">(<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>[a-zA-Z0-9\+\&\#\;\s]*)*[\sa-zA-Z0-9\:\.]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s\/\\\&\#\;]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>\s*<\/div>)*@';
+        //NOW <div class="row\s*\-*[row\-tall mt4]*[gray]*\s*[even]*"\s*[data\-pid="]*[0-9]*[" data\-eid="]*[0-9]*[" data\-type="evt" data\-esd="]*[0-9]*["]*>\s*[<div class="clear"> <div class="left"> <a href="]*[a-zA-Z\/\-]*["><strong>]*[a-zA-Z\/\-\s]*[<\/strong><\/a> \- <a href="]*[a-zA-Z0-9\/\-]*[">]*[a-zA-Z0-9ó\/\-\s\:]*(<\/a> <\/div> <div class="right fs11"> )*[a-zA-z0-9\s]*( <\/div> <\/div>)*(<div class="min">(<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>[a-zA-Z0-9\+\&\#\;\s]*)*[\sa-zA-Z0-9\:\.]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s\/\\\&\#\;]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>\s*<\/div>)*
+        // <div class="row\s*\-*[row\-tall mt4]*[gray]*\s*[even]*"\s*[data\-pid="]*[0-9]*[" data\-eid="]*[0-9]*[" data\-type="evt" data\-esd="]*[0-9]*["]*>\s*[<div class="clear"> <div class="left"> <a href="]*[a-zA-Z\/\-]*["><strong>]*[a-zA-Z\/\-\s]*[<\/strong><\/a> \- <a href="]*[a-zA-Z0-9\/\-]*[">]*[a-zA-Z0-9ó\/\-\s\:]*[<\/a> <\/div> <div class="right fs11"> ]*[a-zA-z0-9\s]*( <\/div> <\/div>)*[<div class="min">]*[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[a-zA-Z0-9\+\&\#\;\s]*[\sa-zA-Z0-9\:\.]*[<\/div> <div class="ply tright name">]*[\sa-zA-Z0-9\-\.\*]*[<\/div> <div class="sco">]*[\s<a href="]*[a-zA-Z0-9\s\/\-]*[" class="scorelink">]*[0-9\-\?\s]*(<\/a>)*[ <\/div> <div class="ply name">]*[0-9a-zA-Z\-\.\s\/\\\&\#\;]*[<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>]*\s*[<\/div>]*
+        
+        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*[<div class="clear"> <div class="left"> <a href="]*[\w\/\-]*["><strong>]*[\w\/\-\s]*[<\/strong><\/a> \- <a href="]*[\w\d\/\-]*[">]*[\w\dó\/\-\s\:]*[<\/a> <\/div> <div class="right fs11"> ]*[\w\d\s]*( <\/div> <\/div>)*[<div class="min">]*[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+\&\#\;\s]*[\s\w\d\:\.]*[<\/div> <div class="ply tright name">]*[\s\w\d\-\.\*]*[<\/div> <div class="sco">]*[\s<a href="]*[\w\d\s\/\-]*[" class="scorelink">]*[\d\-\?\s]*(<\/a>)*[ <\/div> <div class="ply name">]*[\d\w\-\.\s\/\\\&\#\;]*[<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>]*\s*[<\/div>]*
+        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*[<div class="clear"> <div class="left"> <a href="]*[\w\/-]*["><strong>]*[\w\/-\s]*[<\/strong><\/a> \- <a href="]*[\w\d\/\-]*[">]*[\w\dó\/\-\s\:]*[<\/a> <\/div> <div class="right fs11"> ]*[\w\d\s]*( <\/div> <\/div>)*[<div class="min">]*[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+\&\#\;\s]*[\s\w\d\:\.]*[<\/div> <div class="ply tright name">]*[\s\w\d\-\.\*]*[<\/div> <div class="sco">]*[\s<a href="]*[\w\d\s\/\-]*[" class="scorelink">]*[\d\-\?\s]*(<\/a>)*[ <\/div> <div class="ply name">]*[\d\w\-\.\s\/\\\&\#\;]*[<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>]*\s*[<\/div>]*
+        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\s\w\d-:\.\*&#;\/ó]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\s\w\d-:\.\*&#;\/ó]*">[\s\w\d-:\.\*&#;\/ó]*<\/a> <\/div> <div class="right fs11"> [\s\w\d-:\.\*&#;\/ó]* <\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\s\w\d-:\.\*&#;\/ó]*<\/div>)*\s*(?:<div class="ply tright name">[\s\w\d-:\.\*&#;\/ó]*<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="[\s\w\d-:\.\*&#;\/ó]*" class="scorelink">)*[\d\-\?\s]*(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">[\s\w\d-:\.\*&#;\/ó]*<\/div>)* 
+        // NOW <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\w\/-]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\w\d\/-]*">[\w\dó\/\-\s:\.]*<\/a> <\/div> <div class="right fs11"> [\w\d\s]* <\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+&#;\s:]*<\/div>)*\s*(?:<div class="ply tright name">[\s\w\d\-\.\*&;\/]*<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="[\s\w\d\-\.\*&;\/]*" class="scorelink">)*[\d\-\?\s]*(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">[\s\w\d-\.\*&#;\/]*<\/div>)*
+        $pattern = '@<div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\s\w\d-:\.\*&#;\/ó]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\s\w\d-:\.\*&#;\/ó]*">[\s\w\d-:\.\*&#;\/ó]*<\/a> <\/div> <div class="right fs11">[\s\w\d-:\.\*&#;\/ó]*<\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\s\w\d-:\.\*&#;\/ó]*<\/div>)*\s*(?:<div class="ply tright name">[\s\w\d-:\.\*&#;\/ó]*<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="[\s\w\d-:\.\*&#;\/ó]*" class="scorelink">)*[\d\-\?\s]*(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">[\s\w\d-:\.\*&#;\/ó]*<\/div>)*@'; 
+        //  [\s\w\d-:\.\*&#;\/ó]
+        
+        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\w\/-]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\w\d\/-]*">[\w\dó\/\-\s:\.]*<\/a> <\/div> <div class="right fs11"> [\w\d\s]* <\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+&#;\s:]*<\/div>)*
+        preg_match_all($pattern, $content[0][0], $rows);
+        //print '<pre>ALL ROWS';
+        //print_r($rows[0]);
+        //print '</pre>';
+               
+        echo '<br/>COMPETITIONS<br/>';
+        $matchesCount = 0;
+        $currentCompetitionLink = '';
+        
+        foreach ($rows[0] as $row) {
+            //echo '<br/><b>ROW: ' . $row . '</b><br/>';
+            // row is competition
+            if (strstr($row, 'row-tall')) {
+                $kompetitions = array();
+                $competitionPattern = '@<a href="([\s\w\d-:\.\*&#;\/]*)"><strong>([\s\w\d-:\.\*&#;\/ó]*)<\/strong><\/a> - <a href="([\s\w\d-:\.\*&#;\/ó]*)">([\s\w\d-:\.\*&#;\/ó]*)<\/a>@U';                
+                preg_match_all($competitionPattern, $row, $kompetitions);
+//                print $row . '<br/>';
+//                print '<pre>KOMPETITIONS';
+//                print_r($kompetitions);
+//                print '</pre>';
+                
+                $competitionLink = str_replace(array('soccer', '/'), '', $kompetitions[1][0]);
+                
+                // competition just changed, add matches
+                if (strlen($currentCompetitionLink) && ($currentCompetitionLink != $competitionLink)) {
+                    $competitions[] = clone $competition;
+                } else {
+                   $currentCompetitionLink = $competitionLink; 
+                }
+                
+                $competition->country = trim($kompetitions[2][0]);
+                $competition->country_link = $competitionLink;                
+                $competition->competition_name = trim($kompetitions[4][0]);
+                $competition->competition_link = trim(substr(str_replace('soccer/', '', $kompetitions[3][0]), 1, -1));
+                $competition->matches = array();                
+                continue;
+            }
+            
+            // row is match
+            $pattern = '@<div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z0-9\/\-]*">[a-zA-Z0-9ó\/\-\s\:]*<\/a> <\/div> <div class="right fs11"> [a-zA-z0-9\s]* <\/div> <\/div> <\/div>@';
+            $matchPattern = '@<div class="row-gray (even)*" data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*"> <div class="min">[\sa-zA-Z0-9\:]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div> <\/div>@';
+            $matchPattern = '@<div class="row\s*-*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\s\w\d-:\.\*&#;\/ó]*<\/div>)*\s*(?:<div class="ply tright name">([\s\w\d-:\.\*&#;\/ó]*)<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="([\s\w\d-:\.\*&#;\/ó]*)" class="scorelink">)*([\d\-\?\s]*)(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">([\s\w\d-:\.\*&#;\/ó]*)<\/div>)*@';
+            preg_match_all($matchPattern, $row, $matchez);
+            
+            $match->team_home = trim(str_replace(" *", "", $matchez[1][0]));
+            $match->team_away = trim(str_replace(" *", "", $matchez[4][0]));
+            $match->score_link = trim(str_replace('/soccer/', '', $matchez[2][0]));
+            $match->score = trim($matchez[3][0]);
+            $team_links = $this->match_model->get_team_links($match->score_link);
+            $match->team_home_link = $team_links[0];
+            $match->team_away_link = $team_links[1];
+            
+            $competition->matches[] = clone $match;
+            $matchesCount++;
+            
+            print $row . '<br/>';
+            print '<pre>MATCHEZ';
+            print_r($matchez);
+            print '</pre>';            
+        }
+        
+        // add last competition
+        $competitions[] = clone $competition;
+        
+        echo '<br/>------------------------------------------------------<br/>';
+        print '<pre>RESULT';
+        print_r($competitions);
+        print '</pre>';
+        echo '<br/>MATCHES: ' . $matchesCount;
+        
+        foreach ($competitions as $competition) {
+            echo '<br/><b>COMPETITION PARAMS: COUNTRY ' . $competition->country . ' LINK ' . $competition->country_link . ' NAME ' . $competition->competition_name . '</b><br/>';
+            // add fake world competition
+            if(!strlen($competition->country)) {
+                $competition->country = 'WORLD';
+            }
+            if(!strlen($competition->country_link)) {
+                $competition->country_link = 'soccer/world';
+            }
+            if(!strlen($competition->competition_name)) {
+                $competition->competition_name = 'WORLD';
+            }
+            if(!strlen($competition->competition_link)) {
+                $competition->competition_link = 'world';
+            }
+            
+            $competitionParams = array('link' => $competition->competition_link);
+            $country_id = $this->country_model->get_country_by_link($competition->country_link);
+
+            // if competition international it results country INTERNATIONAL which we don't have
+            if (!$country_id)
+            {
+                if (strstr($competition->competition_link, 'africa'))
+                {
+                    $country_id = $this->country_model->get_country_by_name('AFRICA');
+                }
+                elseif (strstr($competition->competition_link, 'concacaf') || strstr($competition->competition_link, 'america'))
+                {
+                    $country_id = $this->country_model->get_country_by_name('AMERICA');
+                }               
+                elseif (strstr($competition->competition_link, 'asia') || strstr($competition->competition_link, 'oceania'))
+                {
+                    $country_id = $this->country_model->get_country_by_name('ASIA');
+                }               
+                elseif (strstr($competition->competition_link, 'euro') || strstr($competition->competition_link, 'nextgen') || strstr($competition->competition_link, 'toulon'))
+                {
+                    $country_id = $this->country_model->get_country_by_name('EUROPE');
+                }               
+                else
+                {
+                    // default WORLD
+                    $country_id = $this->country_model->get_country_by_name('WORLD');
+                }
+            }
+            
+            // competitions
+            if (!$this->competition_today_model->competition_exists_id($competitionParams))
+            {
+//                $update_fields = array(
+//                    'name' => $c->competition_name,
+//                    'link_complete' => 'http://www.livescore.com/soccer/' . $c->competition_link,
+//                );
+//                $this->competition_model->update_competition_by_link($update_fields, $c->competition_link);
+
+                $competition_id = $this->competition_today_model->competition_exists($competitionParams);
+                // does not exist as old competition id
+                if (!$competition_id)
+                {
+                    $insert_fields = array(
+                        'country_id' => $country_id,
+                        'name' => $competition->competition_name,
+                        'link' => $competition->competition_link,
+                        'link_complete' => 'http://www.livescore.com/soccer/' . $competition->competition_link,
+                    );
+                    print '<pre>INSERT FIELDS 1';
+                    print_r($insert_fields);
+                    print '</pre>';
+                    $competition_id = $this->competition_today_model->new_competition($insert_fields);
+                }
+                else
+                {
+                    $insert_fields = array(
+                        'competition_id' => $competition_id
+                    );
+                    print '<pre>INSERT FIELDS 2';
+                    print_r($insert_fields);
+                    print '</pre>';
+                    $competition_id = $this->competition_today_model->new_competition($insert_fields);
+                }
+            }
+            else
+            {
+                $competition_id = $this->competition_today_model->competition_exists($competitionParams);
+            }
+            
+            foreach ($competition->matches as $match) {
+                echo '<br/><b>-----------------------------------CURRENT MATCH</b><br/>';
+                echo '<br>COMPETITION ID: ' . $competition_id . '<br/>';
+                print '<pre>';
+                print_r($match);
+                print '</pre>';
+                echo '<br/><b>-----------------------------------CURRENT MATCH</b><br/>';
+                if(!strlen($match->score_link)) {
+                    $match->score_link = 'world';
+                }
+                if(!strlen($match->team_home_link)) {
+                    $match->team_home_link = 'world';
+                }
+                if(!strlen($match->team_away_link)) {
+                    $match->team_away_link = 'world';
+                }
+                
+                // **************                                
+                // teams
+                $teams = array();
+                $param = array();
+                
+                $teams[0] = $match->team_home_link;
+                $teams[1] = $match->team_away_link;
+
+                $teams_name[0] = $match->team_home;
+                $teams_name[1] = $match->team_away;
+
+                foreach ($teams as $key => $t)
+                {
+                    if (strlen($t)) {
+                        $param['link'] = $t;
+                    }                    
+                    $param['country_id'] = $country_id;
+                    $param['name'] = $teams_name[$key];
+                    $param['matches'] = 0;
+
+                    if (!$this->team_today_model->team_exists_id($param))
+                    {                        
+                        $team_id = $this->team_today_model->team_exists($param);                                                
+
+                        // does not exist as old team id
+                        if (!$team_id)
+                        {
+                            $this->team_today_model->new_team($param);
+                        }
+                        else
+                        {
+                            $insert_fields = array(
+                                'team_id' => $team_id
+                            );
+                            $this->team_today_model->new_team($insert_fields);
+                        }                                               
+                    }
+                }
+
+                $search_team1 = array('country_id' => $country_id);
+                if (strlen($match->team_home_link)) {
+                    $search_team1['link'] = $match->team_home_link;
+                }
+
+                if (strlen($match->team_home)) {
+                    $search_team1['name'] = $match->team_home;
+                }
+
+                $search_team2 = array('country_id' => $country_id);
+                if (strlen($match->team_away_link)) {
+                    $search_team2['link'] = $match->team_away_link;
+                }
+
+                if (strlen($match->team_away)) {
+                    $search_team2['name'] = $match->team_away;
+                }
+
+                $team1_id = $this->team_today_model->team_exists_id($search_team1);
+                $team2_id = $this->team_today_model->team_exists_id($search_team2);
+                $link_complete = 'http://www.livescore.com/soccer/' . $match->score_link;
+
+                $match_data = array(
+                    'competition_id_today' => $competition_id,
+                    'match_date' => $match_date,
+                    'team1_today' => $team1_id,
+                    'team2_today' => $team2_id,
+                    'score' => str_replace(' ', '', $match->score),
+                    'link' => $match->score_link,
+                    'link_complete' => $link_complete
+                );
+                
+                print '<pre>MATCH DATA';
+                print_r($match_data);
+                print '</pre>';
+
+                //echo 'Treating match ' . $match_data['link_complete'];
+
+                $match_id = $this->match_today_model->match_exists(
+                        array(
+                            'link' => $match_data['link'],
+                            'match_date' => $match_data['match_date'],
+                            'team1_today' => $match_data['team1_today'],
+                            'team2_today' => $match_data['team2_today'],
+                ));
+
+                if (!$match_id)
+                {
+                    // echo ' New match ' . PHP_EOL;
+                    $this->match_today_model->new_match($match_data);
+                }
+                else
+                {
+                    // echo ' Old match id ' . $match_id . PHP_EOL;
+                    $match_db = $this->match_today_model->get_match($match_id);
+                    // add condition parse=0
+                    // if matched is not parsed yet we can still update it
+                    $this->match_today_model->update_match($match_data, $match_id);
+                }
+                // **************
+            }
+        }
+        
+        echo '</div>';
     }
 
     private function parse_info_per_date($link)
@@ -579,17 +966,141 @@ class Admincp3 extends Admincp_Controller {
     {
         $this->load->model('match_pre_model');
         $this->load->library('dataset');
-
         $count_matches_pre = $this->match_pre_model->get_num_rows();
         $nr_new_teams = $this->team_pre_model->get_num_rows(array('team_id' => true));
         $nr_new_competitions = $this->competition_pre_model->get_num_rows(array('competition_id' => true));
-
         $this->admin_navigation->module_link('List teams pre new: ' . $nr_new_teams, site_url('admincp3/livescore/list_teams_pre'));
         $this->admin_navigation->module_link('List competitions pre new: ' . $nr_new_competitions, site_url('admincp3/livescore/list_competitions_pre'));
         $this->admin_navigation->module_link('Move matches pre: ' . $count_matches_pre, site_url('admincp3/livescore/move_matches_pre'));
         $this->admin_navigation->module_link('Add match pre', site_url('admincp3/livescore/add_match_pre'));
         $this->admin_navigation->module_link('Add competition pre', site_url('admincp3/livescore/add_competition_pre'));
         $this->admin_navigation->module_link('Add team pre', site_url('admincp3/livescore/add_team_pre'));
+        $columns = array(
+            array(
+                'name' => 'COUNTRY',
+                'width' => '10%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => 'COMPETITION',
+                'width' => '10%',
+                'filter' => 'competition_name',
+                'type' => 'name',
+                'sort_column' => 'competition_name',
+            ),
+            array(
+                'name' => 'DATE',
+                'width' => '15%',
+                'filter' => 'match_date',
+                'type' => 'date',
+                'field_start_date' => '2013-01-01',
+                'field_end_date' => '2013-12-31',
+                'sort_column' => 'match_date',
+            ),
+            array(
+                'name' => 'HOME',
+                'width' => '15%',
+                'filter' => 'team1',
+                'type' => 'text',
+                'sort_column' => 'team1',
+            ),
+            array(
+                'name' => 'AWAY',
+                'width' => '15%',
+                'filter' => 'team2',
+                'type' => 'text',
+                'sort_column' => 'team2',
+            ),
+            array(
+                'name' => 'SCORE',
+                'width' => '5%',
+                'filter' => 'score',
+                'type' => 'text',
+                'sort_column' => 'score',
+            ),
+            array(
+                'name' => 'LINK COMPLETE',
+                'width' => '20%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'View',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'Edit',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+        );
+        $filters = array();
+        $filters['limit'] = 20;
+        if (isset($_GET['filters']))
+        {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+        }
+        if (isset($_GET['offset']))
+            $filters['offset'] = $_GET['offset'];
+        if (isset($_GET['country_name']))
+            $filters['country_name'] = $_GET['country_name'];
+        if (isset($_GET['competition_name']))
+            $filters['competition_name'] = $_GET['competition_name'];
+        if (isset($_GET['team1']))
+            $filters['team1'] = $_GET['team1'];
+        if (isset($_GET['team2']))
+            $filters['team2'] = $_GET['team2'];
+        if (isset($_GET['score']))
+            $filters['score'] = $_GET['score'];
+        if (isset($_GET['match_date_start']))
+            $filters['match_date_start'] = $_GET['match_date_start'];
+        if (isset($_GET['match_date_end']))
+            $filters['match_date_end'] = $_GET['match_date_end'];
+        if (isset($filters_decode) && !empty($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
+                $filters[$key] = $val;
+            }
+        }
+        foreach ($filters as $key => $val)
+        {
+            if (in_array($val, array('filter results', 'start date', 'end date')))
+            {
+                unset($filters[$key]);
+            }
+        }
+        //unset($filters['limit']);
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('match_pre_model', 'get_matches', $filters);
+        $this->dataset->base_url(site_url('admincp3/livescore/list_matches_pre'));
+        $this->dataset->rows_per_page($filters['limit']);
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->match_pre_model->get_num_rows($filters);
+        $this->dataset->total_rows($total_rows);
+        // initialize the dataset
+        $this->dataset->initialize();
+        // add actions
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_match_pre');
+        $this->load->view('list_matches_pre');
+    }
+    
+    public function list_matches_today()
+    {
+        $this->load->model('match_today_model');
+        $this->load->library('dataset');
+
+        $count_matches_today = $this->match_today_model->get_num_rows();
+        $nr_new_teams = $this->team_today_model->get_num_rows(array('team_id' => true));
+        $nr_new_competitions = $this->competition_today_model->get_num_rows(array('competition_id' => true));
+
+        $filters = array();
+
+        $this->admin_navigation->module_link('List teams today new: ' . $nr_new_teams, site_url('admincp3/livescore/list_teams_today'));
+        $this->admin_navigation->module_link('List competitions today new: ' . $nr_new_competitions, site_url('admincp3/livescore/list_competitions_today'));        
 
         $columns = array(
             array(
@@ -695,20 +1206,20 @@ class Admincp3 extends Admincp_Controller {
         }
         //unset($filters['limit']);
         $this->dataset->columns($columns);
-        $this->dataset->datasource('match_pre_model', 'get_matches', $filters);
-        $this->dataset->base_url(site_url('admincp3/livescore/list_matches_pre'));
+        $this->dataset->datasource('match_today_model', 'get_matches', $filters);
+        $this->dataset->base_url(site_url('admincp3/livescore/list_matches_today'));
         $this->dataset->rows_per_page($filters['limit']);
 
         // total rows
         unset($filters['limit']);
-        $total_rows = $this->match_pre_model->get_num_rows($filters);
+        $total_rows = $this->match_today_model->get_num_rows($filters);
         $this->dataset->total_rows($total_rows);
 
         // initialize the dataset
         $this->dataset->initialize();
         // add actions
-        $this->dataset->action('Delete', 'admincp3/livescore/delete_match_pre');
-        $this->load->view('list_matches_pre');
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_match_today');
+        $this->load->view('list_matches_today');
     }
 
     function list_competitions_pre()
@@ -804,6 +1315,98 @@ class Admincp3 extends Admincp_Controller {
         $this->load->view('list_competitions_pre');
     }
 
+    function list_competitions_today()
+    {
+        ini_set('display_errors', 1);
+        $this->load->library('dataset');
+        $this->load->model('competition_today_model');
+        $new_competitions = $this->competition_today_model->get_num_rows(array('competition_id' => true));        
+        $this->admin_navigation->module_link('New competitions:' . $new_competitions, site_url('admincp3/livescore/list_competitions_today'));
+
+        $columns = array(
+            array(
+                'name' => 'NAME',
+                'type' => 'name',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'COUNTRY',
+                'width' => '15%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => 'MATCHES',
+                'type' => 'name',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'LINK',
+                'width' => '15%',
+                'type' => 'text'
+            ),
+            array(
+                'name' => 'LINK COMPLETE',
+                'width' => '35%',
+                'type' => 'text'
+            ),
+            array(
+                'name' => 'EDIT',
+                'width' => '5%',
+                'type' => 'text',
+            ),
+        );
+
+        $filters = array();
+
+        $filters['new_competitions'] = $new_competitions;
+        $filters['country_name_sort'] = true;
+        $data = $this->competition_today_model->get_competitions($filters);
+        $filters['data'] = $data;
+
+        $filters['limit'] = 20;
+
+        if (isset($_GET['filters']))
+        {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+        }
+
+        if (isset($_GET['offset']))
+        {
+            $filters['offset'] = $_GET['offset'];
+        }
+
+        if (isset($_GET['country_name']))
+        {
+            $filters['country_name'] = $_GET['country_name'];
+        }
+
+        if (isset($filters_decode) && !empty($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
+                $filters[$key] = $val;
+            }
+        }
+
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('competition_today_model', 'get_competitions_by_country_with_filters', $filters);
+        $this->dataset->base_url(site_url('admincp3/livescore/list_competitions_today'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->competition_today_model->get_num_rowz($filters);
+        $this->dataset->total_rows($total_rows);
+
+        // initialize the dataset
+        $this->dataset->initialize();
+        // add actions
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_competition_today');
+        $this->load->view('list_competitions_today');
+    }
+
     function list_teams_pre()
     {
         $this->load->library('dataset');
@@ -812,6 +1415,98 @@ class Admincp3 extends Admincp_Controller {
         $this->admin_navigation->module_link('Move new teams:' . $nr_new_teams, site_url('admincp3/livescore/move_teams_pre/'));
         $this->admin_navigation->module_link('Add team pre', site_url('admincp3/livescore/add_team_pre/'));
         $this->admin_navigation->module_link('Make links', site_url('admincp3/livescore/make_links/'));
+        $columns = array(
+            array(
+                'name' => 'NAME',
+                'type' => 'name',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'LINK',
+                'type' => 'link',
+                'width' => '15%',
+            ),
+            array(
+                'name' => 'SIMILAR TEAMS',
+                'type' => 'id',
+                'width' => '10%',
+            ),
+            array(
+                'name' => 'ID',
+                'type' => 'id',
+                'width' => '5%',
+            ),
+            array(
+                'name' => 'COUNTRY',
+                'width' => '15%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => '# OF MATCHES',
+                'type' => 'text',
+                'width' => '10%',
+            ),
+            array(
+                'name' => 'MATCHES',
+                'type' => 'text',
+                'width' => '10%',
+            ),
+            array(
+                'name' => 'EDIT',
+                'width' => '10%',
+                'type' => 'text',
+            ),
+        );
+        $filters = array();
+        $filters['nr_new_teams'] = $nr_new_teams;
+        $filters['country_name_sort'] = true;
+        $data = $this->team_pre_model->get_teams($filters);
+        $filters['data'] = $data;
+        $filters['limit'] = 20;
+        $filters['sort'] = 'name';
+        if (isset($_GET['offset']))
+        {
+            $filters['offset'] = $_GET['offset'];
+        }
+        if (isset($_GET['country_name']))
+        {
+            $filters['country_name'] = $_GET['country_name'];
+        }
+        if (isset($_GET['filters']))
+        {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+        }
+        if (isset($filters_decode) && is_array($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
+                $filters[$key] = $val;
+            }
+        }
+        $this->dataset->datasource('team_pre_model', 'get_teams_by_country_with_filters', $filters);
+        $this->dataset->columns($columns);
+        $this->dataset->base_url(site_url('admincp3/livescore/list_teams_pre/'));
+        $this->dataset->rows_per_page($filters['limit']);
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->team_pre_model->get_num_rowz($filters);
+        $this->dataset->total_rows($total_rows);
+        // initialize the dataset
+        $this->dataset->initialize();
+        // add actions
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_team_pre');
+        $this->load->view('list_teams_pre');
+    }
+    
+    function list_teams_today()
+    {
+        $this->load->library('dataset');
+        $this->load->model('team_today_model');
+        $nr_new_teams = $this->team_today_model->get_num_rows(array('team_id' => true));
+        
+        $this->admin_navigation->module_link('New teams:' . $nr_new_teams, site_url('admincp3/livescore/list_teams_today'));
 
         $columns = array(
             array(
@@ -861,7 +1556,7 @@ class Admincp3 extends Admincp_Controller {
         $filters = array();
         $filters['nr_new_teams'] = $nr_new_teams;
         $filters['country_name_sort'] = true;
-        $data = $this->team_pre_model->get_teams($filters);
+        $data = $this->team_today_model->get_teams($filters);
         $filters['data'] = $data;
         $filters['limit'] = 20;
         $filters['sort'] = 'name';
@@ -889,21 +1584,21 @@ class Admincp3 extends Admincp_Controller {
             }
         }
 
-        $this->dataset->datasource('team_pre_model', 'get_teams_by_country_with_filters', $filters);
+        $this->dataset->datasource('team_today_model', 'get_teams_by_country_with_filters', $filters);
         $this->dataset->columns($columns);
-        $this->dataset->base_url(site_url('admincp3/livescore/list_teams_pre/'));
+        $this->dataset->base_url(site_url('admincp3/livescore/list_teams_today/'));
         $this->dataset->rows_per_page($filters['limit']);
 
         // total rows
         unset($filters['limit']);
-        $total_rows = $this->team_pre_model->get_num_rowz($filters);
+        $total_rows = $this->team_today_model->get_num_rowz($filters);
         $this->dataset->total_rows($total_rows);
 
         // initialize the dataset
         $this->dataset->initialize();
         // add actions
-        $this->dataset->action('Delete', 'admincp3/livescore/delete_team_pre');
-        $this->load->view('list_teams_pre');
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_team_today');
+        $this->load->view('list_teams_today');
     }
 
     public function move_competitions_pre()
@@ -1417,6 +2112,24 @@ class Admincp3 extends Admincp_Controller {
         return true;
     }
 
+    public function delete_competition_today($contents, $return_url)
+    {
+        $this->load->library('asciihex');
+        $this->load->model('competition_today_model');
+
+        $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+        $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+
+        foreach ($contents as $content)
+        {
+            $this->competition_today_model->delete_competition($content);
+        }
+        $this->notices->SetNotice('Competition today deleted successfully.');
+        redirect($return_url);
+        
+        return true;
+    }
+
     public function add_team_pre()
     {
         $this->load->model('country_model');
@@ -1618,6 +2331,24 @@ class Admincp3 extends Admincp_Controller {
             $this->team_pre_model->delete_team($content);
         }
         $this->notices->SetNotice('Team pre deleted successfully.');
+        redirect($return_url);
+        
+        return true;
+    }
+
+    public function delete_team_today($contents, $return_url)
+    {
+        $this->load->library('asciihex');
+        $this->load->model(array('competition_today_model', 'team_today_model'));
+
+        $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+        $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+
+        foreach ($contents as $content)
+        {
+            $this->team_today_model->delete_team($content);
+        }
+        $this->notices->SetNotice('Team today deleted successfully.');
         redirect($return_url);
         
         return true;
@@ -1843,6 +2574,23 @@ class Admincp3 extends Admincp_Controller {
             $this->match_pre_model->delete_match($content);
         }
         $this->notices->SetNotice('Match pre deleted successfully.');
+        redirect($return_url);
+        return true;
+    }
+    
+    public function delete_match_today($contents, $return_url)
+    {
+        $this->load->library('asciihex');
+        $this->load->model('match_today_model');
+
+        $contents = unserialize(base64_decode($this->asciihex->HexToAscii($contents)));
+        $return_url = base64_decode($this->asciihex->HexToAscii($return_url));
+
+        foreach ($contents as $content)
+        {
+            $this->match_today_model->delete_match($content);
+        }
+        $this->notices->SetNotice('Match today deleted successfully.');
         redirect($return_url);
         return true;
     }
