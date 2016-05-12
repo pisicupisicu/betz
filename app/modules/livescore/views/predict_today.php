@@ -74,9 +74,9 @@
             }
             ?>><b><?= $row['team2']; ?></b></td>
                 <td align="center"><b><?= $row['score']; ?></b></td>                
-                <td align="center"><b><a href="<?= $row['link_match']; ?>" target="_blank"><?= $row['link_complete']; ?></a></b></td>
-                <td align="center" class="options"><b><a href="/admincp5/livescore/view_match_pre/<?= $row['index']; ?>" target="_blank" >view</a></b></td>                
-                <td align="center"><b><a href="/admincp9/livescore/h2h/<?=$row['team1_id'];?>/<?=$row['team2_id'];?>/<?=$row['match_date'];?>" target="_blank">H2h</a></b></td>
+                <td align="center"><b><a href="/admincp9/livescore/h2h/<?=$row['team1_id'];?>/<?=$row['team2_id'];?>/<?=$row['match_date'];?>" target="_blank">H2h</a></b></td>                
+                <td align="center"><b><?= $row['percentage']; ?>%</b></td>
+                <td align="center"><b><?= $row['over']; ?></b></td>                
             </tr>
 
         <?php

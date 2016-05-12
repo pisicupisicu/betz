@@ -195,6 +195,136 @@ class Admincp9 extends Admincp_Controller {
         // add actions        
         $this->load->view('h2h');
     }
+    
+    public function predict_today()
+    {
+        $this->load->model(array('match_today_model'));
+        $this->load->library('dataset');
+
+        $count_matches_today = $this->match_today_model->get_num_rows();
+        
+
+        $filters = array();        
+
+        $columns = array(
+            array(
+                'name' => 'COUNTRY',
+                'width' => '10%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => 'COMPETITION',
+                'width' => '10%',
+                'filter' => 'competition_name',
+                'type' => 'name',
+                'sort_column' => 'competition_name',
+            ),
+            array(
+                'name' => 'DATE',
+                'width' => '15%',
+                'filter' => 'match_date',
+                'type' => 'date',
+                'field_start_date' => '2013-01-01',
+                'field_end_date' => '2013-12-31',
+                'sort_column' => 'match_date',
+            ),
+            array(
+                'name' => 'HOME',
+                'width' => '15%',
+                'filter' => 'team1',
+                'type' => 'text',
+                'sort_column' => 'team1',
+            ),
+            array(
+                'name' => 'AWAY',
+                'width' => '15%',
+                'filter' => 'team2',
+                'type' => 'text',
+                'sort_column' => 'team2',
+            ),
+            array(
+                'name' => 'SCORE',
+                'width' => '5%',
+                'filter' => 'score',
+                'type' => 'text',
+                'sort_column' => 'score',
+            ),            
+            array(
+                'name' => 'H2H',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'PERCENTAGE',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'PREDICTION',
+                'width' => '20%',
+                'type' => 'text,'
+            ),
+        );
+
+        $filters = array();
+        $filters['limit'] = 20;
+
+        if (isset($_GET['filters']))
+        {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+        }
+
+        if (isset($_GET['offset']))
+            $filters['offset'] = $_GET['offset'];
+        if (isset($_GET['country_name']))
+            $filters['country_name'] = $_GET['country_name'];
+        if (isset($_GET['competition_name']))
+            $filters['competition_name'] = $_GET['competition_name'];
+        if (isset($_GET['team1']))
+            $filters['team1'] = $_GET['team1'];
+        if (isset($_GET['team2']))
+            $filters['team2'] = $_GET['team2'];
+        if (isset($_GET['score']))
+            $filters['score'] = $_GET['score'];
+        if (isset($_GET['match_date_start']))
+            $filters['match_date_start'] = $_GET['match_date_start'];
+        if (isset($_GET['match_date_end']))
+            $filters['match_date_end'] = $_GET['match_date_end'];
+
+        if (isset($filters_decode) && !empty($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
+                $filters[$key] = $val;
+            }
+        }
+
+        foreach ($filters as $key => $val)
+        {
+            if (in_array($val, array('filter results', 'start date', 'end date')))
+            {
+                unset($filters[$key]);
+            }
+        }
+        //unset($filters['limit']);
+        $this->dataset->columns($columns);
+        $this->dataset->datasource('match_today_model', 'get_matches_predict_h2h', $filters);
+        $this->dataset->base_url(site_url('admincp9/livescore/predict_today'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+        $total_rows = $this->match_today_model->get_num_rows($filters);
+        $this->dataset->total_rows($total_rows);
+
+        // initialize the dataset
+        $this->dataset->initialize();
+        // add actions
+        $this->dataset->action('Delete', 'admincp3/livescore/delete_match_today');
+        $this->load->view('predict_today');
+    }
 
     private function getUrl($url)
     {

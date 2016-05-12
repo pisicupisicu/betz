@@ -177,22 +177,22 @@ class Admincp3 extends Admincp_Controller {
         //$pattern = '@<div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="(.*)"><strong>(.*)</strong></a> - <a href="(.*)">(.*)</a> </div> <div class="right fs11"> April 26 </div> </div> </div></div>@';
         //
         // <div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z\/\-]*">[a-zA-Z\/\-\s]*<\/a> <\/div> <div class="right fs11"> April 26 <\/div> <\/div> <\/div>
-        //$pattern = '@<div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z0-9\/\-]*">[a-zA-Z0-9ó\/\-\s\:]*<\/a> <\/div> <div class="right fs11"> [a-zA-z0-9\s]* <\/div> <\/div> <\/div>@';
+        //$pattern = '@<div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z0-9\/\-]*">[a-zA-Z0-9óí\/\-\s\:]*<\/a> <\/div> <div class="right fs11"> [a-zA-z0-9\s]* <\/div> <\/div> <\/div>@';
         
         // <div class="row-gray even" data-pid="1" data-eid="2217815" data-type="evt" data-esd="20160426214500"> <div class="min"> 21:45 </div> <div class="ply tright name"> Manchester City </div> <div class="sco"> <a href="/soccer/champions-league/semi-finals/manchester-city-vs-real-madrid/1-2217815/" class="scorelink">? - ?</a> </div> <div class="ply name"> Real Madrid </div> <div class="star hidden" data-type="star"><i class="ico ico-star"></i></div> </div>        
         //$pattern = '@<div class="row-gray (even)*" data-pid="[0-9]*" data-eid="[0-9]*" data-type="evt" data-esd="[0-9]*"> <div class="min">[\sa-zA-Z0-9\:]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div> <\/div>@';
-        //$pattern = '@<div class="row\s*\-*(row-tall mt4)*(gray)*\s*(even)*"\s*(data-pid="[0-9]*" data-eid="[0-9]*" data-type="evt" data-esd="[0-9]*")*>\s*(<div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z0-9\/\-]*">[a-zA-Z0-9ó\/\-\s\:]*<\/a> <\/div> <div class="right fs11"> [a-zA-z0-9\s]* <\/div> <\/div>)*(<div class="min">(<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>[a-zA-Z0-9\+\&\#\;\s]*)*[\sa-zA-Z0-9\:\.]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s\/\\\&\#\;]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>\s*<\/div>)*@';
-        //NOW <div class="row\s*\-*[row\-tall mt4]*[gray]*\s*[even]*"\s*[data\-pid="]*[0-9]*[" data\-eid="]*[0-9]*[" data\-type="evt" data\-esd="]*[0-9]*["]*>\s*[<div class="clear"> <div class="left"> <a href="]*[a-zA-Z\/\-]*["><strong>]*[a-zA-Z\/\-\s]*[<\/strong><\/a> \- <a href="]*[a-zA-Z0-9\/\-]*[">]*[a-zA-Z0-9ó\/\-\s\:]*(<\/a> <\/div> <div class="right fs11"> )*[a-zA-z0-9\s]*( <\/div> <\/div>)*(<div class="min">(<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>[a-zA-Z0-9\+\&\#\;\s]*)*[\sa-zA-Z0-9\:\.]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s\/\\\&\#\;]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>\s*<\/div>)*
-        // <div class="row\s*\-*[row\-tall mt4]*[gray]*\s*[even]*"\s*[data\-pid="]*[0-9]*[" data\-eid="]*[0-9]*[" data\-type="evt" data\-esd="]*[0-9]*["]*>\s*[<div class="clear"> <div class="left"> <a href="]*[a-zA-Z\/\-]*["><strong>]*[a-zA-Z\/\-\s]*[<\/strong><\/a> \- <a href="]*[a-zA-Z0-9\/\-]*[">]*[a-zA-Z0-9ó\/\-\s\:]*[<\/a> <\/div> <div class="right fs11"> ]*[a-zA-z0-9\s]*( <\/div> <\/div>)*[<div class="min">]*[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[a-zA-Z0-9\+\&\#\;\s]*[\sa-zA-Z0-9\:\.]*[<\/div> <div class="ply tright name">]*[\sa-zA-Z0-9\-\.\*]*[<\/div> <div class="sco">]*[\s<a href="]*[a-zA-Z0-9\s\/\-]*[" class="scorelink">]*[0-9\-\?\s]*(<\/a>)*[ <\/div> <div class="ply name">]*[0-9a-zA-Z\-\.\s\/\\\&\#\;]*[<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>]*\s*[<\/div>]*
+        //$pattern = '@<div class="row\s*\-*(row-tall mt4)*(gray)*\s*(even)*"\s*(data-pid="[0-9]*" data-eid="[0-9]*" data-type="evt" data-esd="[0-9]*")*>\s*(<div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z0-9\/\-]*">[a-zA-Z0-9óí\/\-\s\:]*<\/a> <\/div> <div class="right fs11"> [a-zA-z0-9\s]* <\/div> <\/div>)*(<div class="min">(<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>[a-zA-Z0-9\+\&\#\;\s]*)*[\sa-zA-Z0-9\:\.]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s\/\\\&\#\;]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>\s*<\/div>)*@';
+        //NOW <div class="row\s*\-*[row\-tall mt4]*[gray]*\s*[even]*"\s*[data\-pid="]*[0-9]*[" data\-eid="]*[0-9]*[" data\-type="evt" data\-esd="]*[0-9]*["]*>\s*[<div class="clear"> <div class="left"> <a href="]*[a-zA-Z\/\-]*["><strong>]*[a-zA-Z\/\-\s]*[<\/strong><\/a> \- <a href="]*[a-zA-Z0-9\/\-]*[">]*[a-zA-Z0-9óí\/\-\s\:]*(<\/a> <\/div> <div class="right fs11"> )*[a-zA-z0-9\s]*( <\/div> <\/div>)*(<div class="min">(<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>[a-zA-Z0-9\+\&\#\;\s]*)*[\sa-zA-Z0-9\:\.]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s\/\\\&\#\;]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>\s*<\/div>)*
+        // <div class="row\s*\-*[row\-tall mt4]*[gray]*\s*[even]*"\s*[data\-pid="]*[0-9]*[" data\-eid="]*[0-9]*[" data\-type="evt" data\-esd="]*[0-9]*["]*>\s*[<div class="clear"> <div class="left"> <a href="]*[a-zA-Z\/\-]*["><strong>]*[a-zA-Z\/\-\s]*[<\/strong><\/a> \- <a href="]*[a-zA-Z0-9\/\-]*[">]*[a-zA-Z0-9óí\/\-\s\:]*[<\/a> <\/div> <div class="right fs11"> ]*[a-zA-z0-9\s]*( <\/div> <\/div>)*[<div class="min">]*[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[a-zA-Z0-9\+\&\#\;\s]*[\sa-zA-Z0-9\:\.]*[<\/div> <div class="ply tright name">]*[\sa-zA-Z0-9\-\.\*]*[<\/div> <div class="sco">]*[\s<a href="]*[a-zA-Z0-9\s\/\-]*[" class="scorelink">]*[0-9\-\?\s]*(<\/a>)*[ <\/div> <div class="ply name">]*[0-9a-zA-Z\-\.\s\/\\\&\#\;]*[<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>]*\s*[<\/div>]*
         
-        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*[<div class="clear"> <div class="left"> <a href="]*[\w\/\-]*["><strong>]*[\w\/\-\s]*[<\/strong><\/a> \- <a href="]*[\w\d\/\-]*[">]*[\w\dó\/\-\s\:]*[<\/a> <\/div> <div class="right fs11"> ]*[\w\d\s]*( <\/div> <\/div>)*[<div class="min">]*[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+\&\#\;\s]*[\s\w\d\:\.]*[<\/div> <div class="ply tright name">]*[\s\w\d\-\.\*]*[<\/div> <div class="sco">]*[\s<a href="]*[\w\d\s\/\-]*[" class="scorelink">]*[\d\-\?\s]*(<\/a>)*[ <\/div> <div class="ply name">]*[\d\w\-\.\s\/\\\&\#\;]*[<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>]*\s*[<\/div>]*
-        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*[<div class="clear"> <div class="left"> <a href="]*[\w\/-]*["><strong>]*[\w\/-\s]*[<\/strong><\/a> \- <a href="]*[\w\d\/\-]*[">]*[\w\dó\/\-\s\:]*[<\/a> <\/div> <div class="right fs11"> ]*[\w\d\s]*( <\/div> <\/div>)*[<div class="min">]*[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+\&\#\;\s]*[\s\w\d\:\.]*[<\/div> <div class="ply tright name">]*[\s\w\d\-\.\*]*[<\/div> <div class="sco">]*[\s<a href="]*[\w\d\s\/\-]*[" class="scorelink">]*[\d\-\?\s]*(<\/a>)*[ <\/div> <div class="ply name">]*[\d\w\-\.\s\/\\\&\#\;]*[<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>]*\s*[<\/div>]*
-        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\s\w\d-:\.\*&#;\/ó]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\s\w\d-:\.\*&#;\/ó]*">[\s\w\d-:\.\*&#;\/ó]*<\/a> <\/div> <div class="right fs11"> [\s\w\d-:\.\*&#;\/ó]* <\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\s\w\d-:\.\*&#;\/ó]*<\/div>)*\s*(?:<div class="ply tright name">[\s\w\d-:\.\*&#;\/ó]*<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="[\s\w\d-:\.\*&#;\/ó]*" class="scorelink">)*[\d\-\?\s]*(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">[\s\w\d-:\.\*&#;\/ó]*<\/div>)* 
-        // NOW <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\w\/-]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\w\d\/-]*">[\w\dó\/\-\s:\.]*<\/a> <\/div> <div class="right fs11"> [\w\d\s]* <\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+&#;\s:]*<\/div>)*\s*(?:<div class="ply tright name">[\s\w\d\-\.\*&;\/]*<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="[\s\w\d\-\.\*&;\/]*" class="scorelink">)*[\d\-\?\s]*(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">[\s\w\d-\.\*&#;\/]*<\/div>)*
-        $pattern = '@<div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\s\w\d-:\.\*&#;\/ó]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\s\w\d-:\.\*&#;\/ó]*">[\s\w\d-:\.\*&#;\/ó]*<\/a> <\/div> <div class="right fs11">[\s\w\d-:\.\*&#;\/ó]*<\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\s\w\d-:\.\*&#;\/ó]*<\/div>)*\s*(?:<div class="ply tright name">[\s\w\d-:\.\*&#;\/ó]*<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="[\s\w\d-:\.\*&#;\/ó]*" class="scorelink">)*[\d\-\?\s]*(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">[\s\w\d-:\.\*&#;\/ó]*<\/div>)*@'; 
-        //  [\s\w\d-:\.\*&#;\/ó]
+        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*[<div class="clear"> <div class="left"> <a href="]*[\w\/\-]*["><strong>]*[\w\/\-\s]*[<\/strong><\/a> \- <a href="]*[\w\d\/\-]*[">]*[\w\dóí\/\-\s\:]*[<\/a> <\/div> <div class="right fs11"> ]*[\w\d\s]*( <\/div> <\/div>)*[<div class="min">]*[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+\&\#\;\s]*[\s\w\d\:\.]*[<\/div> <div class="ply tright name">]*[\s\w\d\-\.\*]*[<\/div> <div class="sco">]*[\s<a href="]*[\w\d\s\/\-]*[" class="scorelink">]*[\d\-\?\s]*(<\/a>)*[ <\/div> <div class="ply name">]*[\d\w\-\.\s\/\\\&\#\;]*[<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>]*\s*[<\/div>]*
+        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*[<div class="clear"> <div class="left"> <a href="]*[\w\/-]*["><strong>]*[\w\/-\s]*[<\/strong><\/a> \- <a href="]*[\w\d\/\-]*[">]*[\w\dóí\/\-\s\:]*[<\/a> <\/div> <div class="right fs11"> ]*[\w\d\s]*( <\/div> <\/div>)*[<div class="min">]*[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+\&\#\;\s]*[\s\w\d\:\.]*[<\/div> <div class="ply tright name">]*[\s\w\d\-\.\*]*[<\/div> <div class="sco">]*[\s<a href="]*[\w\d\s\/\-]*[" class="scorelink">]*[\d\-\?\s]*(<\/a>)*[ <\/div> <div class="ply name">]*[\d\w\-\.\s\/\\\&\#\;]*[<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div>]*\s*[<\/div>]*
+        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\s\w\d-:\.\*&#;\/óí]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\s\w\d-:\.\*&#;\/óí]*">[\s\w\d-:\.\*&#;\/óí]*<\/a> <\/div> <div class="right fs11"> [\s\w\d-:\.\*&#;\/óí]* <\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\s\w\d-:\.\*&#;\/óí]*<\/div>)*\s*(?:<div class="ply tright name">[\s\w\d-:\.\*&#;\/óí]*<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="[\s\w\d-:\.\*&#;\/óí]*" class="scorelink">)*[\d\-\?\s]*(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">[\s\w\d-:\.\*&#;\/óí]*<\/div>)* 
+        // NOW <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\w\/-]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\w\d\/-]*">[\w\dóí\/\-\s:\.]*<\/a> <\/div> <div class="right fs11"> [\w\d\s]* <\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+&#;\s:]*<\/div>)*\s*(?:<div class="ply tright name">[\s\w\d\-\.\*&;\/]*<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="[\s\w\d\-\.\*&;\/]*" class="scorelink">)*[\d\-\?\s]*(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">[\s\w\d-\.\*&#;\/]*<\/div>)*
+        $pattern = '@<div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\s\w\d-:\.\*&#;\/óí]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\s\w\d-:\.\*&#;\/óí]*">[\s\w\d-:\.\*&#;\/óí]*<\/a> <\/div> <div class="right fs11">[\s\w\d-:\.\*&#;\/óí]*<\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\s\w\d-:\.\*&#;\/óí]*<\/div>)*\s*(?:<div class="ply tright name">[\s\w\d-:\.\*&#;\/óí]*<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="[\s\w\d-:\.\*&#;\/óí]*" class="scorelink">)*[\d\-\?\s]*(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">[\s\w\d-:\.\*&#;\/óí]*<\/div>)*@'; 
+        //  [\s\w\d-:\.\*&#;\/óí]
         
-        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\w\/-]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\w\d\/-]*">[\w\dó\/\-\s:\.]*<\/a> <\/div> <div class="right fs11"> [\w\d\s]* <\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+&#;\s:]*<\/div>)*
+        // <div class="row\s*-*(?:row-tall mt4)*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="clear">\s*<div class="left">\s*<a href="[\w\/-]*"><strong>[\w\/-\s]*<\/strong><\/a> - <a href="[\w\d\/-]*">[\w\dóí\/\-\s:\.]*<\/a> <\/div> <div class="right fs11"> [\w\d\s]* <\/div> <\/div>)*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\w\d\+&#;\s:]*<\/div>)*
         preg_match_all($pattern, $content[0][0], $rows);
         //print '<pre>ALL ROWS';
         //print_r($rows[0]);
@@ -207,7 +207,7 @@ class Admincp3 extends Admincp_Controller {
             // row is competition
             if (strstr($row, 'row-tall')) {
                 $kompetitions = array();
-                $competitionPattern = '@<a href="([\s\w\d-:\.\*&#;\/]*)"><strong>([\s\w\d-:\.\*&#;\/ó]*)<\/strong><\/a> - <a href="([\s\w\d-:\.\*&#;\/ó]*)">([\s\w\d-:\.\*&#;\/ó]*)<\/a>@U';                
+                $competitionPattern = '@<a href="([\s\w\d-:\.\*&#;\/]*)"><strong>([\s\w\d-:\.\*&#;\/óí]*)<\/strong><\/a> - <a href="([\s\w\d-:\.\*&#;\/óí]*)">([\s\w\d-:\.\*&#;\/óí]*)<\/a>@U';                
                 preg_match_all($competitionPattern, $row, $kompetitions);
 //                print $row . '<br/>';
 //                print '<pre>KOMPETITIONS';
@@ -232,9 +232,9 @@ class Admincp3 extends Admincp_Controller {
             }
             
             // row is match
-            $pattern = '@<div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z0-9\/\-]*">[a-zA-Z0-9ó\/\-\s\:]*<\/a> <\/div> <div class="right fs11"> [a-zA-z0-9\s]* <\/div> <\/div> <\/div>@';
+            $pattern = '@<div class="row row-tall mt4"> <div class="clear"> <div class="left"> <a href="[a-zA-Z\/\-]*"><strong>[a-zA-Z\/\-\s]*<\/strong><\/a> - <a href="[a-zA-Z0-9\/\-]*">[a-zA-Z0-9óí\/\-\s\:]*<\/a> <\/div> <div class="right fs11"> [a-zA-z0-9\s]* <\/div> <\/div> <\/div>@';
             $matchPattern = '@<div class="row-gray (even)*" data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*"> <div class="min">[\sa-zA-Z0-9\:]*<\/div> <div class="ply tright name">[\sa-zA-Z0-9\-\.\*]*<\/div> <div class="sco">(\s<a href="[a-zA-Z0-9\s\/\-]*" class="scorelink">)*[0-9\-\?\s]*(<\/a>)* <\/div> <div class="ply name">[0-9a-zA-Z\-\.\s]*<\/div> <div class="star hidden" data-type="star"><i class="ico ico-star"><\/i><\/div> <\/div>@';
-            $matchPattern = '@<div class="row\s*-*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\s\w\d-:\.\*&#;\/ó]*<\/div>)*\s*(?:<div class="ply tright name">([\s\w\d-:\.\*&#;\/ó]*)<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="([\s\w\d-:\.\*&#;\/ó]*)" class="scorelink">)*([\d\-\?\s]*)(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">([\s\w\d-:\.\*&#;\/ó]*)<\/div>)*@';
+            $matchPattern = '@<div class="row\s*-*[gray]*\s*[even]*"\s*(?:data-pid="\d*" data-eid="\d*" data-type="evt" data-esd="\d*")*>\s*(?:<div class="min">[<img src="http:\/\/cdn3\.livescore\.com\/web\/img\/flash\.gif" alt="live"\/>]*[\s\w\d-:\.\*&#;\/óí]*<\/div>)*\s*(?:<div class="ply tright name">([\s\w\d-:\.\*&#;\/óí]*)<\/div>)*(?:\s<div class="sco">)*\s*(?:<a href="([\s\w\d-:\.\*&#;\/óí]*)" class="scorelink">)*([\d\-\?\s]*)(?:<\/a>)*\s*(?:<\/div>)*\s*(?:<div class="ply name">([\s\w\d-:\.\*&#;\/óí]*)<\/div>)*@';
             preg_match_all($matchPattern, $row, $matchez);
             
             $match->team_home = trim(str_replace(" *", "", $matchez[1][0]));
@@ -378,12 +378,11 @@ class Admincp3 extends Admincp_Controller {
 
                 foreach ($teams as $key => $t)
                 {
-                    if (strlen($t)) {
+                    if (strlen($t)  && $t != 'world') {
                         $param['link'] = $t;
-                    }                    
+                    }
                     $param['country_id'] = $country_id;
-                    $param['name'] = $teams_name[$key];
-                    $param['matches'] = 0;
+                    $param['name'] = $teams_name[$key];                    
 
                     if (!$this->team_today_model->team_exists_id($param))
                     {                        
@@ -391,7 +390,7 @@ class Admincp3 extends Admincp_Controller {
 
                         // does not exist as old team id
                         if (!$team_id)
-                        {
+                        {                            
                             $this->team_today_model->new_team($param);
                         }
                         else
@@ -405,7 +404,7 @@ class Admincp3 extends Admincp_Controller {
                 }
 
                 $search_team1 = array('country_id' => $country_id);
-                if (strlen($match->team_home_link)) {
+                if (strlen($match->team_home_link) && $match->team_home_link != 'world') {
                     $search_team1['link'] = $match->team_home_link;
                 }
 
@@ -414,7 +413,7 @@ class Admincp3 extends Admincp_Controller {
                 }
 
                 $search_team2 = array('country_id' => $country_id);
-                if (strlen($match->team_away_link)) {
+                if (strlen($match->team_away_link && $match->team_away_link != 'world')) {
                     $search_team2['link'] = $match->team_away_link;
                 }
 
@@ -1100,7 +1099,8 @@ class Admincp3 extends Admincp_Controller {
         $filters = array();
 
         $this->admin_navigation->module_link('List teams today new: ' . $nr_new_teams, site_url('admincp3/livescore/list_teams_today'));
-        $this->admin_navigation->module_link('List competitions today new: ' . $nr_new_competitions, site_url('admincp3/livescore/list_competitions_today'));        
+        $this->admin_navigation->module_link('List competitions today new: ' . $nr_new_competitions, site_url('admincp3/livescore/list_competitions_today'));
+        $this->admin_navigation->module_link('Predict', site_url('admincp9/livescore/predict_today'));
 
         $columns = array(
             array(
@@ -1158,7 +1158,7 @@ class Admincp3 extends Admincp_Controller {
                 'type' => 'text,'
             ),
             array(
-                'name' => 'Edit',
+                'name' => 'H2H',
                 'width' => '5%',
                 'type' => 'text,'
             ),
@@ -1320,8 +1320,8 @@ class Admincp3 extends Admincp_Controller {
         ini_set('display_errors', 1);
         $this->load->library('dataset');
         $this->load->model('competition_today_model');
-        $new_competitions = $this->competition_today_model->get_num_rows(array('competition_id' => true));        
-        $this->admin_navigation->module_link('New competitions:' . $new_competitions, site_url('admincp3/livescore/list_competitions_today'));
+        $new_competitions = $this->competition_today_model->get_num_rows(array('competition_id' => true));
+        $this->admin_navigation->module_link('Move new competitions:' . $new_competitions, site_url('admincp3/livescore/move_competitions_today'));        
 
         $columns = array(
             array(
@@ -1506,7 +1506,7 @@ class Admincp3 extends Admincp_Controller {
         $this->load->model('team_today_model');
         $nr_new_teams = $this->team_today_model->get_num_rows(array('team_id' => true));
         
-        $this->admin_navigation->module_link('New teams:' . $nr_new_teams, site_url('admincp3/livescore/list_teams_today'));
+        $this->admin_navigation->module_link('Move new teams:' . $nr_new_teams, site_url('admincp3/livescore/move_teams_today/'));        
 
         $columns = array(
             array(
@@ -1607,6 +1607,13 @@ class Admincp3 extends Admincp_Controller {
         $this->competition_pre_model->move_competitions_pre();
         redirect('admincp3/livescore/list_competitions_pre');
     }
+    
+    public function move_competitions_today()
+    {
+        $this->load->model('competition_today_model');
+        $this->competition_today_model->move_competitions_today();
+        redirect('admincp3/livescore/list_competitions_today');
+    }
 
     public function move_teams_pre()
     {
@@ -1614,6 +1621,14 @@ class Admincp3 extends Admincp_Controller {
         $nr_teams_moved = $this->team_pre_model->move_teams_pre();
         $this->notices->SetNotice("$nr_teams_moved teams moved successfully.");
         redirect('admincp3/livescore/list_teams_pre');
+    }
+    
+    public function move_teams_today()
+    {
+        $this->load->model('team_today_model');
+        $nr_teams_moved = $this->team_today_model->move_teams_today();
+        $this->notices->SetNotice("$nr_teams_moved teams moved successfully.");
+        redirect('admincp3/livescore/list_teams_today');
     }
 
     public function list_matches_by_team_id_pre($id)
@@ -1846,6 +1861,31 @@ class Admincp3 extends Admincp_Controller {
         );
         $this->load->view('edit_team_pre_similar', $data);
     }
+    
+    function edit_team_today_similar($id)
+    {
+        $this->load->model(array('country_model', 'team_today_model'));
+        $this->load->library('admin_form');
+
+        $params = array();
+        $params['dropdown'] = 1;
+        $params['team_today_id'] = $id;
+
+        $similar_teams = $this->team_today_model->get_similar_teams($params);
+
+        $form = new Admin_form;
+
+        $form->fieldset('Similar teams');
+        $form->dropdown('Teams', 'team_id', $similar_teams, false, false, true, false, true);
+
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Edit Team',
+            'form_action' => site_url('admincp3/livescore/similar_team_validate_today/' . $id),
+            'referer' => $this->input->server('HTTP_REFERER')
+        );
+        $this->load->view('edit_team_today_similar', $data);
+    }
 
     function similar_team_validate_pre($id = 0)
     {
@@ -1876,6 +1916,40 @@ class Admincp3 extends Admincp_Controller {
             redirect($this->input->post('referer'));
         } else {
             redirect('admincp3/livescore/list_teams_pre/');
+        }
+        
+        return true;
+    }
+    
+    function similar_team_validate_today($id = 0)
+    {
+        $this->load->library('form_validation');
+        $this->load->model('team_today_model');
+        $this->form_validation->set_rules('team_id', 'Team', 'is_natural_no_zero|trim');
+        if ($this->form_validation->run() === false)
+        {
+            $this->notices->SetError('Required fields.');
+            $error = true;
+        }
+        if (isset($error))
+        {
+            redirect('admincp3/livescore/edit_team_today_similar/' . $id);
+            return false;
+        }
+
+        $fields = array(
+            'team_id' => $this->input->post('team_id'),
+            'name' => null,
+            'country_id' => null,
+            'matches' => null
+        );
+        $this->team_today_model->update_team($fields, $id);
+        $this->notices->SetNotice('Team today with similar teams updated successfully.');
+        
+        if ( strstr($this->input->post('referer'), 'filters')) {
+            redirect($this->input->post('referer'));
+        } else {
+            redirect('admincp3/livescore/list_teams_today/');
         }
         
         return true;
@@ -2042,6 +2116,135 @@ class Admincp3 extends Admincp_Controller {
         
         return true;
     }
+    
+    public function add_competition_today_validate($action = 'new', $id = false)
+    {
+        $this->load->library('form_validation');
+        $this->load->model(array('competition_today_model', 'competition_model'));
+
+        $this->form_validation->set_rules('name', 'Nume', 'trim');
+        $this->form_validation->set_rules('link', 'Link', 'trim');
+        $this->form_validation->set_rules('country_id', 'Country', 'trim');
+
+        if ($this->form_validation->run() === false)
+        {
+            $this->notices->SetError('Required fields.');
+            $error = true;
+        }
+
+        if (isset($error))
+        {
+            if ($action == 'new')
+            {
+                redirect('admincp3/livescore/list_competitions_today');
+                return false;
+            }
+            else
+            {
+                redirect('admincp3/livescore/edit_competition_today/' . $id);
+                return false;
+            }
+        }
+
+        $competition_before = $this->input->post('competitions_before');
+
+        if (strlen($competition_before))
+        {
+            $fields['competition_id'] = $competition_before;
+        }
+        else
+        {
+            $temp = $this->input->post('link_complete');
+            if ($temp[strlen($temp) - 1] == '/')
+            {
+                $link_complete = substr($temp, 0, -1);
+            }
+            else
+            {
+                $link_complete = $temp;
+            }
+
+            // search first the competition by link
+            $competition = $this->competition_model->get_competition_by_link_complete($link_complete);
+
+            if (!empty($competition))
+            {
+                $fields['competition_id'] = $competition['competition_id'];
+            }
+            else
+            {
+                $name = $this->input->post('name');
+                $link = $this->input->post('link');
+                $country_id = $this->input->post('country_id');
+
+                if (!strlen($name) || !strlen($link) || !strlen($country_id))
+                {
+                    $this->notices->SetError('Competition not found.Add more details like name, link and country.');
+                    redirect('admincp3/livescore/list_competitions_today');
+                    return false;
+                }
+                else
+                {
+                    $fields['name'] = $this->input->post('name');
+                    $fields['link'] = $this->input->post('link');
+                    $fields['link_complete'] = $link_complete;
+                    $fields['country_id'] = $this->input->post('country_id');
+                }
+            }
+        }
+
+        if ($action == 'new')
+        {
+            if (strlen($competition_before))
+            {
+                $competition_exists = $this->competition_today_model->get_competition_by_competition_id($fields['competition_id']);
+                if (!empty($competition_exists))
+                {
+                    $this->notices->SetNotice('Competition today already exists.');
+                    redirect('admincp3/livescore/list_competitions_today/');
+                    return false;
+                }
+            }
+            else
+            {
+                $competition_exists = $this->competition_today_model->get_competition_by_criteria($fields);
+                if (!empty($competition_exists))
+                {
+                    $this->notices->SetNotice('Competition today already exists.');
+                    redirect('admincp3/livescore/list_competitions_today/');
+                    return false;
+                }
+            }
+
+            $this->competition_today_model->new_competition($fields);
+            $this->notices->SetNotice('Competition today added successfully.');
+            redirect('admincp3/livescore/list_competitions_today/');
+        }
+        else
+        {
+            if (strlen($competition_before))
+            {
+                $competition_exists = $this->competition_today_model->get_competition_by_competition_id($fields['competition_id']);
+            }
+            else
+            {
+                $competition_exists = $this->competition_today_model->get_competition_by_criteria($fields);
+            }
+
+            if (!empty($competition_exists))
+            {
+                $this->notices->SetNotice('Competition today already exists.');                    
+                redirect('admincp3/livescore/list_competitions_today/');
+                return false;                    
+            }
+
+            $this->competition_today_model->update_competition($fields, $id);
+            $this->notices->SetNotice('Competition today updated successfully.');
+            redirect('admincp3/livescore/list_competitions_today/');
+        }
+        
+        return true;
+    }
 
     public function edit_competition_pre($id)
     {
@@ -2092,6 +2295,57 @@ class Admincp3 extends Admincp_Controller {
         );
 
         $this->load->view('add_competition_pre', $data);
+    }
+    
+    public function edit_competition_today($id)
+    {
+        $this->load->model(array('competition_today_model', 'competition_model', 'country_model'));
+        $this->load->library('admin_form');
+
+        $competition_today = $this->competition_today_model->get_competition($id);
+        if (empty($competition_today))
+        {
+            die(show_error('No competition today with this ID.'));
+        }
+        $form = new Admin_form;
+
+        if (isset($competition_today['competition_id']))
+        {
+            $competition = $this->competition_model->get_competition($competition_today['competition_id']);
+            $competitions_all = $this->competition_model->get_competitions(array('country_id' => $competition['country_id']));
+            foreach ($competitions_all as $c)
+            {
+                $competitions[$c['competition_id']] = $c['name'];
+            }
+            $competition_today['name'] = $competition_today['link'] = $competition_today['link_complete'] = $competition_today['country_id'] = '';
+        }
+        else
+        {
+            $competitions = array('' => 'Country competitions');
+            $competition['country_id'] = false;
+            $competitions['country_id'] = false;
+        }
+
+        $countries = $params = array();
+        $params['dropdown'] = 1;
+        $countries = $this->country_model->get_countries($params);
+
+        $form->fieldset('Edit Competition Today');
+        $form->dropdown('Country', 'country_id_before', $countries, $competition['country_id']);
+        $form->dropdown('Competitions', 'competitions_before', $competitions, $competition_today['competition_id']);
+        $form->text('Competition name', 'name', $competition_today['name'], 'Competition name to be introduced', false, 'e.g., Bundesliga', true);
+        $form->text('Link', 'link', $competition_today['link'], 'Competition link', false, 'e.g., russia/premier-league', true);
+        $form->text('Link complete', 'link_complete', $competition_today['link_complete'], 'Competition link complete', false, 'e.g., http://www.livescore.com/soccer/russia/premier-league/', true);
+        $form->dropdown('Country', 'country_id', $countries, $competition_today['country_id']);
+
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Edit Competition Pre',
+            'form_action' => site_url('admincp3/livescore/add_competition_today_validate/edit/' . $competition_today['index']),
+            'action' => 'edit',
+        );
+
+        $this->load->view('add_competition_today', $data);
     }
 
     public function delete_competition_pre($contents, $return_url)
@@ -2277,6 +2531,128 @@ class Admincp3 extends Admincp_Controller {
         return true;
     }
 
+    public function add_team_today_validate($action = 'new', $id = false)
+    {
+        $this->load->library('form_validation');
+        $this->load->model('team_today_model');
+
+        $this->form_validation->set_rules('country_id', 'Team Country', 'trim');
+        $this->form_validation->set_rules('team_id', 'Team Name', 'trim');
+        $this->form_validation->set_rules('name', 'Name', 'trim');
+        $this->form_validation->set_rules('country', 'Country', 'trim');
+
+        if ($this->form_validation->run() === false)
+        {
+            $this->notices->SetError('Required fields.');
+            $error = true;
+        }
+
+        if (isset($error))
+        {
+            if ($action == 'new')
+            {
+                redirect('admincp3/livescore/list_teams_today');
+                return false;
+            }
+            else
+            {
+                redirect('admincp3/livescore/edit_team_today/' . $id);
+                return false;
+            }
+        }
+        $team_id = (int) $this->input->post('team_id');
+
+        if ($action == 'new')
+        {
+            if ($team_id)
+            {
+                $team_exists = $this->team_today_model->team_exists_team_id($team_id);
+
+                if ($team_exists)
+                {
+                    $this->notices->SetError('Team id already exists.');
+                    redirect('admincp3/livescore/list_teams_today');
+                    return false;
+                }
+
+                $fields = array(
+                    'team_id' => $team_id,
+                    'country_id' => null,
+                    'name' => null,
+                    'matches' => 0
+                );
+            }
+            else
+            {
+                $team_exists = $this->team_today_model->team_exists_name_country(
+                        array(
+                            'country_id' => (int) $this->input->post('country'),
+                            'name' => $this->input->post('name')
+                        )
+                );
+
+                if ($team_exists)
+                {
+                    $this->notices->SetError('Team with country and name already exists.');
+                    redirect('admincp3/livescore/list_teams_today');
+                    return false;
+                }
+
+                $fields = array(
+                    'team_id' => null,
+                    'country_id' => (int) $this->input->post('country'),
+                    'name' => $this->input->post('name'),
+                    'matches' => 0
+                );
+            }
+        }
+        else
+        {
+            $team = $this->team_today_model->get_team($id);
+
+            if (empty($team))
+            {
+                $this->notices->SetError('Team not found.');
+                redirect('admincp3/livescore/list_teams_today');
+                return false;
+            }
+
+            if ($team_id)
+            {
+                $fields = array(
+                    'team_id' => $team_id,
+                    'country_id' => null,
+                    'name' => null,
+                    'matches' => 0
+                );
+            }
+            else
+            {
+                $fields = array(
+                    'team_id' => null,
+                    'country_id' => (int) $this->input->post('country'),
+                    'name' => $this->input->post('name'),
+                    'matches' => 0
+                );
+            }
+        }
+
+        if ($action == 'new')
+        {
+            $team_id = $this->team_today_model->new_team($fields);
+            $this->notices->SetNotice('Team today added successfully.');
+            redirect('admincp3/livescore/list_teams_today/');
+        }
+        else
+        {
+            $this->team_today_model->update_team($fields, $id);
+            $this->notices->SetNotice('Team today updated successfully.');
+            redirect('admincp3/livescore/list_teams_today/');
+        }
+
+        return true;
+    }
+    
     function edit_team_pre($id)
     {
         $this->load->model(array('country_model', 'team_model', 'team_pre_model'));
@@ -2316,6 +2692,47 @@ class Admincp3 extends Admincp_Controller {
             'action' => 'edit',
         );
         $this->load->view('add_team_pre', $data);
+    }
+    
+    function edit_team_today($id)
+    {
+        $this->load->model(array('country_model', 'team_model', 'team_today_model'));
+        $this->load->library('admin_form');
+
+        $team = $this->team_today_model->get_team($id);
+
+        if (!$team['team_id'])
+        {
+            $teams[0] = 'Select team';
+        }
+
+        $all_teams = $this->team_model->get_teams(array('country_id' => $team['country_id']));
+        foreach ($all_teams as $t)
+        {
+            $teams[$t['team_id']] = $t['name'];
+        }
+
+        if (empty($team))
+        {
+            die(show_error('No team today with this ID.'));
+        }
+        $form = new Admin_form;
+        $countries = $params = array();
+        $params['dropdown'] = 1;
+        $countries = $this->country_model->get_countries($params);
+
+        $form->fieldset('Edit Team Today');
+        $form->dropdown('Country', 'country_id', $countries, $team['country_id']);
+        $form->dropdown('Teams', 'team_id', $teams, $team['team_id']);
+        $form->text('Team name', 'name', $team['name'], 'Team name to be introduced', false, 'e.g., AC Milan', true);
+        $form->dropdown('Country', 'country', $countries, $team['country_id']);
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Edit Team today',
+            'form_action' => site_url('admincp3/livescore/add_team_today_validate/edit/' . $team['index']),
+            'action' => 'edit',
+        );
+        $this->load->view('add_team_today', $data);
     }
 
     public function delete_team_pre($contents, $return_url)

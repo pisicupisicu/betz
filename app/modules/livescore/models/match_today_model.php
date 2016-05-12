@@ -50,10 +50,10 @@ class Match_today_model extends CI_Model
             $competition = $this->competition_model->get_competition($competition_today['competition_id']);
             if (!isset($competition_today['country_id'])) {
                 $linie['country_name'] = $competition['country_name'];
-                $linie['competition_name'] = $competition['name'];
+                $linie['competition_name'] = isset($competition['name']) ?  $competition['name'] : '';
             } else {
                 $linie['country_name'] = $competition_today['country_name'];
-                $linie['competition_name'] = $competition['name'];                                
+                $linie['competition_name'] = isset($competition['name']) ?  $competition['name'] : '';
             }
             
             if (!$competition_today['competition_id']) {
@@ -64,8 +64,10 @@ class Match_today_model extends CI_Model
             
             $temp = $this->team_today_model->get_team($linie['team1_today']);
             $linie['team1'] = $temp['name'];
+            $linie['team1_id'] = $temp['team_id'];
             $linie['ok_team1'] = $temp['ok'];
             $temp = $this->team_today_model->get_team($linie['team2_today']);
+            $linie['team2_id'] = $temp['team_id'];
             $linie['team2'] = $temp['name'];
             $linie['ok_team2'] = $temp['ok'];
             
@@ -127,6 +129,158 @@ class Match_today_model extends CI_Model
         }
         
         return $row;
+    }
+    
+    /**
+     * Get Matches predict H2H
+     *
+     *
+     * @return array
+     */
+    function get_matches_predict_h2h($filters = array()) 
+    {
+        $this->load->model(array('team_today_model','competition_today_model','competition_model','country_model', 'match_model'));
+        $row = array();
+
+        $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';
+        if (isset($filters['sort'])) {
+            $this->db->order_by($filters['sort'], $order_dir);
+        }
+            
+        if (isset($filters['competition_name']) && $filters['competition_name']) {
+            $this->db->like('z_competitions_today.name', $filters['competition_name']);
+        }       
+
+        $this->db->select('*,z_matches_today.link_complete AS link_match');
+
+        $result = $this->db->get('z_matches_today');
+
+        foreach ($result->result_array() as $linie) {
+            $competition_today = $this->competition_today_model->get_competition($linie['competition_id_today']);
+            $competition = $this->competition_model->get_competition($competition_today['competition_id']);
+            if (!isset($competition_today['country_id'])) {
+                $linie['country_name'] = $competition['country_name'];
+                $linie['competition_name'] = isset($competition['name']) ?  $competition['name'] : '';
+            } else {
+                $linie['country_name'] = $competition_today['country_name'];
+                $linie['competition_name'] = isset($competition['name']) ?  $competition['name'] : '';
+            }
+            
+            if (!$competition_today['competition_id']) {
+                $linie['ok_competition'] = 0;
+            } else {               
+                $linie['ok_competition'] = 1;
+            }
+            
+            $temp = $this->team_today_model->get_team($linie['team1_today']);
+            $linie['team1'] = $temp['name'];
+            $linie['team1_id'] = $temp['team_id'];
+            $linie['ok_team1'] = $temp['ok'];
+            $temp = $this->team_today_model->get_team($linie['team2_today']);
+            $linie['team2_id'] = $temp['team_id'];
+            $linie['team2'] = $temp['name'];
+            $linie['ok_team2'] = $temp['ok'];
+            
+            // get previous matches
+            $h2hFilters = array(
+                'team1' =>  $linie['team1_id'],
+                'team2' => $linie['team2_id'],
+                'match_date' => $linie['match_date']
+            );
+            $previousMatches = $this->match_model->get_h2h($h2hFilters);
+            
+            $total = $overs = 0;
+            $linie['percentage'] = 0;
+            $linie['over'] = '';
+            foreach ($previousMatches as $previousMatch) {
+                $total++;
+                $score = explode('-', $previousMatch['score']);
+                $score[0] = (int) $score[0];
+                $score[1] = (int) $score[1];
+                if (($score[0] + $score[1]) > 2) {
+                    $overs++;
+                }
+                $linie['percentage'] = round($overs * 100/ $total, 2);
+                if ($linie['percentage'] < 50 ) {
+                    $linie['percentage'] = 100 - $linie['percentage'];
+                    $linie['over'] = 'UNDER';
+                } else {
+                    $linie['over'] = 'OVER';
+                }
+            }
+            
+            if ($total < 3) {
+                $linie['percentage'] = 0;
+            }
+            
+            if ($linie['team1'] == $linie['team2']) {
+                $linie['ok_team1'] = $linie['ok_team2'] = 0;
+            }
+            
+            if (isset($filters['country_name'])
+                && $filters['country_name']
+                && strcasecmp($linie['country_name'], $filters['country_name'])) {
+                continue;
+            }
+            
+            if (isset($filters['match_date_start'])
+                && !empty($filters['match_date_start'])
+                && ($linie['match_date'] < $filters['match_date_start'])) {
+                continue;
+            }
+            
+            if (isset($filters['match_date_end'])
+                && !empty($filters['match_date_end'])
+                && ($linie['match_date'] > $filters['match_date_end'])) {
+                continue;
+            }
+            
+            if (isset($filters['score'])
+                && (strcmp($filters['score'], $linie['score']))
+            ) {
+                continue;
+            }
+            
+            if (isset($filters['team1'])
+                && (strcasecmp($filters['team1'], $linie['team1']))
+            ) {
+                continue;
+            }
+            
+            if (isset($filters['team2'])
+                && (strcasecmp($filters['team2'], $linie['team2']))
+            ) {
+                continue;
+            }
+                        
+            $row[] = $linie;
+//             print '<today>';
+//             print_r($temp);
+//             print_r($competition_today);
+//             print_r($competition);
+//             print_r($linie);
+//             die;
+        }
+//        print '<today>';
+//        print_r($row);
+//        print '</today>';
+//        die;
+        
+        uasort($row, array('Match_today_model', 'cmp'));
+        
+        if (isset($filters['limit'])) {
+            $row = array_slice($row, isset($filters['offset']) ? (int) $filters['offset'] : 0, isset($filters['limit']) ? (int) $filters['limit'] : 20);
+        }
+        
+        return $row;
+    }
+    
+    private static function cmp($a, $b)
+    {
+        if ($a['percentage'] == $b['percentage']) {
+            return 0;
+        }
+        return ($a['percentage'] > $b['percentage']) ? -1 : 1;
     }
 
     function get_num_rows($filters = array())

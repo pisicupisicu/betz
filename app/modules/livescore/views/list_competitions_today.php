@@ -23,6 +23,7 @@
             <td align="center"><b><?=$row['matches'];?></b></td>
             <td align="center"><b><?=$row['link'];?></b></td>
             <td align="center"><b><a href="<?=$row['link_complete'];?>" target="_blank"><?=$row['link_complete'];?></a></b></td>											            
+            <td align="center"><b><a href="/admincp3/livescore/edit_competition_today/<?=$row['index'];?>">edit</a></b></td>
 			</tr>
 
 		<?php

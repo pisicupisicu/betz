@@ -383,7 +383,7 @@ class Team_today_model extends CI_Model
                       'name' => $linie['name'],
                       'matches' => $linie['matches'],
                       'link' => $linie['link']
-                    );
+                    );                    
 
                     $team_id = $this->team_model->new_team($insert_fields);
 
