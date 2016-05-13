@@ -1094,12 +1094,11 @@ class Admincp3 extends Admincp_Controller {
 
         $count_matches_today = $this->match_today_model->get_num_rows();
         $nr_new_teams = $this->team_today_model->get_num_rows(array('team_id' => true));
-        $nr_new_competitions = $this->competition_today_model->get_num_rows(array('competition_id' => true));
-
-        $filters = array();
+        $nr_new_competitions = $this->competition_today_model->get_num_rows(array('competition_id' => true));        
 
         $this->admin_navigation->module_link('List teams today new: ' . $nr_new_teams, site_url('admincp3/livescore/list_teams_today'));
         $this->admin_navigation->module_link('List competitions today new: ' . $nr_new_competitions, site_url('admincp3/livescore/list_competitions_today'));
+        $this->admin_navigation->module_link('Move matches today: ' . $count_matches_today, site_url('admincp3/livescore/move_matches_today'));
         $this->admin_navigation->module_link('Predict', site_url('admincp9/livescore/predict_today'));
 
         $columns = array(
@@ -1961,6 +1960,14 @@ class Admincp3 extends Admincp_Controller {
         $moved = $this->match_pre_model->move_matches_pre();
         $this->notices->SetNotice($moved . ' matches successfully moved to z_matches normal table');
         redirect('admincp3/livescore/list_matches_pre/');
+    }
+    
+    public function move_matches_today()
+    {
+        $this->load->model('match_today_model');
+        $moved = $this->match_today_model->move_matches_today();
+        $this->notices->SetNotice($moved . ' matches successfully moved to z_matches normal table');
+        redirect('admincp3/livescore/list_matches_today/');
     }
 
     public function add_competition_pre()

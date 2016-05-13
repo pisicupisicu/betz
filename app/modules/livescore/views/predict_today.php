@@ -76,7 +76,7 @@
                 <td align="center"><b><?= $row['score']; ?></b></td>                
                 <td align="center"><b><a href="/admincp9/livescore/h2h/<?=$row['team1_id'];?>/<?=$row['team2_id'];?>/<?=$row['match_date'];?>" target="_blank">H2h</a></b></td>                
                 <td align="center"><b><?= $row['percentage']; ?>%</b></td>
-                <td align="center"><b><?= $row['over']; ?></b></td>                
+                <td align="center" style="background-color:<?php echo $row['color']; ?>"><b><?= $row['over']; ?></b></td>                
             </tr>
 
         <?php

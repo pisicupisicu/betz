@@ -139,7 +139,7 @@ class Match_today_model extends CI_Model
      */
     function get_matches_predict_h2h($filters = array()) 
     {
-        $this->load->model(array('team_today_model','competition_today_model','competition_model','country_model', 'match_model'));
+        $this->load->model(array('team_today_model','competition_today_model','competition_model','country_model', 'match_model', 'goal_model'));
         $row = array();
 
         $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';
@@ -211,7 +211,33 @@ class Match_today_model extends CI_Model
             
             if ($total < 3) {
                 $linie['percentage'] = 0;
-            }
+            }                        
+            
+            if (strstr($linie['score'], '?')) {
+                $linie['color'] = $linie['percentage'] == 0 ? 'grey' : 'orange';                                
+            } else {
+                $isOver = $this->goal_model->isOver($linie['score']);
+                
+                do {
+                    if ($linie['percentage'] == 0) {
+                        $linie['color'] = 'grey';
+                        break;
+                    }
+                    
+                    if ($linie['over'] === 'OVER' && $isOver) {
+                        $linie['color'] = 'green';
+                        break;
+                    }
+                    
+                    if ($linie['over'] === 'UNDER' && !$isOver) {
+                        $linie['color'] = 'green';
+                        break;
+                    }
+                    
+                    $linie['color'] = 'red';
+                    
+                } while (false);                                
+            }                        
             
             if ($linie['team1'] == $linie['team2']) {
                 $linie['ok_team1'] = $linie['ok_team2'] = 0;
