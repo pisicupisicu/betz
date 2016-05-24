@@ -325,6 +325,186 @@ class Admincp9 extends Admincp_Controller {
         $this->dataset->action('Delete', 'admincp3/livescore/delete_match_today');
         $this->load->view('predict_today');
     }
+    
+    public function predict_choose()
+    {
+        $this->load->model(array('match_today_model'));
+        $date = $this->match_today_model->getDate();
+        
+        $this->load->library('admin_form');
+        $form = new Admin_form;
+        $form->fieldset('Date to predict for');
+        $form->date('Date', 'date', $date, '', true);        
+        $form->fieldset('Head to head');
+        $form->checkbox('Head to head', 'h2h', '1', true);
+        $form->fieldset('Teams form');
+        $form->checkbox('Teams form', 'teamsForm', '1');
+        $data = array(
+            'form' => $form->display(),
+            'form_title' => 'Choose your date and criteria',
+            'form_action' => site_url('admincp9/livescore/predict_validate')
+        );
+        $this->load->view('predict_choose', $data);
+    }
+    
+    public function predict_validate()
+    {
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('date', 'Date', 'required|trim');        
+
+        if ($this->form_validation->run() === false)
+        {
+            $this->notices->SetError('Required fields.');
+            $error = true;
+        }
+
+        if (isset($error))
+        {
+            redirect('admincp9/livescore/predict_choose');
+            return false;
+        }
+
+        $this->load->model(array('match_model', 'match_today_model'));
+        $this->load->library('dataset');
+        
+        $date = $this->input->post('date');
+        
+        $isToday = $this->match_today_model->isDate($date);
+        
+        $columns = array(
+            array(
+                'name' => 'COUNTRY',
+                'width' => '10%',
+                'filter' => 'country_name',
+                'type' => 'text',
+                'sort_column' => 'country_name',
+            ),
+            array(
+                'name' => 'COMPETITION',
+                'width' => '10%',
+                'filter' => 'competition_name',
+                'type' => 'name',
+                'sort_column' => 'competition_name',
+            ),
+            array(
+                'name' => 'DATE',
+                'width' => '15%',               
+            ),
+            array(
+                'name' => 'HOME',
+                'width' => '15%',
+                'filter' => 'team1',
+                'type' => 'text',
+                'sort_column' => 'team1',
+            ),
+            array(
+                'name' => 'AWAY',
+                'width' => '15%',
+                'filter' => 'team2',
+                'type' => 'text',
+                'sort_column' => 'team2',
+            ),
+            array(
+                'name' => 'SCORE',
+                'width' => '5%',
+                'filter' => 'score',
+                'type' => 'text',
+                'sort_column' => 'score',
+            ),            
+            array(
+                'name' => 'H2H',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'PERCENTAGE',
+                'width' => '5%',
+                'type' => 'text,'
+            ),
+            array(
+                'name' => 'PREDICTION',
+                'width' => '20%',
+                'type' => 'text,'
+            ),
+        );
+
+        $filters = array();
+        $filters['limit'] = 20;
+
+        if (strlen($this->input->get('filters')))
+        {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($this->input->get('filters'))));
+        }
+        
+        $filterPossibleValues = array(
+            'offset', 
+            'country_name',
+            'competition_name',
+            'team1',
+            'team2',
+            'score',
+            'match_date_start',
+            'match_date_end'
+        );
+        
+        foreach ($filterPossibleValues as $filterValue) {
+            if (strlen($this->input->get($filterValue))) {
+                $filters[$filterValue] = $this->input->get($filterValue);
+            }
+        }    
+
+        if (isset($filters_decode) && !empty($filters_decode))
+        {
+            foreach ($filters_decode as $key => $val)
+            {
+                $filters[$key] = $val;
+            }
+        }
+
+        foreach ($filters as $key => $val)
+        {
+            if (in_array($val, array('filter results', 'start date', 'end date')))
+            {
+                unset($filters[$key]);
+            }
+        }
+        //unset($filters['limit']);
+        $this->dataset->columns($columns);
+        
+        $methodName = 'get_matches_predict_h2h';
+        if (strlen($this->input->post('teamsForm'))) {
+            if (strlen($this->input->post('h2h'))) {
+                $methodName = 'get_matches_predict_h2h_and_form';
+            } else {
+                $methodName = 'get_matches_predict_form';
+            }
+        }
+        
+        if ($isToday) {            
+            $this->dataset->datasource('match_today_model', $methodName, $filters);
+        } else {
+            $this->dataset->datasource('match_model', $methodName, $filters);
+        }
+        
+        $this->dataset->base_url(site_url('admincp9/livescore/predict_validate'));
+        $this->dataset->rows_per_page($filters['limit']);
+
+        // total rows
+        unset($filters['limit']);
+         if ($isToday) {
+             $total_rows = $this->match_today_model->get_num_rows($filters);
+         } else {
+             $filters['match_date_start'] = $date;
+             $filters['match_date_end'] = $date;
+             $total_rows = $this->match_model->get_num_rows($filters);
+         }
+        
+        $this->dataset->total_rows($total_rows);
+
+        // initialize the dataset
+        $this->dataset->initialize();        
+        $this->load->view('predict');
+    }
 
     private function getUrl($url)
     {

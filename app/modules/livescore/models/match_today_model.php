@@ -689,6 +689,27 @@ class Match_today_model extends CI_Model
         return true;
     }
     
+    /**
+     * If today table is current date
+     * 
+     * @param string $date The date to search by
+     */
+    public function isDate($date)
+    {
+        $this->db->where('match_date', $date);
+        $result = $this->db->get('z_matches_today');
+        return (bool) $result->num_rows();
+    }
+    
+    public function getDate()
+    {
+        $result = $this->db->get('z_matches_today');
+        $this->db->limit(1, 0);
+        foreach ($result->result_array() as $row) {
+            return $row['match_date'];
+        }
+    }
+    
     public function make_links()
     {
         error_reporting(E_ALL);

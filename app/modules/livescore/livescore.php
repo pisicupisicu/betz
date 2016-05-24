@@ -34,6 +34,7 @@ class Livescore extends Module
 
     function admin_preload()
     {
+        $this->CI->admin_navigation->child_link('livescore', 9, 'Predict', site_url('admincp9/livescore/predict_choose'));
         $this->CI->admin_navigation->child_link('livescore', 10, 'List competitions', site_url('admincp/livescore/list_competitions'));
         $this->CI->admin_navigation->child_link('livescore', 20, 'List teams', site_url('admincp/livescore/list_teams'));
         $this->CI->admin_navigation->child_link('livescore', 29, 'List matches pre', site_url('admincp3/livescore/list_matches_pre'));
