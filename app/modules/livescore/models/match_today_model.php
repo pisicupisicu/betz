@@ -137,7 +137,7 @@ class Match_today_model extends CI_Model
      *
      * @return array
      */
-    function get_matches_predict_h2h($filters = array()) 
+    function get_matches_predict($filters = array()) 
     {
         $this->load->model(array('team_today_model','competition_today_model','competition_model','country_model', 'match_model', 'goal_model'));
         $row = array();

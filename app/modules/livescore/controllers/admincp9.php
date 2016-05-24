@@ -471,16 +471,19 @@ class Admincp9 extends Admincp_Controller {
         //unset($filters['limit']);
         $this->dataset->columns($columns);
         
-        $methodName = 'get_matches_predict_h2h';
-        if (strlen($this->input->post('teamsForm'))) {
-            if (strlen($this->input->post('h2h'))) {
-                $methodName = 'get_matches_predict_h2h_and_form';
-            } else {
-                $methodName = 'get_matches_predict_form';
-            }
+        $methodName = 'get_matches_predict';        
+        
+        if (strlen($this->input->post('h2h'))) {
+            $filters['h2h'] = true;
         }
         
-        if ($isToday) {            
+        if (strlen($this->input->post('teamsForm'))) {
+            $filters['form'] = true;
+        }
+        
+        $filters['date'] = $this->input->post('date');
+                       
+        if ($isToday) {
             $this->dataset->datasource('match_today_model', $methodName, $filters);
         } else {
             $this->dataset->datasource('match_model', $methodName, $filters);

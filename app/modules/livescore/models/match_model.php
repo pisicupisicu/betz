@@ -1010,6 +1010,57 @@ class Match_model extends CI_Model {
         return $row;
     }
     
+    public function get_form($filters = array(), $lastGames = 5)
+    {
+        $this->load->model('team_model');
+        $row = array();
+        
+        if (isset($filters['include_competitions'])) {
+            $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
+            $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');            
+        }
+
+        if (isset($filters['forTeam1'])) {
+            $this->db->or_where('team1', $filters['team1']);
+            $this->db->or_where('team2', $filters['team1']);
+        }
+        
+        if (isset($filters['forTeam2'])) {
+            $this->db->or_where('team1', $filters['team2']);
+            $this->db->or_where('team2', $filters['team2']);
+        }
+       
+        $this->db->limit($lastGames, 0);
+        
+        $this->db->where('match_date <', $filters['match_date']);
+        
+        if (isset($filters['include_competitions'])) {
+            $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
+        }
+        
+        $result_home = $this->db->get('z_matches');
+
+        foreach ($result_home->result_array() as $line) {
+            if (isset($filters['include_competitions'])) {
+                $temp = $this->team_model->get_team($line['team1']);
+                $line['team1_name'] = $temp['name'];
+                $temp = $this->team_model->get_team($line['team2']);
+                $line['team2_name'] = $temp['name'];
+            }
+            $row[] = $line;
+        }       
+
+        if (isset($filters['count'])) {
+            return count($row);
+        }
+        
+        //print '<pre>xx ' . $filters['team1'] . ' ' . $filters['team2'];
+        //print_r($row);
+        //die;
+
+        return $row;
+    }
+    
     protected function isHome($match, $team1, $team2)
     {
         if ($match['team1'] == $team1) {
@@ -1481,17 +1532,23 @@ class Match_model extends CI_Model {
     /**
      * Get Matches predict H2H
      *
-     *
+     * @param array $filters  The filters to sort by     
+     * 
      * @return array
      */
-    public function get_matches_predict_h2h($filters = array()) 
+    public function get_matches_predict($filters = array()) 
     {
         $this->load->model(array('goal_model'));
         $row = array();
-        
+                
         $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';
         if (isset($filters['sort'])) {
             $this->db->order_by($filters['sort'], $order_dir);
+        }
+        
+        if (isset($filters['limit'])) {
+            $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
+            $this->db->limit($filters['limit'], $offset);
         }
             
         if (isset($filters['competition_name']) && $filters['competition_name']) {
@@ -1500,69 +1557,24 @@ class Match_model extends CI_Model {
         
         $this->db->select('*,z_matches.link_complete AS link_match');
         $result = $this->db->get('z_matches');
+        
         foreach ($result->result_array() as $linie) {
-            // get previous matches
-            $h2hFilters = array(
-                'team1' =>  $linie['team1'],
-                'team2' => $linie['team2'],
-                'match_date' => $linie['match_date']
-            );
-            $previousMatches = $this->get_h2h($h2hFilters);
+            $linie['date'] = $filters['date'];
             
-            $total = $overs = 0;
-            $linie['percentage'] = 0;
-            $linie['over'] = '';
-            foreach ($previousMatches as $previousMatch) {
-                $total++;
-                $score = explode('-', $previousMatch['score']);
-                $score[0] = (int) $score[0];
-                $score[1] = (int) $score[1];
-                if (($score[0] + $score[1]) > 2) {
-                    $overs++;
-                }
-                $linie['percentage'] = round($overs * 100/ $total, 2);
-                if ($linie['percentage'] < 50 ) {
-                    $linie['percentage'] = 100 - $linie['percentage'];
-                    $linie['over'] = 'UNDER';
-                } else {
-                    $linie['over'] = 'OVER';
-                }
-            }
-            
-            if ($total < 3) {
-                $linie['percentage'] = 0;
-            }                        
-            
-            if (strstr($linie['score'], '?')) {
-                $linie['color'] = $linie['percentage'] == 0 ? 'grey' : 'orange';                                
+            if (isset($filters['h2h'])) {
+                $this->computeH2h(&$linie);
+            } elseif (isset($filters['form'])) {
+                $this->computeForm(&$linie);
             } else {
-                $isOver = $this->goal_model->isOver($linie['score']);
-                
-                do {
-                    if ($linie['percentage'] == 0) {
-                        $linie['color'] = 'grey';
-                        break;
-                    }
-                    
-                    if ($linie['over'] === 'OVER' && $isOver) {
-                        $linie['color'] = 'green';
-                        break;
-                    }
-                    
-                    if ($linie['over'] === 'UNDER' && !$isOver) {
-                        $linie['color'] = 'green';
-                        break;
-                    }
-                    
-                    $linie['color'] = 'red';
-                    
-                } while (false);                                
+                $this->computeH2h(&$linie);
             }
             
+            $this->formatPercentageMatch(&$linie);
+                                                                                    
             $row[] = $linie;
-        }
+        }                
                
-        uasort($row, array('Match_model', 'cmp2'));
+        uasort($row, array('Match_model', 'sortPercentage'));
         
         if (isset($filters['limit'])) {
             $row = array_slice($row, isset($filters['offset']) ? (int) $filters['offset'] : 0, isset($filters['limit']) ? (int) $filters['limit'] : 20);
@@ -1571,7 +1583,160 @@ class Match_model extends CI_Model {
         return $row;
     }
     
-    private static function cmp2($a, $b)
+    /**
+     * Compute the h2h match percentage
+     * 
+     * @param array $linie The match row
+     * @return void
+     */
+    private function computeH2h($linie)
+    {
+        // get previous matches
+        $h2hFilters = array(
+            'team1' =>  $linie['team1'],
+            'team2' => $linie['team2'],
+            'match_date' => $linie['date']
+        );
+        
+        $previousMatches = $this->get_h2h($h2hFilters);               
+        
+        $total = $overs = 0;                
+        foreach ($previousMatches as $previousMatch) {
+            $total++;
+            $score = explode('-', $previousMatch['score']);
+            $score[0] = (int) $score[0];
+            $score[1] = (int) $score[1];
+            if (($score[0] + $score[1]) > 2) {
+                $overs++;
+            }            
+        }
+        
+        $linie['total_h2h'] = $total;
+        $linie['overs_h2h'] = $overs;
+        $linie['unders_h2h'] = $total - $overs;
+    }
+    
+    /**
+     * Compute the h2h match percentage
+     * 
+     * @param array $linie The match row
+     * @return void
+     */
+    private function computeForm($linie)
+    {
+        $previousMatches = array();
+        $forTeams = array('forTeam1', 'forTeam2');
+        
+        foreach ($forTeams as $forTeam) {
+            // get previous matches
+            $formFilters = array(
+                $forTeam => true,
+                'team1' =>  $linie['team1'],
+                'team2' => $linie['team2'],
+                'match_date' => $linie['date']
+            );
+            
+            $previousMatches = array_merge($previousMatches, $this->get_form($formFilters));
+        }
+                                        
+        $total = $overs = 0;                
+        foreach ($previousMatches as $previousMatch) {
+            $total++;
+            $score = explode('-', $previousMatch['score']);
+            $score[0] = (int) $score[0];
+            $score[1] = (int) $score[1];
+            if (($score[0] + $score[1]) > 2) {
+                $overs++;
+            }            
+        }
+        
+        $linie['total_h2h'] = $total;
+        $linie['overs_h2h'] = $overs;
+        $linie['unders_h2h'] = $total - $overs;
+    }
+    
+    /**
+     * Compute the actual percentages
+     * 
+     * @param array $linie The match row
+     * @return void
+     */
+    private function formatPercentageMatch($linie)
+    {
+        $linie['total'] = $linie['overs'] = $linie['unders'] = 0;
+        
+        if (isset($linie['total_h2h'])) {
+            $linie['total'] += $linie['total_h2h'];
+        }
+        
+        if (isset($linie['overs_h2h'])) {
+            $linie['overs'] += $linie['overs_h2h'];
+        }
+        
+        if (isset($linie['unders_h2h'])) {
+            $linie['unders'] += $linie['unders_h2h'];
+        }
+        
+        if (isset($linie['total_form'])) {
+            $linie['total'] += $linie['total_form'];
+        }
+        
+        if (isset($linie['overs_form'])) {
+            $linie['overs'] += $linie['overs_form'];
+        }
+        
+        if (isset($linie['unders_form'])) {
+            $linie['unders'] += $linie['unders_form'];
+        }
+                
+        $linie['percentage'] = 0;
+        $linie['over'] = '';
+        
+        if (!$linie['overs']) {
+            $linie['percentage'] = 0;
+        } else {
+            $linie['percentage'] = round($linie['overs'] * 100/ $linie['total'], 2);
+        }
+                
+        if ($linie['percentage'] < 50 ) {
+            $linie['percentage'] = 100 - $linie['percentage'];
+            $linie['over'] = 'UNDER';
+        } else {
+            $linie['over'] = 'OVER';
+        }
+        
+        if ($linie['total'] < 3) {
+            $linie['percentage'] = 0;
+        }                        
+
+        if (strstr($linie['score'], '?')) {
+            $linie['color'] = $linie['percentage'] == 0 ? 'grey' : 'orange';                                
+        } else {
+            $isOver = $this->goal_model->isOver($linie['score']);
+
+            do {
+                if ($linie['percentage'] == 0) {
+                    $linie['color'] = 'grey';
+                    break;
+                }
+
+                if ($linie['over'] === 'OVER' && $isOver) {
+                    $linie['color'] = 'green';
+                    break;
+                }
+
+                if ($linie['over'] === 'UNDER' && !$isOver) {
+                    $linie['color'] = 'green';
+                    break;
+                }
+
+                $linie['color'] = 'red';
+
+            } while (false);                                
+        }
+    }
+    
+    private static function sortPercentage($a, $b)
     {
         if ($a['percentage'] == $b['percentage']) {
             return 0;
