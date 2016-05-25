@@ -392,17 +392,27 @@ class Admincp9 extends Admincp_Controller {
             ),
             array(
                 'name' => 'HOME',
-                'width' => '15%',
+                'width' => '10%',
                 'filter' => 'team1',
                 'type' => 'text',
                 'sort_column' => 'team1',
             ),
             array(
+                'name' => 'FORM',
+                'width' => '5%',                
+                'type' => 'text'                
+            ),
+            array(
                 'name' => 'AWAY',
-                'width' => '15%',
+                'width' => '10%',
                 'filter' => 'team2',
                 'type' => 'text',
                 'sort_column' => 'team2',
+            ),
+            array(
+                'name' => 'FORM',
+                'width' => '5%',                
+                'type' => 'text'                
             ),
             array(
                 'name' => 'SCORE',

@@ -1542,20 +1542,23 @@ class Match_model extends CI_Model {
         $row = array();
                 
         $order_dir = (isset($filters['sort_dir'])) ? $filters['sort_dir'] : 'ASC';
+        
         if (isset($filters['sort'])) {
             $this->db->order_by($filters['sort'], $order_dir);
-        }
-        
-        if (isset($filters['limit'])) {
-            $offset = (isset($filters['offset'])) ? $filters['offset'] : 0;
-            $this->db->limit($filters['limit'], $offset);
-        }
+        }       
             
         if (isset($filters['competition_name']) && $filters['competition_name']) {
             $this->db->like('z_competitions.name', $filters['competition_name']);
         }
         
-        $this->db->select('*,z_matches.link_complete AS link_match');
+        $this->db->join('z_teams AS zt1', 'z_matches.team1 = zt1.team_id', 'inner');
+        $this->db->join('z_teams AS zt2', 'z_matches.team2 = zt2.team_id', 'inner');        
+                
+        $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
+        $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');
+        
+        $this->db->where('z_matches.match_date', $filters['date']);
+        $this->db->select('*,z_matches.link_complete AS link_match,zt1.name as team1_name,zt2.name as team2_name');
         $result = $this->db->get('z_matches');
         
         foreach ($result->result_array() as $linie) {
