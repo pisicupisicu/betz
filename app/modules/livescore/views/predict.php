@@ -52,7 +52,7 @@
             ?>
             <tr>
                 <td align="center"><b><?= $row['country_name']; ?></b></td>
-                <td align="center"><b><?= $row['competition_name']; ?></b></td>
+                <td align="center"><b><?= $row['name']; ?></b></td>
                 <td align="center"><b><?= $row['match_date']; ?></b></td>
                 <td align="center"><b><?= $row['team1_name']; ?></b></td>
                 <td align="center"><b><a href="/admincp9/livescore/form/<?=$row['team1'];?>/<?=$row['match_date'];?>" target="_blank">Form</a></b></td>

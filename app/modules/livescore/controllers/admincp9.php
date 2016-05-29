@@ -513,7 +513,13 @@ class Admincp9 extends Admincp_Controller {
         $data = array(
           'criteria' =>  $criteria
         );
-        $this->load->view('predict', $data);
+        
+        if ($isToday) {
+            $this->load->view('predict_today', $data);
+        } else {
+            $this->load->view('predict', $data);
+        }
+        
     }
         
     private function getUrl($url)
