@@ -1098,8 +1098,7 @@ class Admincp3 extends Admincp_Controller {
 
         $this->admin_navigation->module_link('List teams today new: ' . $nr_new_teams, site_url('admincp3/livescore/list_teams_today'));
         $this->admin_navigation->module_link('List competitions today new: ' . $nr_new_competitions, site_url('admincp3/livescore/list_competitions_today'));
-        $this->admin_navigation->module_link('Move matches today: ' . $count_matches_today, site_url('admincp3/livescore/move_matches_today'));
-        $this->admin_navigation->module_link('Predict', site_url('admincp9/livescore/predict_today'));
+        $this->admin_navigation->module_link('Move matches today: ' . $count_matches_today, site_url('admincp3/livescore/move_matches_today'));        
 
         $columns = array(
             array(

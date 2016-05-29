@@ -90,8 +90,6 @@ class Admincp9 extends Admincp_Controller {
         $this->load->model('match_model');
         $this->load->library('dataset');
 
-        $filters = array();
-
         $columns = array(
             array(
                 'name' => 'COUNTRY',
@@ -196,15 +194,10 @@ class Admincp9 extends Admincp_Controller {
         $this->load->view('h2h');
     }
     
-    public function predict_today()
-    {
-        $this->load->model(array('match_today_model'));
-        $this->load->library('dataset');
-
-        $count_matches_today = $this->match_today_model->get_num_rows();
-        
-
-        $filters = array();        
+    public function form($team, $match_date)
+    {        
+        $this->load->model('match_model');
+        $this->load->library('dataset');        
 
         $columns = array(
             array(
@@ -250,49 +243,28 @@ class Admincp9 extends Admincp_Controller {
                 'filter' => 'score',
                 'type' => 'text',
                 'sort_column' => 'score',
-            ),            
-            array(
-                'name' => 'H2H',
-                'width' => '5%',
-                'type' => 'text,'
             ),
             array(
-                'name' => 'PERCENTAGE',
-                'width' => '5%',
-                'type' => 'text,'
-            ),
-            array(
-                'name' => 'PREDICTION',
+                'name' => 'LINK COMPLETE',
                 'width' => '20%',
                 'type' => 'text,'
             ),
+            array(
+                'name' => 'View',
+                'width' => '5%',
+                'type' => 'text,'
+            )
         );
 
-        $filters = array();
+        $filters = array('team1' => $team, 'forTeam1' => 1, 'match_date' => $match_date, 'include_competitions' => 1);
         $filters['limit'] = 20;
 
-        if (isset($_GET['filters']))
+        if (strlen($this->input->get('filters')))
         {
-            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($_GET['filters'])));
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii(strlen($this->input->get('filters')))));
         }
 
-        if (isset($_GET['offset']))
-            $filters['offset'] = $_GET['offset'];
-        if (isset($_GET['country_name']))
-            $filters['country_name'] = $_GET['country_name'];
-        if (isset($_GET['competition_name']))
-            $filters['competition_name'] = $_GET['competition_name'];
-        if (isset($_GET['team1']))
-            $filters['team1'] = $_GET['team1'];
-        if (isset($_GET['team2']))
-            $filters['team2'] = $_GET['team2'];
-        if (isset($_GET['score']))
-            $filters['score'] = $_GET['score'];
-        if (isset($_GET['match_date_start']))
-            $filters['match_date_start'] = $_GET['match_date_start'];
-        if (isset($_GET['match_date_end']))
-            $filters['match_date_end'] = $_GET['match_date_end'];
-
+        
         if (isset($filters_decode) && !empty($filters_decode))
         {
             foreach ($filters_decode as $key => $val)
@@ -308,23 +280,23 @@ class Admincp9 extends Admincp_Controller {
                 unset($filters[$key]);
             }
         }
-        //unset($filters['limit']);
+
         $this->dataset->columns($columns);
-        $this->dataset->datasource('match_today_model', 'get_matches_predict_h2h', $filters);
-        $this->dataset->base_url(site_url('admincp9/livescore/predict_today'));
+        $this->dataset->datasource('match_model', 'get_form', $filters);
+        $this->dataset->base_url(site_url('admincp9/livescore/form'));
         $this->dataset->rows_per_page($filters['limit']);
 
         // total rows
         unset($filters['limit']);
-        $total_rows = $this->match_today_model->get_num_rows($filters);
+        $filters['count'] = 1;
+        $total_rows = $this->match_model->get_form($filters);        
         $this->dataset->total_rows($total_rows);
 
         // initialize the dataset
         $this->dataset->initialize();
-        // add actions
-        $this->dataset->action('Delete', 'admincp3/livescore/delete_match_today');
-        $this->load->view('predict_today');
-    }
+        // add actions        
+        $this->load->view('form');
+    }        
     
     public function predict_choose()
     {
@@ -363,11 +335,30 @@ class Admincp9 extends Admincp_Controller {
             redirect('admincp9/livescore/predict_choose');
             return false;
         }
-
-        $this->load->model(array('match_model', 'match_today_model'));
-        $this->load->library('dataset');
         
+        $criteria = array();
+        
+        if (strlen($this->input->post('h2h'))) {
+            $criteria[] = 'h2h';
+        }
+        
+        if (strlen($this->input->post('teamsForm'))) {
+            $criteria[] = 'form';
+        }
+        
+        if (empty($criteria)) {
+            $criteria[] = 'h2h';
+        }
+
         $date = $this->input->post('date');
+        
+        redirect('admincp9/livescore/predict/' . implode('.', $criteria) . '/' . $date);        
+    }
+    
+    public function predict($predictCriteria = '', $date = '')
+    {
+        $this->load->model(array('match_model', 'match_today_model'));
+        $this->load->library('dataset');               
         
         $isToday = $this->match_today_model->isDate($date);
         
@@ -381,7 +372,7 @@ class Admincp9 extends Admincp_Controller {
             ),
             array(
                 'name' => 'COMPETITION',
-                'width' => '10%',
+                'width' => '20%',
                 'filter' => 'competition_name',
                 'type' => 'name',
                 'sort_column' => 'competition_name',
@@ -433,18 +424,17 @@ class Admincp9 extends Admincp_Controller {
             ),
             array(
                 'name' => 'PREDICTION',
-                'width' => '20%',
+                'width' => '10%',
                 'type' => 'text,'
             ),
         );
 
         $filters = array();
         $filters['limit'] = 20;
-
-        if (strlen($this->input->get('filters')))
-        {
-            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($this->input->get('filters'))));
-        }
+        
+        if (strlen($this->input->get('offset'))) {
+            $filters['offset'] = $this->input->get('offset');
+        }       
         
         $filterPossibleValues = array(
             'offset', 
@@ -456,12 +446,21 @@ class Admincp9 extends Admincp_Controller {
             'match_date_start',
             'match_date_end'
         );
-        
+                        
         foreach ($filterPossibleValues as $filterValue) {
             if (strlen($this->input->get($filterValue))) {
                 $filters[$filterValue] = $this->input->get($filterValue);
             }
-        }    
+        } 
+        
+        if (strlen($this->input->get('filters')))
+        {
+            $filters_decode = unserialize(base64_decode($this->asciihex->HexToAscii($this->input->get('filters'))));
+//            print '<pre>Filters decode';
+//            print_r($filters_decode);
+//            print '</pre>';
+//            die;
+        }
 
         if (isset($filters_decode) && !empty($filters_decode))
         {
@@ -481,17 +480,12 @@ class Admincp9 extends Admincp_Controller {
         //unset($filters['limit']);
         $this->dataset->columns($columns);
         
-        $methodName = 'get_matches_predict';        
-        
-        if (strlen($this->input->post('h2h'))) {
-            $filters['h2h'] = true;
-        }
-        
-        if (strlen($this->input->post('teamsForm'))) {
-            $filters['form'] = true;
-        }
-        
-        $filters['date'] = $this->input->post('date');
+        $methodName = 'get_matches_predict';
+        $criteria = explode('.', $predictCriteria);
+        foreach ($criteria as $crit) {
+            $filters[$crit] = 1;
+        }                
+        $filters['date'] = $date;
                        
         if ($isToday) {
             $this->dataset->datasource('match_today_model', $methodName, $filters);
@@ -499,7 +493,7 @@ class Admincp9 extends Admincp_Controller {
             $this->dataset->datasource('match_model', $methodName, $filters);
         }
         
-        $this->dataset->base_url(site_url('admincp9/livescore/predict_validate'));
+        $this->dataset->base_url(site_url('admincp9/livescore/predict/' . $predictCriteria . '/' . $date));
         $this->dataset->rows_per_page($filters['limit']);
 
         // total rows
@@ -515,10 +509,13 @@ class Admincp9 extends Admincp_Controller {
         $this->dataset->total_rows($total_rows);
 
         // initialize the dataset
-        $this->dataset->initialize();        
-        $this->load->view('predict');
+        $this->dataset->initialize();
+        $data = array(
+          'criteria' =>  $criteria
+        );
+        $this->load->view('predict', $data);
     }
-
+        
     private function getUrl($url)
     {
         $cUrl = curl_init();

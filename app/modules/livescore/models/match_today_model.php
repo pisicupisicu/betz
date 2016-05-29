@@ -164,120 +164,26 @@ class Match_today_model extends CI_Model
             } else {
                 $linie['country_name'] = $competition_today['country_name'];
                 $linie['competition_name'] = isset($competition['name']) ?  $competition['name'] : '';
-            }
-            
-            if (!$competition_today['competition_id']) {
-                $linie['ok_competition'] = 0;
-            } else {               
-                $linie['ok_competition'] = 1;
-            }
-            
-            $temp = $this->team_today_model->get_team($linie['team1_today']);
-            $linie['team1'] = $temp['name'];
-            $linie['team1_id'] = $temp['team_id'];
-            $linie['ok_team1'] = $temp['ok'];
-            $temp = $this->team_today_model->get_team($linie['team2_today']);
-            $linie['team2_id'] = $temp['team_id'];
-            $linie['team2'] = $temp['name'];
-            $linie['ok_team2'] = $temp['ok'];
-            
-            // get previous matches
-            $h2hFilters = array(
-                'team1' =>  $linie['team1_id'],
-                'team2' => $linie['team2_id'],
-                'match_date' => $linie['match_date']
-            );
-            $previousMatches = $this->match_model->get_h2h($h2hFilters);
-            
-            $total = $overs = 0;
-            $linie['percentage'] = 0;
-            $linie['over'] = '';
-            foreach ($previousMatches as $previousMatch) {
-                $total++;
-                $score = explode('-', $previousMatch['score']);
-                $score[0] = (int) $score[0];
-                $score[1] = (int) $score[1];
-                if (($score[0] + $score[1]) > 2) {
-                    $overs++;
-                }
-                $linie['percentage'] = round($overs * 100/ $total, 2);
-                if ($linie['percentage'] < 50 ) {
-                    $linie['percentage'] = 100 - $linie['percentage'];
-                    $linie['over'] = 'UNDER';
-                } else {
-                    $linie['over'] = 'OVER';
-                }
-            }
-            
-            if ($total < 3) {
-                $linie['percentage'] = 0;
             }                        
             
-            if (strstr($linie['score'], '?')) {
-                $linie['color'] = $linie['percentage'] == 0 ? 'grey' : 'orange';                                
+            $team1Temp = $this->team_today_model->get_team($linie['team1_today']);
+            $linie['team1_name'] = $team1Temp['name'];
+            $linie['team1'] = $team1Temp['team_id'];
+            $team2Temp = $this->team_today_model->get_team($linie['team2_today']);
+            $linie['team2_name'] = $team2Temp['name'];
+            $linie['team2'] = $team2Temp['team_id'];
+            
+            $linie['date'] = $filters['date'];
+            
+            if (isset($filters['h2h'])) {
+                $this->match_model->computeH2h(&$linie);
+            } elseif (isset($filters['form'])) {
+                $this->match_model->computeForm(&$linie);
             } else {
-                $isOver = $this->goal_model->isOver($linie['score']);
-                
-                do {
-                    if ($linie['percentage'] == 0) {
-                        $linie['color'] = 'grey';
-                        break;
-                    }
-                    
-                    if ($linie['over'] === 'OVER' && $isOver) {
-                        $linie['color'] = 'green';
-                        break;
-                    }
-                    
-                    if ($linie['over'] === 'UNDER' && !$isOver) {
-                        $linie['color'] = 'green';
-                        break;
-                    }
-                    
-                    $linie['color'] = 'red';
-                    
-                } while (false);                                
-            }                        
-            
-            if ($linie['team1'] == $linie['team2']) {
-                $linie['ok_team1'] = $linie['ok_team2'] = 0;
+                $this->match_model->computeH2h(&$linie);
             }
             
-            if (isset($filters['country_name'])
-                && $filters['country_name']
-                && strcasecmp($linie['country_name'], $filters['country_name'])) {
-                continue;
-            }
-            
-            if (isset($filters['match_date_start'])
-                && !empty($filters['match_date_start'])
-                && ($linie['match_date'] < $filters['match_date_start'])) {
-                continue;
-            }
-            
-            if (isset($filters['match_date_end'])
-                && !empty($filters['match_date_end'])
-                && ($linie['match_date'] > $filters['match_date_end'])) {
-                continue;
-            }
-            
-            if (isset($filters['score'])
-                && (strcmp($filters['score'], $linie['score']))
-            ) {
-                continue;
-            }
-            
-            if (isset($filters['team1'])
-                && (strcasecmp($filters['team1'], $linie['team1']))
-            ) {
-                continue;
-            }
-            
-            if (isset($filters['team2'])
-                && (strcasecmp($filters['team2'], $linie['team2']))
-            ) {
-                continue;
-            }
+            $this->match_model->formatPercentageMatch(&$linie);
                         
             $row[] = $linie;
 //             print '<today>';

@@ -952,11 +952,11 @@ class Match_model extends CI_Model {
             $this->db->join('z_competitions', 'z_matches.competition_id = z_competitions.competition_id', 'inner');
             $this->db->join('z_countries', 'z_competitions.country_id = z_countries.ID', 'left');            
         }
-
        
         $this->db->where('team1', $filters['team1']);
         $this->db->where('team2', $filters['team2']);
         $this->db->where('match_date <', $filters['match_date']);
+        $this->db->order_by('match_date', 'desc');
         
         if (isset($filters['include_competitions'])) {
             $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
@@ -982,6 +982,7 @@ class Match_model extends CI_Model {
         $this->db->where('team1', $filters['team2']);
         $this->db->where('team2', $filters['team1']);
         $this->db->where('match_date <', $filters['match_date']);
+        $this->db->order_by('match_date', 'desc');
         
         if (isset($filters['include_competitions'])) {
            $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
@@ -1011,7 +1012,7 @@ class Match_model extends CI_Model {
     }
     
     public function get_form($filters = array(), $lastGames = 5)
-    {
+    {        
         $this->load->model('team_model');
         $row = array();
         
@@ -1033,30 +1034,27 @@ class Match_model extends CI_Model {
         $this->db->limit($lastGames, 0);
         
         $this->db->where('match_date <', $filters['match_date']);
+        $this->db->order_by('match_date', 'desc');
         
         if (isset($filters['include_competitions'])) {
             $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
         }
         
         $result_home = $this->db->get('z_matches');
-
+        
+        if (isset($filters['count'])) {
+            return $result_home->num_rows();
+        }        
+                
         foreach ($result_home->result_array() as $line) {
             if (isset($filters['include_competitions'])) {
-                $temp = $this->team_model->get_team($line['team1']);
-                $line['team1_name'] = $temp['name'];
-                $temp = $this->team_model->get_team($line['team2']);
-                $line['team2_name'] = $temp['name'];
+                $team1Temp = $this->team_model->get_team($line['team1']);
+                $line['team1_name'] = $team1Temp['name'];
+                $team2Temp = $this->team_model->get_team($line['team2']);
+                $line['team2_name'] = $team2Temp['name'];                                                
             }
             $row[] = $line;
-        }       
-
-        if (isset($filters['count'])) {
-            return count($row);
         }
-        
-        //print '<pre>xx ' . $filters['team1'] . ' ' . $filters['team2'];
-        //print_r($row);
-        //die;
 
         return $row;
     }
@@ -1592,7 +1590,7 @@ class Match_model extends CI_Model {
      * @param array $linie The match row
      * @return void
      */
-    private function computeH2h($linie)
+    public function computeH2h($linie)
     {
         // get previous matches
         $h2hFilters = array(
@@ -1625,7 +1623,7 @@ class Match_model extends CI_Model {
      * @param array $linie The match row
      * @return void
      */
-    private function computeForm($linie)
+    public function computeForm($linie)
     {
         $previousMatches = array();
         $forTeams = array('forTeam1', 'forTeam2');
@@ -1664,7 +1662,7 @@ class Match_model extends CI_Model {
      * @param array $linie The match row
      * @return void
      */
-    private function formatPercentageMatch($linie)
+    public function formatPercentageMatch($linie)
     {
         $linie['total'] = $linie['overs'] = $linie['unders'] = 0;
         

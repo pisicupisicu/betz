@@ -29,7 +29,7 @@
 
 </script>
 
-<h1>MATCHES TODAY</h1>
+<h1>MATCHES PREDICT TODAY WITH CRITERIA: <?php echo implode('+', $criteria); ?></h1>
 
 <div style="width:auto;text-align:center;" align="center">
 
@@ -51,30 +51,15 @@
             $row['score'] = $score[0] . ' - ' . $score[1];
             ?>
             <tr>							
-                <td><input type="checkbox" name="check_<?= $row['index']; ?>" value="1" class="action_items" /></td>
                 <td align="center"><b><?= $row['country_name']; ?></b></td>
-                <td align="center" <?php
-                if (!$row['ok_competition'])
-                {
-                    echo 'style="color:red;"';
-                }                                              
-                
-                ?>><b><?= $row['competition_name']; ?></b></td>
+                <td align="center"><b><?= $row['name']; ?></b></td>
                 <td align="center"><b><?= $row['match_date']; ?></b></td>
-                <td align="center" <?php
-                    if (!$row['ok_team1'])
-                    {
-                        echo 'style="color:red;"';
-                    }
-                    ?>><b><?= $row['team1']; ?></b></td>
-                <td align="center" <?php
-            if (!$row['ok_team2'])
-            {
-                echo 'style="color:red;"';
-            }
-            ?>><b><?= $row['team2']; ?></b></td>
+                <td align="center"><b><?= $row['team1_name']; ?></b></td>
+                <td align="center"><b><a href="/admincp9/livescore/form/<?=$row['team1'];?>/<?=$row['match_date'];?>" target="_blank">Form</a></b></td>
+                <td align="center"><b><?= $row['team2_name']; ?></b></td>
+                <td align="center"><b><a href="/admincp9/livescore/form/<?=$row['team2'];?>/<?=$row['match_date'];?>" target="_blank">Form</a></b></td>
                 <td align="center"><b><?= $row['score']; ?></b></td>                
-                <td align="center"><b><a href="/admincp9/livescore/h2h/<?=$row['team1_id'];?>/<?=$row['team2_id'];?>/<?=$row['match_date'];?>" target="_blank">H2h</a></b></td>                
+                <td align="center"><b><a href="/admincp9/livescore/h2h/<?=$row['team1'];?>/<?=$row['team2'];?>/<?=$row['match_date'];?>" target="_blank">H2h</a></b></td>
                 <td align="center"><b><?= $row['percentage']; ?>%</b></td>
                 <td align="center" style="background-color:<?php echo $row['color']; ?>"><b><?= $row['over']; ?></b></td>                
             </tr>
