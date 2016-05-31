@@ -179,7 +179,7 @@ class Admincp9 extends Admincp_Controller {
 
         $this->dataset->columns($columns);
         $this->dataset->datasource('match_model', 'get_h2h', $filters);
-        $this->dataset->base_url(site_url('admincp8/livescore/h2h'));
+        $this->dataset->base_url(site_url('admincp9/livescore/h2h'));
         $this->dataset->rows_per_page($filters['limit']);
 
         // total rows

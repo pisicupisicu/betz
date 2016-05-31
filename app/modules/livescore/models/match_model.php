@@ -956,7 +956,6 @@ class Match_model extends CI_Model {
         $this->db->where('team1', $filters['team1']);
         $this->db->where('team2', $filters['team2']);
         $this->db->where('match_date <', $filters['match_date']);
-        $this->db->order_by('match_date', 'desc');
         
         if (isset($filters['include_competitions'])) {
             $this->db->select('*,z_competitions.name AS competition_name,z_matches.link_complete AS link_match');
@@ -981,7 +980,6 @@ class Match_model extends CI_Model {
         
         $this->db->where('team1', $filters['team2']);
         $this->db->where('team2', $filters['team1']);
-        $this->db->where('match_date <', $filters['match_date']);
         $this->db->order_by('match_date', 'desc');
         
         if (isset($filters['include_competitions'])) {
@@ -1000,6 +998,8 @@ class Match_model extends CI_Model {
             $row[] = $line;
         }
 
+        usort($row, array('Match_model', 'cmpMatchDate'));
+
         if (isset($filters['count'])) {
             return count($row);
         }
@@ -1009,6 +1009,13 @@ class Match_model extends CI_Model {
         //die;
 
         return $row;
+    }
+    
+    private static function cmpMatchDate($a, $b) {
+        if ($a['match_date'] == $b['match_date']) {
+            return 0;
+        }
+        return ($a['match_date'] > $b['match_date']) ? -1 : 1;
     }
     
     public function get_form($filters = array(), $lastGames = 5)
